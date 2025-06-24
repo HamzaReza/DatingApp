@@ -3,14 +3,17 @@ import Container from "@/components/RnContainer";
 import RnText from "@/components/RnText";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { setToken } from "@/redux/slices/userSlice";
 import { FontAwesome } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { ImageBackground, TouchableOpacity, View } from "react-native";
+import { useDispatch } from "react-redux";
 
 export default function Onboarding({ navigation }: any) {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
+  const dispatch = useDispatch();
 
   return (
     <Container>
@@ -23,7 +26,8 @@ export default function Onboarding({ navigation }: any) {
         <TouchableOpacity
           style={styles.socialButton}
           onPress={() => {
-            // Handle Google login
+            router.push("/(tabs)/home");
+            dispatch(setToken(true));
           }}
         >
           <View style={styles.iconContainer}>
@@ -39,7 +43,8 @@ export default function Onboarding({ navigation }: any) {
         <TouchableOpacity
           style={styles.socialButton}
           onPress={() => {
-            // Handle Apple login
+            router.push("/(tabs)/home");
+            dispatch(setToken(true));
           }}
         >
           <View style={styles.iconContainer}>

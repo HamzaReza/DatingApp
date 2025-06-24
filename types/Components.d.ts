@@ -82,12 +82,13 @@ export interface RnHeaderProps {
   centerContainerStyle?: StyleProp<ViewStyle>;
   leftContainerStyle?: StyleProp<ViewStyle>;
   rightContainerStyle?: StyleProp<ViewStyle>;
+  centerTextStyle?: StyleProp<TextStyle>;
 }
 
 export interface RnModalProps {
   show: boolean;
   backButton(): void;
-  backDrop(): void;
+  backDrop?: () => void;
   children: ReactNode;
 }
 
@@ -150,4 +151,42 @@ export interface RnAvatarProps {
   showAvatarIcon?: boolean;
   source?: {uri: string} | null;
   style?: StyleProp<ViewStyle>;
+}
+
+export interface RnSliderProps  {
+  value: number;
+  onValueChange: (value: number) => void;
+  minimumValue?: number;
+  maximumValue?: number;
+  step?: number;
+  style?: StyleProp<ViewStyle>;
+  thumbColor?: string;
+  trackColor?: string;
+  minimumTrackTintColor?: string;
+  maximumTrackTintColor?: string;
+  thumbStyle?: any;
+  trackStyle?: any;
+}
+
+export interface RnDropdownProps {
+  onOpen?: () => void;
+  value: any;
+  items: { label: string; value: any; [key: string]: any }[];
+  open: boolean;
+  multiple?: boolean;
+  min?: number;
+  max?: number;
+  zIndex?: number;
+  zIndexInverse?: number;
+  placeholder?: string;
+  placeholderStyle?: StyleProp<TextStyle>;
+  emptyText?: string;
+  onChangeValue?: (value: any) => void;
+  style?: StyleProp<ViewStyle>;
+  dropDownContainerStyle?: StyleProp<ViewStyle>;
+  disabled?: boolean;
+  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  setItems: React.Dispatch<React.SetStateAction<{ label: string; value: any; [key: string]: any }[]>>;
+  setValue: React.Dispatch<React.SetStateAction<any>>;
+  loading?: boolean;
 }

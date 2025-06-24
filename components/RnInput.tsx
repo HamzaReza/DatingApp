@@ -44,7 +44,7 @@ const RnInput: React.FC<RnInputProps> = ({
     inputContainerStyle: {
       borderBottomWidth: 1.5,
       borderWidth: 1.5,
-      borderColor: "#ddd",
+      borderColor: Colors[theme].greenText,
       borderRadius: Borders.radius1,
       paddingHorizontal: wp(4),
       height: hp(6.5),
@@ -72,6 +72,7 @@ const RnInput: React.FC<RnInputProps> = ({
       containerStyle={[styles.containerStyle, containerStyle]}
       inputContainerStyle={[styles.inputContainerStyle, inputContainerStyle]}
       placeholder={placeholder}
+      placeholderTextColor={Colors[theme].placeholderText}
       leftIcon={leftIcon}
       rightIcon={rightIcon}
     />

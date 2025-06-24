@@ -20,6 +20,7 @@ const RnHeader: React.FC<RnHeaderProps> = ({
   centerContainerStyle,
   leftContainerStyle,
   rightContainerStyle,
+  centerTextStyle,
 }) => {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
@@ -45,7 +46,9 @@ const RnHeader: React.FC<RnHeaderProps> = ({
       leftComponent={leftComponent}
       centerComponent={
         centerText ? (
-          <RnText style={styles.centerTextStyle}>{centerText}</RnText>
+          <RnText style={[styles.centerTextStyle, centerTextStyle]}>
+            {centerText}
+          </RnText>
         ) : (
           centerComponent
         )

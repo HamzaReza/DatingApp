@@ -28,6 +28,7 @@ const RnButton: React.FC<RnButtonProps> = ({
   noRightIcon,
   rightIconColor,
 }) => {
+  console.log("🚀 ~ style:", style[0]);
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
 

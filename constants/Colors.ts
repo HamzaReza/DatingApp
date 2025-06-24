@@ -14,6 +14,7 @@ export const Colors = {
     gray:'#E8E6EA',
     recievedMessage:'#FFc4c4',
     sentMessage:'#ffc3d3',
+    placeholderText: '#678999'
   },
   dark: {
     primary: "#76CABB",
@@ -26,5 +27,10 @@ export const Colors = {
     tabIconDefault: "#687076",
     button: "#76CABB",
     track: "#FFE9F1",
+    pink:'#ff5862',
+    gray:'#E8E6EA',
+    recievedMessage:'#FFc4c4',
+    sentMessage:'#ffc3d3',
+    placeholderText: '#678999'
   },
 };

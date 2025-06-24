@@ -18,7 +18,7 @@ const RnPhoneInput = forwardRef<any, RnPhoneInputProps>(
       containerStyle: {
         borderBottomWidth: 1.5,
         borderWidth: 1.5,
-        borderColor: "#ddd",
+        borderColor: Colors[theme].greenText,
         borderRadius: Borders.radius1,
         height: hp(6.5),
         width: wp(92),

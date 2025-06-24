@@ -1,33 +1,34 @@
-import { Colors } from '@/constants/Colors';
-import { FontSize } from '@/constants/FontSize';
-import { hp, wp } from '@/utils';
-import { StyleSheet } from 'react-native';
+import { Borders } from "@/constants/Borders";
+import { Colors } from "@/constants/Colors";
+import { FontFamily } from "@/constants/FontFamily";
+import { FontSize } from "@/constants/FontSize";
+import { hp, wp } from "@/utils";
+import { StyleSheet } from "react-native";
 
-export default StyleSheet.create({
-
-header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+export default (theme: 'light' | 'dark') => StyleSheet.create({
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingVertical: hp(2),
   },
   locationContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   locationText: {
     color: Colors.light.greenText,
     fontSize: FontSize.regular,
-    fontWeight: '600',
+    fontWeight: "600",
     marginHorizontal: wp(1),
   },
   title: {
     fontSize: FontSize.extraLarge,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: Colors.light.greenText,
   },
   headerActions: {
-    flexDirection: 'row',
+    flexDirection: "row",
   },
   actionButton: {
     marginLeft: wp(3),
@@ -40,13 +41,13 @@ header: {
   },
   sectionTitle: {
     fontSize: FontSize.large,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: Colors.light.greenText,
     marginBottom: hp(1),
   },
   hugText: {
     fontSize: FontSize.large,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: Colors.light.redText,
     marginBottom: hp(2),
   },
@@ -56,36 +57,36 @@ header: {
     marginBottom: hp(2),
   },
   interestsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
   },
   aroundMeContainer: {
-    position: 'relative',
+    position: "relative",
   },
   connectButton: {
     backgroundColor: Colors.light.redText,
     paddingHorizontal: wp(4),
     paddingVertical: hp(1),
     borderRadius: wp(5),
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
     marginBottom: hp(2),
   },
   connectText: {
     color: Colors.light.background,
-    fontSize:FontSize.regular,
-    fontWeight: '600',
+    fontSize: FontSize.regular,
+    fontWeight: "600",
   },
   mapContainer: {
     height: hp(25),
     backgroundColor: Colors.light.greenText,
     borderRadius: wp(4),
-    position: 'relative',
-    overflow: 'hidden',
+    position: "relative",
+    overflow: "hidden",
   },
   mapPlaceholder: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   mapText: {
     color: Colors.light.greenText,
@@ -95,25 +96,65 @@ header: {
     ...StyleSheet.absoluteFillObject,
   },
   userPin: {
-    position: 'absolute',
+    position: "absolute",
     width: wp(8),
     height: wp(8),
   },
   pinImage: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
     borderRadius: wp(4),
     backgroundColor: Colors.light.redText,
-    justifyContent: 'center',
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  subHeadContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  viewAllText: {
+    color: Colors.light.greenText,
+  },
+  filterModalContainer: {
+    backgroundColor: Colors[theme].background,
+    borderRadius: Borders.radius2,
+    padding: wp(4),
+  },
+  applyFilterButton: {
+    backgroundColor: Colors.light.redText,
+    borderRadius: Borders.circle,
+    paddingVertical: hp(2),
+    paddingHorizontal: wp(8),
+    width: wp(80),
     alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: hp(2),
   },
-  subHeadContainer:{
-flexDirection:'row',
-alignItems:'center',
-justifyContent:'space-between'
+  filterHeaderText: {
+    fontSize: FontSize.large,
+    fontFamily: FontFamily.semiBold,
+    color: Colors.light.redText,
+    textAlign: 'center',
+    marginBottom: hp(2),
   },
-  viewAllText:{
-    color:Colors.light.greenText
-  }
-  
-  });
+  filterHeaderSubText: {
+    color: Colors.light.redText,
+    textAlign: 'center',
+    marginBottom: hp(4),
+  },
+  filterSlider: {
+    marginVertical: hp(1),
+  },
+  rowContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  modalOptionText: {
+    fontFamily: FontFamily.semiBold,
+  },
+  filterInput: {
+    marginVertical: hp(1),
+  },
+});

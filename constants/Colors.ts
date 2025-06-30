@@ -14,7 +14,8 @@ export const Colors = {
     gray:'#E8E6EA',
     recievedMessage:'#FFc4c4',
     sentMessage:'#ffc3d3',
-    placeholderText: '#678999'
+    placeholderText: '#678999',
+    backgroundSecondary:'#F5F5F5',
   },
   dark: {
     primary: "#76CABB",
@@ -31,6 +32,7 @@ export const Colors = {
     gray:'#E8E6EA',
     recievedMessage:'#FFc4c4',
     sentMessage:'#ffc3d3',
-    placeholderText: '#678999'
+    placeholderText: '#678999',
+    backgroundSecondary:'#F5F5F5',
   },
 };

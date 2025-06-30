@@ -6,7 +6,7 @@ import {
   StatusBarStyle,
   StyleProp,
   TextStyle,
-  ViewStyle
+  ViewStyle,
 } from "react-native";
 import { ToastPosition } from "react-native-toast-message";
 
@@ -149,11 +149,11 @@ export interface ListItemType {
 export interface RnAvatarProps {
   avatarHeight?: number;
   showAvatarIcon?: boolean;
-  source?: {uri: string} | null;
+  source?: { uri: string } | null;
   style?: StyleProp<ViewStyle>;
 }
 
-export interface RnSliderProps  {
+export interface RnSliderProps {
   value: number;
   onValueChange: (value: number) => void;
   minimumValue?: number;
@@ -186,7 +186,9 @@ export interface RnDropdownProps {
   dropDownContainerStyle?: StyleProp<ViewStyle>;
   disabled?: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  setItems: React.Dispatch<React.SetStateAction<{ label: string; value: any; [key: string]: any }[]>>;
+  setItems: React.Dispatch<
+    React.SetStateAction<{ label: string; value: any; [key: string]: any }[]>
+  >;
   setValue: React.Dispatch<React.SetStateAction<any>>;
   loading?: boolean;
 }

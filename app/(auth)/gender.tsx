@@ -35,7 +35,7 @@ export default function Gender() {
     setIsLoading(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      router.push("/auth/lookingFor");
+      router.push("/lookingFor");
     } catch (error) {
       console.error(error);
     } finally {

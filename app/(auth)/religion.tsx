@@ -1,46 +1,49 @@
-import createStyles from "@/app/authStyles/profession.styles";
+import createStyles from "@/app/authStyles/religion.styles";
 import RnButton from "@/components/RnButton";
 import RnProgressBar from "@/components/RnProgressBar";
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { ProfessionValues } from "@/types";
+import { setToken } from "@/redux/slices/userSlice";
+import { ReligionValues } from "@/types";
 import { router } from "expo-router";
 import { Formik } from "formik";
 import { useState } from "react";
 import { Pressable, View } from "react-native";
+import { useDispatch } from "react-redux";
 import * as Yup from "yup";
 
-const professionSchema = Yup.object().shape({
-  profession: Yup.string()
+const religionSchema = Yup.object().shape({
+  religion: Yup.string()
     .oneOf(
-      ["it", "healthcare", "engineer", "business", "teacher", "artist"],
+      ["hinduism", "islam", "christianity", "judaism"],
       "Please select a valid option"
     )
     .required("Please select an option"),
 });
 
-const PROFESSIONS = [
-  { value: "it", label: "IT & Software" },
-  { value: "healthcare", label: "Doctor / Healthcare" },
-  { value: "engineer", label: "Engineer" },
-  { value: "business", label: "Business Owner" },
-  { value: "teacher", label: "Teacher / Professor" },
-  { value: "artist", label: "Artist / Designer" },
+const RELIGIONS = [
+  { value: "hinduism", label: "Hinduism" },
+  { value: "islam", label: "Islam" },
+  { value: "christianity", label: "Christianity" },
+  { value: "judaism", label: "Judaism" },
 ] as const;
 
-export default function Profession() {
+export default function Religion() {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
   const [isLoading, setIsLoading] = useState(false);
+  const dispatch = useDispatch();
 
-  const handleProfessionSubmit = async (values: ProfessionValues) => {
-    if (!values.profession) return;
+  const handleReligionSubmit = async (values: ReligionValues) => {
+    if (!values.religion) return;
     setIsLoading(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      router.push("/auth/religion");
+      router.dismissAll();
+      router.push("/home");
+      dispatch(setToken(true));
     } catch (error) {
       console.error(error);
     } finally {
@@ -49,7 +52,7 @@ export default function Profession() {
   };
 
   const renderOption = (
-    option: (typeof PROFESSIONS)[number],
+    option: (typeof RELIGIONS)[number],
     selectedOption: string,
     setFieldValue: (field: string, value: any) => void
   ) => {
@@ -58,7 +61,7 @@ export default function Profession() {
       <Pressable
         key={option.value}
         onPress={() =>
-          setFieldValue("profession", isSelected ? "" : option.value)
+          setFieldValue("religion", isSelected ? "" : option.value)
         }
         style={[styles.option, isSelected && styles.optionSelected]}
       >
@@ -72,27 +75,27 @@ export default function Profession() {
   };
 
   return (
-    <ScrollContainer topBar={<RnProgressBar progress={10 / 11} />}>
+    <ScrollContainer topBar={<RnProgressBar progress={11 / 11} />}>
       <Formik
-        initialValues={{ profession: "" }}
-        validationSchema={professionSchema}
-        onSubmit={handleProfessionSubmit}
+        initialValues={{ religion: "" }}
+        validationSchema={religionSchema}
+        onSubmit={handleReligionSubmit}
       >
         {({ values, setFieldValue, handleSubmit, errors }) => (
           <View style={styles.innerContainer}>
-            <RnText style={styles.title}>What Is Your Profession?</RnText>
+            <RnText style={styles.title}>{`What's Your Religion?`}</RnText>
             <RnText style={styles.subtitle}>
-              Let others know what you do for a living
+              Share your faith and beliefs with others
             </RnText>
 
             <View style={styles.optionsContainer}>
-              {PROFESSIONS.map((option) =>
-                renderOption(option, values.profession, setFieldValue)
+              {RELIGIONS.map((option) =>
+                renderOption(option, values.religion, setFieldValue)
               )}
             </View>
 
-            {errors.profession && (
-              <RnText style={styles.errorText}>{errors.profession}</RnText>
+            {errors.religion && (
+              <RnText style={styles.errorText}>{errors.religion}</RnText>
             )}
 
             <RnButton

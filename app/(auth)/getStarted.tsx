@@ -31,12 +31,12 @@ export default function GetStarted() {
             title="Login with Phone"
             icon="phone"
             style={[styles.button]}
-            onPress={() => router.push("/auth/login")}
+            onPress={() => router.push("/login")}
           />
         </View>
         <View style={styles.footer}>
           <RnText>{`Don't have an account? `}</RnText>
-          <TouchableOpacity onPress={() => router.push("/auth/signup")}>
+          <TouchableOpacity onPress={() => router.push("/signup")}>
             <RnText style={styles.link}>Sign Up</RnText>
           </TouchableOpacity>
         </View>

@@ -86,7 +86,7 @@ export default function Login() {
               <TouchableOpacity
                 onPress={() => {
                   resetForm();
-                  router.push("/auth/signup");
+                  router.push("/signup");
                 }}
                 disabled={isLoading}
               >

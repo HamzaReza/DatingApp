@@ -1,38 +1,32 @@
-import createStyles from "@/app/authStyles/email.styles";
+import createStyles from "@/app/authStyles/name.styles";
 import RnButton from "@/components/RnButton";
 import RnInput from "@/components/RnInput";
 import RnProgressBar from "@/components/RnProgressBar";
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { EmailValues } from "@/types";
+import { NameValues } from "@/types";
 import { router } from "expo-router";
 import { Formik } from "formik";
 import React, { useState } from "react";
 import { View } from "react-native";
 import * as Yup from "yup";
 
-const emailSchema = Yup.object().shape({
-  email: Yup.string()
-    .required("Email is required")
-    .test("email-format", "Please enter a valid email address", (value) => {
-      if (!value) return false;
-      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-      return emailRegex.test(value);
-    }),
+const nameSchema = Yup.object().shape({
+  name: Yup.string().required("Name is required"),
 });
 
-export default function Email() {
+export default function Name() {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleEmailSubmit = async (values: EmailValues) => {
+  const handleNameSubmit = async (values: NameValues) => {
     setIsLoading(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      router.push("/auth/age");
+      router.push("/email");
     } catch (error) {
       console.error(error);
     } finally {
@@ -41,28 +35,27 @@ export default function Email() {
   };
 
   return (
-    <ScrollContainer topBar={<RnProgressBar progress={4 / 11} />}>
+    <ScrollContainer topBar={<RnProgressBar progress={3 / 11} />}>
       <Formik
-        initialValues={{ email: "" }}
-        validationSchema={emailSchema}
-        onSubmit={handleEmailSubmit}
+        initialValues={{ name: "" }}
+        validationSchema={nameSchema}
+        onSubmit={handleNameSubmit}
         validateOnChange
         validateOnMount={false}
       >
         {({ handleChange, handleSubmit, values, errors }) => (
           <View style={styles.innerContainer}>
             <View>
-              <RnText style={styles.title}>Email Address</RnText>
+              <RnText style={styles.title}>{`What's Your Name?`}</RnText>
               <RnText style={styles.subtitle}>
-                We&apos;ll need your email to stay in touch
+                {`Let's Get to Know Each Other`}
               </RnText>
               <RnInput
-                value={values.email}
-                onChangeText={handleChange("email")}
-                error={errors.email}
-                placeholder="Enter your email"
-                keyboardType="email-address"
-                maxLength={50}
+                value={values.name}
+                onChangeText={handleChange("name")}
+                error={errors.name}
+                placeholder="Enter your name"
+                maxLength={40}
               />
               <RnButton
                 title="Continue"

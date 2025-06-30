@@ -33,7 +33,7 @@ export default function LookingFor() {
     setIsLoading(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      router.push("/auth/interests");
+      router.push("/interests");
     } catch (error) {
       console.error(error);
     } finally {

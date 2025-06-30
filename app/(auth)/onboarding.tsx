@@ -3,7 +3,7 @@ import Container from "@/components/RnContainer";
 import RnText from "@/components/RnText";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { setToken } from "@/redux/slices/userSlice";
+import { setToken, setUser } from "@/redux/slices/userSlice";
 import { FontAwesome } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { ImageBackground, TouchableOpacity, View } from "react-native";
@@ -26,8 +26,13 @@ export default function Onboarding({ navigation }: any) {
         <TouchableOpacity
           style={styles.socialButton}
           onPress={() => {
-            router.push("/(tabs)/home");
+            router.push("/dashboard");
             dispatch(setToken(true));
+            dispatch(
+              setUser({
+                role: "admin",
+              })
+            );
           }}
         >
           <View style={styles.iconContainer}>
@@ -43,8 +48,13 @@ export default function Onboarding({ navigation }: any) {
         <TouchableOpacity
           style={styles.socialButton}
           onPress={() => {
-            router.push("/(tabs)/home");
+            router.push("/dashboard");
             dispatch(setToken(true));
+            dispatch(
+              setUser({
+                role: "admin",
+              })
+            );
           }}
         >
           <View style={styles.iconContainer}>
@@ -59,7 +69,7 @@ export default function Onboarding({ navigation }: any) {
 
         <TouchableOpacity
           style={styles.emailButton}
-          onPress={() => router.push("/auth/getStarted")}
+          onPress={() => router.push("/getStarted")}
         >
           <RnText style={styles.emailwhiteText}>Continue with Phone</RnText>
         </TouchableOpacity>

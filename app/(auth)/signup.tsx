@@ -29,7 +29,7 @@ export default function Signup() {
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
       router.push({
-        pathname: "/auth/otp",
+        pathname: "/otp",
         params: { phone: values.phone },
       });
     } catch (error) {
@@ -76,7 +76,7 @@ export default function Signup() {
               <TouchableOpacity
                 onPress={() => {
                   resetForm();
-                  router.push("/auth/login");
+                  router.push("/login");
                 }}
                 disabled={isLoading}
               >

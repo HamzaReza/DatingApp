@@ -29,7 +29,7 @@ export default function Photo() {
     setIsLoading(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      router.push("/auth/location");
+      router.push("/location");
     } catch (error) {
       console.error(error);
     } finally {

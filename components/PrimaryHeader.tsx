@@ -23,6 +23,8 @@ interface PrimaryHeaderProps {
   showLeftIcon?: boolean;
   showRightIcon?: boolean;
   borderWidth?: number;
+  backgroundColor?:string
+  borderColor?:string
 }
 
 const PrimaryHeader: React.FC<PrimaryHeaderProps> = ({
@@ -39,6 +41,8 @@ const PrimaryHeader: React.FC<PrimaryHeaderProps> = ({
   showLeftIcon = true,
   showRightIcon = true,
   borderWidth = 0.5,
+  backgroundColor='',
+  borderColor=rightIconColor
 }) => {
   return (
     <View style={styles.header}>
@@ -46,13 +50,15 @@ const PrimaryHeader: React.FC<PrimaryHeaderProps> = ({
         <TouchableOpacity
           onPress={onLeftPress}
           style={{
-            borderColor: leftIconColor,
+            borderColor: borderColor,
             borderWidth: borderWidth,
             width: wp(9),
             height: wp(9),
             borderRadius: Borders.circle,
             alignItems: "center",
             justifyContent: "center",
+            backgroundColor:backgroundColor
+            
           }}
         >
           <SimpleLineIcons
@@ -69,13 +75,14 @@ const PrimaryHeader: React.FC<PrimaryHeaderProps> = ({
         <TouchableOpacity
           onPress={onRightPress}
           style={{
-            borderColor: rightIconColor,
+            borderColor: borderColor,
             borderWidth: 0.5,
             width: wp(9),
             height: wp(9),
             borderRadius: Borders.circle,
             alignItems: "center",
             justifyContent: "center",
+            backgroundColor:backgroundColor
           }}
         >
           <SimpleLineIcons

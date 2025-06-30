@@ -9,7 +9,8 @@ interface RoundButtonProps extends TouchableOpacityProps {
   iconColor?: string;
   iconSize?: number;
   borderColor?: string;
-  onPress?: () => void; // optional onPress handler
+  onPress?: () => void;
+  backgroundColour?: string; // optional background color
 }
 
 const RoundButton: React.FC<RoundButtonProps> = ({
@@ -19,11 +20,12 @@ const RoundButton: React.FC<RoundButtonProps> = ({
   borderColor = Colors.light.greenText,
   style,
   onPress,
+  backgroundColour='transparent',
   ...touchableProps
 }) => {
   return (
     <TouchableOpacity
-      style={[styles.container, { borderColor }, style]}
+      style={[styles.container, { borderColor, backgroundColor: backgroundColour }, style]}
       onPress={onPress}
       {...touchableProps}
     >
@@ -42,6 +44,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    width: wp(11),
+    height: wp(11),
   },
 });
     

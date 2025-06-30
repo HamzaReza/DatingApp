@@ -146,12 +146,7 @@ export default function Home() {
           XYZ
         </RnText>
         <TouchableOpacity style={styles.notificationContainer}>
-          <MaterialIcons
-            name="notifications-none"
-            size={24}
-            color={Colors.dark.greenText}
-            onPress={() => router.push("/mainScreens/matchesList")}
-          />
+        <MaterialIcons name="notifications-none" size={24} color={Colors.dark.greenText} onPress={()=>router.push('/eventScreens/explore')} />
           {hasNotification && <View style={styles.notificationDot} />}
         </TouchableOpacity>
       </View>
@@ -225,3 +220,4 @@ export default function Home() {
     </ScrollContainer>
   );
 }
+

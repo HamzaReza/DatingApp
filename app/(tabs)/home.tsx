@@ -139,14 +139,19 @@ export default function Home() {
           style={styles.titleText}
           onPress={() => {
             router.dismissAll();
-            router.replace("/auth/onboarding");
+            router.replace("/onboarding");
             dispatch(setToken(false));
           }}
         >
           XYZ
         </RnText>
         <TouchableOpacity style={styles.notificationContainer}>
-        <MaterialIcons name="notifications-none" size={24} color={Colors.dark.greenText} onPress={()=>router.push('/eventScreens/explore')} />
+          <MaterialIcons
+            name="notifications-none"
+            size={24}
+            color={Colors.dark.greenText}
+            onPress={() => router.push("/eventScreens/explore")}
+          />
           {hasNotification && <View style={styles.notificationDot} />}
         </TouchableOpacity>
       </View>
@@ -220,4 +225,3 @@ export default function Home() {
     </ScrollContainer>
   );
 }
-

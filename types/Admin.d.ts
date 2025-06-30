@@ -15,3 +15,18 @@ export type BarChartDataPoint = {
   label: string;
   frontColor?: string;
 };
+
+export type UserStatus = "approved" | "rejected" | "pending";
+
+export type UserAdmin = {
+  id: string;
+  name: string;
+  age: number;
+  gender: "male" | "female" | "other";
+  matchScore: number;
+  phone: string;
+  email: string;
+  avatar: string; // image url or local asset
+  bio?: string;
+  status: UserStatus;
+};

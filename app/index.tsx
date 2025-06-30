@@ -8,11 +8,11 @@ export default function Index() {
 
   if (token) {
     if (user?.role === "admin") {
-      return <Redirect href="/admin/dashboard" />;
+      return <Redirect href="/dashboard" />;
     } else {
-      return <Redirect href="/(tabs)/home" />;
+      return <Redirect href="/home" />;
     }
   } else {
-    return <Redirect href="/auth/onboarding" />;
+    return <Redirect href="/onboarding" />;
   }
 }

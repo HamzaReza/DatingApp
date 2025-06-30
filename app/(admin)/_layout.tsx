@@ -21,6 +21,13 @@ export default function TabLayout() {
       alignItems: "center",
       justifyContent: "center",
     },
+    iconContainer: {
+      width: wp(10),
+      height: wp(10),
+      borderRadius: wp(5),
+      justifyContent: "center",
+      alignItems: "center",
+    },
   });
 
   return (
@@ -42,23 +49,43 @@ export default function TabLayout() {
           title: "Dashboard",
           tabBarIcon: ({ focused }: { focused: boolean; size: number }) => (
             <View
-              style={{
-                width: wp(10),
-                height: wp(10),
-                borderRadius: wp(5),
-                justifyContent: "center",
-                alignItems: "center",
-                backgroundColor: focused
-                  ? Colors[theme].primary
-                  : "transparent",
-              }}
+              style={[
+                styles.iconContainer,
+                {
+                  backgroundColor: focused
+                    ? Colors[theme].primary
+                    : "transparent",
+                },
+              ]}
             >
               <MaterialCommunityIcons
                 name="view-dashboard"
                 size={focused ? 24 : 28}
-                color={
-                  focused ? Colors[theme].whiteText : "rgba(255, 88, 98, 0.8)"
-                }
+                color={focused ? Colors[theme].whiteText : Colors[theme].pink}
+              />
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="user"
+        options={{
+          title: "Users",
+          tabBarIcon: ({ focused }: { focused: boolean; size: number }) => (
+            <View
+              style={[
+                styles.iconContainer,
+                {
+                  backgroundColor: focused
+                    ? Colors[theme].primary
+                    : "transparent",
+                },
+              ]}
+            >
+              <MaterialCommunityIcons
+                name="account-group"
+                size={focused ? 24 : 28}
+                color={focused ? Colors[theme].whiteText : Colors[theme].pink}
               />
             </View>
           ),

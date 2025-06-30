@@ -85,6 +85,9 @@ export default function Dashboard() {
         data={dashboardStats}
         numColumns={2}
         showsVerticalScrollIndicator={false}
+        columnWrapperStyle={styles.flatlistColumnWrapper}
+        style={styles.flatlist}
+        scrollEnabled={false}
         keyExtractor={(item) => item.label}
         renderItem={({ item, index }) => (
           <View key={item.label} style={styles.statCard}>
@@ -111,9 +114,6 @@ export default function Dashboard() {
             </RnText>
           </View>
         )}
-        columnWrapperStyle={styles.flatlistColumnWrapper}
-        style={styles.flatlist}
-        scrollEnabled={false}
       />
       <View style={styles.chartCard}>
         <RnText style={styles.sectionTitle}>Earning Overview</RnText>

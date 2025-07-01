@@ -1,4 +1,3 @@
-
 import createStyles from "@/app/tabStyles/profile.styles";
 import InterestTag from "@/components/InterestTag";
 import RnText from "@/components/RnText";
@@ -16,7 +15,7 @@ import {
   Pressable,
   TouchableOpacity,
   useColorScheme,
-  View
+  View,
 } from "react-native";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
@@ -50,13 +49,12 @@ const profileData = {
 };
 
 export default function Profile() {
-
- const colorScheme = useColorScheme();
+  const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
 
   const [modalVisible, setModalVisible] = useState(false);
-const [selectedIndex, setSelectedIndex] = useState(0);
+  const [selectedIndex, setSelectedIndex] = useState(0);
   const [showFullAbout, setShowFullAbout] = useState(false);
   const scrollY = useRef(new Animated.Value(0)).current;
 
@@ -111,10 +109,10 @@ const [selectedIndex, setSelectedIndex] = useState(0);
   });
 
   const actionButtonsOpacity = scrollY.interpolate({
-  inputRange: [0, IMAGE_HEIGHT / 3, IMAGE_HEIGHT / 2],
-  outputRange: [1, 1, 0],
-  extrapolate: "clamp",
-});
+    inputRange: [0, IMAGE_HEIGHT / 3, IMAGE_HEIGHT / 2],
+    outputRange: [1, 1, 0],
+    extrapolate: "clamp",
+  });
 
   return (
     <View style={styles.container}>
@@ -167,14 +165,14 @@ const [selectedIndex, setSelectedIndex] = useState(0);
           style={styles.actionButton}
           onPress={handleDislikePress}
         >
-          <Ionicons name="close" size={28} color={Colors[theme].greenText}/>
+          <Ionicons name="close" size={28} color={Colors[theme].greenText} />
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.actionButton, styles.likeButton]}
           onPress={handleLikePress}
         >
-          <Ionicons name="heart" size={32} color={Colors[theme].whiteText}/>
+          <Ionicons name="heart" size={32} color={Colors[theme].whiteText} />
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -218,7 +216,7 @@ const [selectedIndex, setSelectedIndex] = useState(0);
                 iconName="send"
                 iconSize={26}
                 iconColor={Colors[theme].redText}
-                borderColor={Colors.[theme].redText}
+                borderColor={Colors[theme].redText}
               />
             </TouchableOpacity>
           </View>
@@ -284,7 +282,10 @@ const [selectedIndex, setSelectedIndex] = useState(0);
 
             <View style={styles.gallery}>
               <View style={styles.galleryRow}>
-                <TouchableOpacity style={styles.largeGalleryItem} onPress={() => setModalVisible(true)}>
+                <TouchableOpacity
+                  style={styles.largeGalleryItem}
+                  onPress={() => setModalVisible(true)}
+                >
                   <Image
                     source={{ uri: profileData.gallery[0] }}
                     style={styles.galleryImage}
@@ -311,57 +312,57 @@ const [selectedIndex, setSelectedIndex] = useState(0);
         </View>
       </Animated.ScrollView>
 
-<Modal
-  visible={modalVisible}
-  transparent
-  animationType="fade"
-  onRequestClose={() => setModalVisible(false)}
->
-  <View style={styles.modalBackground}>
-    {/* Close Button */}
-    <View style={{height:hp(10),width:wp(10)}}>
-       <TouchableOpacity
-      style={styles.closeButton}
-      onPress={() => setModalVisible(false)}
-    >
-      <Ionicons name="arrow-back" size={25} color={Colors[theme].pink} />
-    </TouchableOpacity>
-    </View>
-   
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalBackground}>
+          {/* Close Button */}
+          <View style={{ height: hp(10), width: wp(10) }}>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setModalVisible(false)}
+            >
+              <Ionicons
+                name="arrow-back"
+                size={25}
+                color={Colors[theme].pink}
+              />
+            </TouchableOpacity>
+          </View>
 
-    {/* Main Image */}
-    <View style={styles.modalImageContainer}>
-      <Image
-        source={{ uri: profileData.gallery[selectedIndex] }}
-        style={styles.modalMainImage}
-        resizeMode="contain"
-      />
-    </View>
+          {/* Main Image */}
+          <View style={styles.modalImageContainer}>
+            <Image
+              source={{ uri: profileData.gallery[selectedIndex] }}
+              style={styles.modalMainImage}
+              resizeMode="contain"
+            />
+          </View>
 
-    {/* Thumbnails */}
-    <FlatList
-      data={profileData.gallery}
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.thumbnailList}
-      keyExtractor={(_, idx) => idx.toString()}
-      renderItem={({ item, index }) => (
-        <Pressable onPress={() => setSelectedIndex(index)}>
-          <Image
-            source={{ uri: item }}
-            style={[
-              styles.thumbnail,
-              index === selectedIndex && styles.selectedThumbnail,
-            ]}
+          {/* Thumbnails */}
+          <FlatList
+            data={profileData.gallery}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.thumbnailList}
+            keyExtractor={(_, idx) => idx.toString()}
+            renderItem={({ item, index }) => (
+              <Pressable onPress={() => setSelectedIndex(index)}>
+                <Image
+                  source={{ uri: item }}
+                  style={[
+                    styles.thumbnail,
+                    index === selectedIndex && styles.selectedThumbnail,
+                  ]}
+                />
+              </Pressable>
+            )}
           />
-        </Pressable>
-      )}
-    />
-  </View>
-</Modal>
-
+        </View>
+      </Modal>
     </View>
   );
 }
-
-

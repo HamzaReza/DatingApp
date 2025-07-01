@@ -22,7 +22,6 @@ const RnDropdown: React.FC<RnDropdownProps> = (props) => {
         backgroundColor: Colors[theme].background,
         borderColor: Colors[theme].greenText,
         borderRadius: Borders.radius1,
-        borderWidth: 1.5,
         borderBottomWidth: 1.5,
         paddingHorizontal: wp(4),
         height: hp(6.5),

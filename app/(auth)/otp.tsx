@@ -29,7 +29,7 @@ export default function OtpScreen() {
     setIsLoading(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      router.replace("/auth/name");
+      router.replace("/name");
     } catch (error) {
       console.error(error);
     } finally {

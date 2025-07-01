@@ -147,7 +147,7 @@ export default function Home() {
           style={styles.titleText}
           onPress={() => {
             router.dismissAll();
-            router.replace("/auth/onboarding");
+            router.replace("/onboarding");
             dispatch(setToken(false));
           }}
         >
@@ -228,4 +228,3 @@ export default function Home() {
     </ScrollContainer>
   );
 }
-

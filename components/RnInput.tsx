@@ -40,7 +40,9 @@ const RnInput: React.FC<RnInputProps> = ({
     style: {
       fontSize: FontSize.small,
     },
-    containerStyle: {},
+    containerStyle: {
+      paddingHorizontal: 0,
+    },
     inputContainerStyle: {
       borderBottomWidth: 1.5,
       borderWidth: 1.5,

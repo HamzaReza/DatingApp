@@ -1,3 +1,4 @@
+import { BottomSheetHandleProps } from "@gorhom/bottom-sheet";
 import { IconNode, TextProps, ViewProps } from "@rneui/base";
 import { ReactElement, ReactNode } from "react";
 import {
@@ -6,7 +7,7 @@ import {
   StatusBarStyle,
   StyleProp,
   TextStyle,
-  ViewStyle
+  ViewStyle,
 } from "react-native";
 import { ToastPosition } from "react-native-toast-message";
 
@@ -149,11 +150,11 @@ export interface ListItemType {
 export interface RnAvatarProps {
   avatarHeight?: number;
   showAvatarIcon?: boolean;
-  source?: {uri: string} | null;
+  source?: { uri: string } | null;
   style?: StyleProp<ViewStyle>;
 }
 
-export interface RnSliderProps  {
+export interface RnSliderProps {
   value: number;
   onValueChange: (value: number) => void;
   minimumValue?: number;
@@ -186,7 +187,63 @@ export interface RnDropdownProps {
   dropDownContainerStyle?: StyleProp<ViewStyle>;
   disabled?: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  setItems: React.Dispatch<React.SetStateAction<{ label: string; value: any; [key: string]: any }[]>>;
+  setItems: React.Dispatch<
+    React.SetStateAction<{ label: string; value: any; [key: string]: any }[]>
+  >;
   setValue: React.Dispatch<React.SetStateAction<any>>;
   loading?: boolean;
+}
+
+export interface RnBottomSheetProps {
+  isVisible: boolean;
+  onClose: () => void;
+  children: ReactNode;
+  enablePanDownToClose?: boolean;
+  enableOverDrag?: boolean;
+  backgroundStyle?: StyleProp<ViewStyle>;
+  handleIndicatorStyle?: StyleProp<ViewStyle>;
+  containerStyle?: StyleProp<ViewStyle>;
+  handleStyle?: StyleProp<ViewStyle>;
+  handleComponent?: React.FC<BottomSheetHandleProps> | null;
+  onChange?: (index: number) => void;
+  onAnimate?: (fromIndex: number, toIndex: number) => void;
+  animatedIndex?: any;
+  animatedPosition?: any;
+  keyboardBehavior?: "interactive" | "extend" | "fillParent";
+  keyboardBlurBehavior?: "none" | "restore";
+  android_keyboardInputMode?: "adjustResize" | "adjustPan";
+  enableContentPanningGesture?: boolean;
+  enableHandlePanningGesture?: boolean;
+  enableOverDrag?: boolean;
+  enablePanDownToClose?: boolean;
+  enableDynamicSizing?: boolean;
+  animateOnMount?: boolean;
+  detached?: boolean;
+  style?: StyleProp<ViewStyle>;
+  scroll?: boolean;
+}
+
+export interface RnDateTimePickerProps {
+  value: Date;
+  onChange: (event: any, selectedDate?: Date) => void;
+  mode?: "date" | "time" | "datetime";
+  display?: "default" | "spinner" | "calendar" | "clock";
+  placeholder?: string;
+  label?: string;
+  error?: string;
+  errorStyle?: StyleProp<TextStyle>;
+  style?: StyleProp<ViewStyle>;
+  containerStyle?: StyleProp<ViewStyle>;
+  minimumDate?: Date;
+  maximumDate?: Date;
+  minuteInterval?: 1 | 2 | 3 | 4 | 5 | 6 | 10 | 12 | 15 | 20 | 30;
+  timeZoneOffsetInMinutes?: number;
+  timeZoneName?: string;
+  textColor?: string;
+  accentColor?: string;
+  neutralButtonLabel?: string;
+  positiveButtonLabel?: string;
+  negativeButtonLabel?: string;
+  is24Hour?: boolean;
+  disabled?: boolean;
 }

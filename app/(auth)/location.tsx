@@ -51,7 +51,7 @@ export default function LocationScreen() {
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
       });
-      router.push("/auth/profession");
+      router.push("/profession");
     } catch (error) {
       console.error(error);
       alert("Error getting location");

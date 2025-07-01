@@ -9,7 +9,6 @@ import {
 } from "@react-navigation/native";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
-import { StatusBar } from "expo-status-bar";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
@@ -62,22 +61,12 @@ export default function RootLayout() {
                 value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
               >
                 <Stack screenOptions={{ headerShown: false }}>
-                  <Stack.Screen
-                    name="(auth)"
-                    options={{ headerShown: false }}
-                  />
-                  <Stack.Screen
-                    name="(tabs)"
-                    options={{ headerShown: false }}
-                  />
-                  <Stack.Screen
-                    name="(admin)"
-                    options={{ headerShown: false }}
-                  />
+                  <Stack.Screen name="(auth)" />
+                  <Stack.Screen name="(tabs)" />
+                  <Stack.Screen name="(admin)" />
                   <Stack.Screen name="+not-found" />
                   <Stack.Screen name="eventScreens/explore" />
                 </Stack>
-                <StatusBar style="auto" />
               </ThemeProvider>
             </PersistGate>
           </Provider>

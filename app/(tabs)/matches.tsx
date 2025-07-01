@@ -1,14 +1,13 @@
-import createStyles from '@/app/tabStyles/matches.styles';
-import MatchCard from '@/components/MatchCard';
-import PrimaryHeader from '@/components/PrimaryHeader';
-import ScrollContainer from '@/components/RnScrollContainer';
-import RnText from '@/components/RnText';
-import { Colors } from '@/constants/Colors';
-import { hp, wp } from '@/utils';
-import { Ionicons } from '@expo/vector-icons';
-import { StatusBar } from 'expo-status-bar';
-import React, { useState } from 'react';
-import { FlatList, useColorScheme, View } from 'react-native';
+import createStyles from "@/app/tabStyles/matches.styles";
+import MatchCard from "@/components/MatchCard";
+import PrimaryHeader from "@/components/PrimaryHeader";
+import ScrollContainer from "@/components/RnScrollContainer";
+import RnText from "@/components/RnText";
+import { Colors } from "@/constants/Colors";
+import { hp, wp } from "@/utils";
+import { Ionicons } from "@expo/vector-icons";
+import React, { useState } from "react";
+import { FlatList, useColorScheme, View } from "react-native";
 
 type Match = {
   id: string;
@@ -18,53 +17,53 @@ type Match = {
   distance: string;
   image: string;
   matchPercentage: number;
-  
 };
-
-
 
 const matches: Match[] = [
   {
-    id: '1',
-    name: 'James',
+    id: "1",
+    name: "James",
     age: 20,
-    location: 'HANOVER',
-    distance: '1.3 km away',
-    image: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=300',
+    location: "HANOVER",
+    distance: "1.3 km away",
+    image:
+      "https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=300",
     matchPercentage: 100,
   },
   {
-    id: '2',
-    name: 'Eddie',
+    id: "2",
+    name: "Eddie",
     age: 23,
-    location: 'DORTMUND',
-    distance: '4 km away',
-    image: 'https://images.pexels.com/photos/1040880/pexels-photo-1040880.jpeg?auto=compress&cs=tinysrgb&w=300',
+    location: "DORTMUND",
+    distance: "4 km away",
+    image:
+      "https://images.pexels.com/photos/1040880/pexels-photo-1040880.jpeg?auto=compress&cs=tinysrgb&w=300",
     matchPercentage: 94,
   },
   {
-    id: '3',
-    name: 'Brandon',
+    id: "3",
+    name: "Brandon",
     age: 20,
-    location: 'BERLIN',
-    distance: '2.5 km away',
-    image: 'https://images.pexels.com/photos/1674752/pexels-photo-1674752.jpeg?auto=compress&cs=tinysrgb&w=300',
+    location: "BERLIN",
+    distance: "2.5 km away",
+    image:
+      "https://images.pexels.com/photos/1674752/pexels-photo-1674752.jpeg?auto=compress&cs=tinysrgb&w=300",
     matchPercentage: 88,
   },
   {
-    id: '4',
-    name: 'Jessica',
+    id: "4",
+    name: "Jessica",
     age: 23,
-    location: 'MUNICH',
-    distance: '3.5 km away',
-    image: 'https://images.pexels.com/photos/1499327/pexels-photo-1499327.jpeg?auto=compress&cs=tinysrgb&w=300',
+    location: "MUNICH",
+    distance: "3.5 km away",
+    image:
+      "https://images.pexels.com/photos/1499327/pexels-photo-1499327.jpeg?auto=compress&cs=tinysrgb&w=300",
     matchPercentage: 85,
   },
 ];
 
 export default function Matches() {
-
-const colorScheme = useColorScheme();
+  const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
 
@@ -77,88 +76,96 @@ const colorScheme = useColorScheme();
   };
 
   const handleBackPress = () => {
-    console.log('Navigate back');
+    console.log("Navigate back");
   };
 
   const handleFilterPress = () => {
-    console.log('Open filters');
+    console.log("Open filters");
   };
 
   return (
-    <ScrollContainer customStyle={{marginTop:hp(3)}}>
+    <ScrollContainer customStyle={{ marginTop: hp(3) }}>
       {/* Header */}
-    <StatusBar style="dark" backgroundColor={Colors[theme].background} />
-     <PrimaryHeader
-  title="Matches"
-  leftIconName="arrow-left"
-
-  onLeftPress={()=>console.log('')}
-  onRightPress={()=>console.log()}
-  titleColor={Colors[theme].greenText}
-  leftIconSize={18}
-
-/>
+      <PrimaryHeader
+        title="Matches"
+        leftIconName="arrow-left"
+        onLeftPress={() => console.log("")}
+        onRightPress={() => console.log()}
+        titleColor={Colors[theme].greenText}
+        leftIconSize={18}
+      />
 
       {/* Stats Section */}
       <View style={styles.statsContainer}>
         <View style={styles.statItem}>
-          <View style={[styles.statCircle, { backgroundColor: Colors[theme].redText }]}>
+          <View
+            style={[
+              styles.statCircle,
+              { backgroundColor: Colors[theme].redText },
+            ]}
+          >
             <Ionicons name="heart" size={20} color={Colors[theme].background} />
           </View>
           <View style={styles.statTextContainers}>
-              <RnText style={styles.statLabel}>Likes</RnText>
-          <RnText style={styles.statNumber}>{likedCount}</RnText>
-       
+            <RnText style={styles.statLabel}>Likes</RnText>
+            <RnText style={styles.statNumber}>{likedCount}</RnText>
           </View>
-           
         </View>
-        
+
         <View style={styles.statItem}>
-          <View style={[styles.statCircle, { backgroundColor: Colors[theme].greenText }]}>
-            <Ionicons name="people" size={20} color={Colors[theme].background} />
+          <View
+            style={[
+              styles.statCircle,
+              { backgroundColor: Colors[theme].greenText },
+            ]}
+          >
+            <Ionicons
+              name="people"
+              size={20}
+              color={Colors[theme].background}
+            />
           </View>
           <View style={styles.statTextContainers}>
-             <RnText style={styles.statLabel}>Connect</RnText>
-             <RnText style={styles.statNumber}>{connectCount}</RnText>
-         
+            <RnText style={styles.statLabel}>Connect</RnText>
+            <RnText style={styles.statNumber}>{connectCount}</RnText>
           </View>
-         
         </View>
       </View>
 
       {/* Your Matches Section */}
-      <View >
+      <View>
         <View style={styles.statTextContainers}>
-               <RnText style={styles.sectionTitle}>Your Matches</RnText>
-               <RnText style={[styles.sectionTitle,{color:Colors[theme].redText}]}>{totalMatches}</RnText>
+          <RnText style={styles.sectionTitle}>Your Matches</RnText>
+          <RnText
+            style={[styles.sectionTitle, { color: Colors[theme].redText }]}
+          >
+            {totalMatches}
+          </RnText>
         </View>
-     
-        <View style={styles.section}>
 
-      
-        <FlatList
-          data={matches}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <MatchCard
-              id={item.id}
-              name={item.name}
-              age={item.age}
-              location={item.location}
-              distance={item.distance}
-              image={item.image}
-              matchPercentage={item.matchPercentage}
-              onPress={() => handleMatchPress(item.id)}
-            />
-          )}
-          
-          numColumns={2}
-          columnWrapperStyle={styles.row}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.matchesList}
-          style={{width:wp(100)}}
-        />
-          </View>
+        <View style={styles.section}>
+          <FlatList
+            data={matches}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <MatchCard
+                id={item.id}
+                name={item.name}
+                age={item.age}
+                location={item.location}
+                distance={item.distance}
+                image={item.image}
+                matchPercentage={item.matchPercentage}
+                onPress={() => handleMatchPress(item.id)}
+              />
+            )}
+            numColumns={2}
+            columnWrapperStyle={styles.row}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.matchesList}
+            style={{ width: wp(100) }}
+          />
+        </View>
       </View>
     </ScrollContainer>
   );
@@ -174,7 +181,7 @@ const colorScheme = useColorScheme();
 //       },
 //       statItem: {
 //         alignItems: 'center',
-        
+
 //       },
 //       statCircle: {
 //         width: wp(16),
@@ -188,7 +195,7 @@ const colorScheme = useColorScheme();
 //         fontSize: FontSize.regular,
 //         fontWeight: 'bold',
 //         color: Colors.light.redText,
-      
+
 //       },
 //       statLabel: {
 //         fontSize: FontSize.regular,
@@ -215,5 +222,3 @@ const colorScheme = useColorScheme();
 //         gap:wp(2)
 //       }
 // })
-
-

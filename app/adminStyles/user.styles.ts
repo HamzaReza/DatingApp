@@ -122,7 +122,7 @@ export default (theme: "light" | "dark") =>
       alignItems: "center",
       justifyContent: "center",
       marginTop: hp(4),
-      marginBottom: hp(12),
+      marginBottom: hp(15),
     },
     paginationButton: {
       width: wp(10),

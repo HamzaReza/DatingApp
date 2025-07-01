@@ -1,63 +1,56 @@
 import { Colors } from "@/constants/Colors";
 import { hp, wp } from "@/utils";
-import {
-  FontAwesome5,
-  Ionicons,
-  MaterialCommunityIcons,
-  Octicons,
-} from "@expo/vector-icons";
+import { MaterialIcons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import { Pressable, StyleSheet, useColorScheme, View } from "react-native";
 
-
 export default function TabLayout() {
+  const colorScheme = useColorScheme();
+  const theme = colorScheme === "dark" ? "dark" : "light";
 
-const colorScheme = useColorScheme();
-const theme = colorScheme === "dark" ? "dark" : "light";
+  const styles = StyleSheet.create({
+    iconContainer: {
+      width: wp(10),
+      height: wp(10),
+      borderRadius: wp(5),
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    tabBarStyle: {
+      borderWidth: 0,
+      borderTopWidth: 0,
+      backgroundColor: Colors[theme].pink,
+      height: hp(8),
+      marginHorizontal: wp(4),
+      marginBottom: hp(1),
+      borderRadius: wp(12),
+      position: "absolute",
+    },
+  });
 
   return (
     <Tabs
       screenOptions={{
-        
         headerShown: false,
-        tabBarStyle: {
-          borderWidth: 0,
-          borderTopWidth: 0,
-          backgroundColor: Colors[theme].background,
-          height: hp(8),
-          marginHorizontal: wp(4),
-          marginBottom: hp(2),
-          borderRadius: wp(12),
-          position: "absolute",
-          alignItems: "center", // Align content inside tabBar
-          justifyContent: "center", // Center vertically
-        },
-
-        tabBarActiveTintColor: Colors[theme].whiteText,
-        tabBarInactiveTintColor: "#FFB3BA",
+        tabBarStyle: styles.tabBarStyle,
         tabBarShowLabel: false,
         tabBarIconStyle: {
-          marginTop: hp(1.5),
+          marginTop: hp(2),
         },
       }}
     >
       <Tabs.Screen
-        name="home"
+        name="main"
         options={{
           title: "Home",
-    tabBarButton: (props) => {
-      // Omit the 'ref' property to avoid type incompatibility
-      const { ref, ...rest } = props;
-      return (
-        <Pressable
-          {...rest}
-          android_ripple={null} // disables ripple on Android
-          style={props.style}
-        >
-          {props.children}
-        </Pressable>
-      );
-    },
+          tabBarButton: (props) => {
+            const { ref, ...rest } = props;
+            return (
+              <Pressable {...rest} android_ripple={null} style={props.style}>
+                {props.children}
+              </Pressable>
+            );
+          },
           tabBarIcon: ({ focused, size }) => (
             <View
               style={[
@@ -69,35 +62,27 @@ const theme = colorScheme === "dark" ? "dark" : "light";
                 },
               ]}
             >
-              <Octicons
+              <MaterialIcons
                 name="home"
                 size={focused ? 24 : 28}
-                color={
-                  focused ? Colors[theme].whiteText : "rgba(255, 88, 98, 0.8)"
-                }
+                color={Colors[theme].whiteText}
               />
             </View>
           ),
         }}
       />
-
       <Tabs.Screen
         name="discover"
         options={{
           title: "Discover",
-           tabBarButton: (props) => {
-      // Omit the 'ref' property to avoid type incompatibility
-      const { ref, ...rest } = props;
-      return (
-        <Pressable
-          {...rest}
-          android_ripple={null} // disables ripple on Android
-          style={props.style}
-        >
-          {props.children}
-        </Pressable>
-      );
-    },
+          tabBarButton: (props) => {
+            const { ref, ...rest } = props;
+            return (
+              <Pressable {...rest} android_ripple={null} style={props.style}>
+                {props.children}
+              </Pressable>
+            );
+          },
           tabBarIcon: ({ focused, size }) => (
             <View
               style={[
@@ -109,12 +94,10 @@ const theme = colorScheme === "dark" ? "dark" : "light";
                 },
               ]}
             >
-              <FontAwesome5
-                name="compass"
+              <MaterialIcons
+                name="explore"
                 size={focused ? 24 : 28}
-                color={
-                  focused ? Colors[theme].whiteText : "rgba(255, 88, 98, 0.8)"
-                }
+                color={Colors[theme].whiteText}
               />
             </View>
           ),
@@ -124,18 +107,14 @@ const theme = colorScheme === "dark" ? "dark" : "light";
         name="profile"
         options={{
           title: "Profile",
-           tabBarButton: (props) => {
-      const { ref, ...rest } = props;
-      return (
-        <Pressable
-          {...rest}
-          android_ripple={null} // disables ripple on Android
-          style={props.style}
-        >
-          {props.children}
-        </Pressable>
-      );
-    },
+          tabBarButton: (props) => {
+            const { ref, ...rest } = props;
+            return (
+              <Pressable {...rest} android_ripple={null} style={props.style}>
+                {props.children}
+              </Pressable>
+            );
+          },
           tabBarIcon: ({ focused, size }) => (
             <View
               style={[
@@ -147,12 +126,10 @@ const theme = colorScheme === "dark" ? "dark" : "light";
                 },
               ]}
             >
-              <Ionicons
+              <MaterialIcons
                 name="add"
                 size={focused ? 24 : 32}
-                color={
-                  focused ? Colors[theme].whiteText : "rgba(255, 88, 98, 0.8)"
-                }
+                color={Colors[theme].whiteText}
               />
             </View>
           ),
@@ -162,18 +139,14 @@ const theme = colorScheme === "dark" ? "dark" : "light";
         name="matches"
         options={{
           title: "Matches",
-         tabBarButton: (props) => {
-      const { ref, ...rest } = props;
-      return (
-        <Pressable
-          {...rest}
-          android_ripple={null} // disables ripple on Android
-          style={props.style}
-        >
-          {props.children}
-        </Pressable>
-      );
-    },
+          tabBarButton: (props) => {
+            const { ref, ...rest } = props;
+            return (
+              <Pressable {...rest} android_ripple={null} style={props.style}>
+                {props.children}
+              </Pressable>
+            );
+          },
           tabBarIcon: ({ focused, size }) => (
             <View
               style={[
@@ -185,12 +158,10 @@ const theme = colorScheme === "dark" ? "dark" : "light";
                 },
               ]}
             >
-              <FontAwesome5
-                name="user-friends"
+              <MaterialIcons
+                name="people"
                 size={focused ? 24 : 22}
-                color={
-                  focused ? Colors[theme].whiteText : "rgba(255, 88, 98, 0.8)"
-                }
+                color={Colors[theme].whiteText}
               />
             </View>
           ),
@@ -200,18 +171,14 @@ const theme = colorScheme === "dark" ? "dark" : "light";
         name="messages"
         options={{
           title: "Messages",
-       tabBarButton: (props) => {
-      const { ref, ...rest } = props;
-      return (
-        <Pressable
-          {...rest}
-          android_ripple={null} // disables ripple on Android
-          style={props.style}
-        >
-          {props.children}
-        </Pressable>
-      );
-    },
+          tabBarButton: (props) => {
+            const { ref, ...rest } = props;
+            return (
+              <Pressable {...rest} android_ripple={null} style={props.style}>
+                {props.children}
+              </Pressable>
+            );
+          },
           tabBarIcon: ({ focused, size }) => (
             <View
               style={[
@@ -223,12 +190,10 @@ const theme = colorScheme === "dark" ? "dark" : "light";
                 },
               ]}
             >
-              <Ionicons
-                name="chatbubble-sharp"
+              <MaterialIcons
+                name="chat"
                 size={focused ? 24 : 22}
-                color={
-                  focused ? Colors[theme].whiteText : "rgba(255, 88, 98, 0.8)"
-                }
+                color={Colors[theme].whiteText}
               />
             </View>
           ),
@@ -239,17 +204,13 @@ const theme = colorScheme === "dark" ? "dark" : "light";
         options={{
           title: "Tickets",
           tabBarButton: (props) => {
-      const { ref, ...rest } = props;
-      return (
-        <Pressable
-          {...rest}
-          android_ripple={null} // disables ripple on Android
-          style={props.style}
-        >
-          {props.children}
-        </Pressable>
-      );
-    },
+            const { ref, ...rest } = props;
+            return (
+              <Pressable {...rest} android_ripple={null} style={props.style}>
+                {props.children}
+              </Pressable>
+            );
+          },
           tabBarIcon: ({ focused, size }) => (
             <View
               style={[
@@ -261,29 +222,15 @@ const theme = colorScheme === "dark" ? "dark" : "light";
                 },
               ]}
             >
-              <MaterialCommunityIcons
-                name="ticket"
+              <MaterialIcons
+                name="local-activity"
                 size={focused ? 24 : 22}
-                color={
-                  focused ? Colors[theme].whiteText : "rgba(255, 88, 98, 0.8)"
-                }
+                color={Colors[theme].whiteText}
               />
             </View>
           ),
         }}
       />
-
-      
     </Tabs>
   );
 }
-
-const styles = StyleSheet.create({
-  iconContainer: {
-    width: wp(10), // reduced size
-    height: wp(10),
-    borderRadius: wp(5),
-    justifyContent: "center",
-    alignItems: "center",
-  },
-});

@@ -5,26 +5,39 @@ import RnText from "@/components/RnText";
 import { Borders } from "@/constants/Borders";
 import { Colors } from "@/constants/Colors";
 import { hp, wp } from "@/utils";
-import Feather from '@expo/vector-icons/Feather';
+import Feather from "@expo/vector-icons/Feather";
+import { router } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
-import { Animated, Dimensions, Image, KeyboardAvoidingView, Platform, TouchableOpacity, useColorScheme, View } from "react-native";
+import {
+  Animated,
+  Dimensions,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableOpacity,
+  useColorScheme,
+  View,
+} from "react-native";
 
 const STORIES = [
   {
     id: "1",
-    image: "https://images.pexels.com/photos/1130626/pexels-photo-1130626.jpeg?auto=compress&cs=tinysrgb&w=600",
+    image:
+      "https://images.pexels.com/photos/1130626/pexels-photo-1130626.jpeg?auto=compress&cs=tinysrgb&w=600",
     profile: "https://randomuser.me/api/portraits/women/1.jpg",
     name: "Jessica Parker",
   },
   {
     id: "2",
-    image: "https://images.pexels.com/photos/1499327/pexels-photo-1499327.jpeg?auto=compress&cs=tinysrgb&w=600",
+    image:
+      "https://images.pexels.com/photos/1499327/pexels-photo-1499327.jpeg?auto=compress&cs=tinysrgb&w=600",
     profile: "https://randomuser.me/api/portraits/men/2.jpg",
     name: "John Doe",
   },
   {
     id: "3",
-    image: "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=600",
+    image:
+      "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=600",
     profile: "https://randomuser.me/api/portraits/women/3.jpg",
     name: "Clara Smith",
   },
@@ -32,10 +45,8 @@ const STORIES = [
 
 const STORY_DURATION = 4000; // ms
 
-export default function StoryView({ navigation }: any) {
-
-
-const colorScheme = useColorScheme();
+export default function StoryView() {
+  const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
 
@@ -56,7 +67,7 @@ const colorScheme = useColorScheme();
       if (current < STORIES.length - 1) {
         setCurrent(current + 1);
       } else {
-        navigation?.goBack?.();
+        router.back();
       }
     }, STORY_DURATION);
 
@@ -67,8 +78,12 @@ const colorScheme = useColorScheme();
   }, [current]);
 
   const handlePress = (direction: "next" | "prev") => {
-    if (direction === "next" && current < STORIES.length - 1) {
-      setCurrent(current + 1);
+    if (direction === "next") {
+      if (current < STORIES.length - 1) {
+        setCurrent(current + 1);
+      } else {
+        router.back();
+      }
     } else if (direction === "prev" && current > 0) {
       setCurrent(current - 1);
     }
@@ -108,7 +123,6 @@ const colorScheme = useColorScheme();
         <RnText style={styles.profileName}>{STORIES[current].name}</RnText>
       </View>
 
-      
       {/* Story Image */}
       <TouchableOpacity
         style={styles.storyTouchable}
@@ -136,7 +150,6 @@ const colorScheme = useColorScheme();
       >
         <View style={styles.inputContainer}>
           <RnInput
-          
             value={message}
             onChangeText={setMessage}
             placeholder="Send message"
@@ -145,9 +158,8 @@ const colorScheme = useColorScheme();
               borderWidth: 1,
               borderColor: Colors[theme].gray,
               borderRadius: Borders.radius2,
-              backgroundColor: 'rgba(255, 255, 255, 0.2)',
+              backgroundColor: "rgba(255, 255, 255, 0.2)",
               height: hp(6),
-             
             }}
             style={{ color: Colors[theme].whiteText }}
           />
@@ -159,4 +171,3 @@ const colorScheme = useColorScheme();
     </Container>
   );
 }
-

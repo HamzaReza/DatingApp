@@ -1,12 +1,13 @@
 import createStyles from "@/app/tabStyles/home.styles";
 import QuestionCard from "@/components/QuestionCard";
-import ScrollContainer from "@/components/RnScrollContainer";
+import Container from "@/components/RnContainer";
 import RnText from "@/components/RnText";
+import RoundButton from "@/components/RoundButton";
 import StoryCircle from "@/components/StoryCircle";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { setToken } from "@/redux/slices/userSlice";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { hp } from "@/utils";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import { FlatList, TouchableOpacity, View } from "react-native";
@@ -112,12 +113,9 @@ const questions: Question[] = [
 ];
 
 export default function Home() {
-
-
- const colorScheme = useColorScheme();
+  const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
-
 
   const [activeTab, setActiveTab] = useState<
     "Make Friends" | "Search Partners"
@@ -141,7 +139,7 @@ export default function Home() {
   };
 
   return (
-    <ScrollContainer>
+    <Container>
       <View style={styles.titleContainer}>
         <RnText
           style={styles.titleText}
@@ -153,10 +151,25 @@ export default function Home() {
         >
           XYZ
         </RnText>
-        <TouchableOpacity style={styles.notificationContainer}>
-        <MaterialIcons name="notifications-none" size={24} color={Colors[theme].greenText} onPress={()=>router.push('/eventScreens/explore')} />
-          {hasNotification && <View style={styles.notificationDot} />}
-        </TouchableOpacity>
+        <View style={styles.headerIconContainer}>
+          <RoundButton
+            iconName="notifications-none"
+            iconSize={24}
+            iconColor={Colors[theme].greenText}
+            borderColor={Colors[theme].background}
+            backgroundColour={Colors[theme].whiteText}
+            onPress={() => router.push("/main/notification")}
+            showDot={hasNotification}
+          />
+          <RoundButton
+            iconName="tv"
+            iconSize={24}
+            iconColor={Colors[theme].greenText}
+            borderColor={Colors[theme].background}
+            backgroundColour={Colors[theme].whiteText}
+            onPress={() => router.push("/eventScreens/explore")}
+          />
+        </View>
       </View>
 
       <View style={styles.storiesContainer}>
@@ -210,21 +223,25 @@ export default function Home() {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.questionsContainer}>
-        {questions.map((question) => (
+      <FlatList
+        data={questions}
+        keyExtractor={(item) => item.id}
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: hp(10) }}
+        renderItem={({ item }: { item: Question }) => (
           <QuestionCard
-            key={question.id}
-            id={question.id}
-            category={question.category}
-            question={question.question}
-            user={question.user}
-            backgroundImage={question.backgroundImage}
-            onLike={() => handleCardAction("like", question.id)}
-            onComment={() => handleCardAction("comment", question.id)}
-            onMore={() => handleCardAction("more", question.id)}
+            id={item.id}
+            category={item.category}
+            question={item.question}
+            user={item.user}
+            backgroundImage={item.backgroundImage}
+            onLike={() => handleCardAction("like", item.id)}
+            onComment={() => handleCardAction("comment", item.id)}
+            onMore={() => handleCardAction("more", item.id)}
           />
-        ))}
-      </View>
-    </ScrollContainer>
+        )}
+        showsVerticalScrollIndicator={false}
+      />
+    </Container>
   );
 }

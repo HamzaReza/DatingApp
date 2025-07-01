@@ -1,8 +1,14 @@
-import { Colors } from '@/constants/Colors';
-import { wp } from '@/utils';
-import { MaterialIcons } from '@expo/vector-icons';
-import React from 'react';
-import { StyleSheet, TouchableOpacity, TouchableOpacityProps, useColorScheme } from 'react-native';
+import { Colors } from "@/constants/Colors";
+import { wp } from "@/utils";
+import { MaterialIcons } from "@expo/vector-icons";
+import React from "react";
+import {
+  StyleSheet,
+  TouchableOpacity,
+  TouchableOpacityProps,
+  useColorScheme,
+  View,
+} from "react-native";
 
 interface RoundButtonProps extends TouchableOpacityProps {
   iconName: keyof typeof MaterialIcons.glyphMap;
@@ -11,6 +17,7 @@ interface RoundButtonProps extends TouchableOpacityProps {
   borderColor?: string;
   onPress?: () => void;
   backgroundColour?: string;
+  showDot?: boolean;
 }
 
 const RoundButton: React.FC<RoundButtonProps> = ({
@@ -21,6 +28,7 @@ const RoundButton: React.FC<RoundButtonProps> = ({
   style,
   onPress,
   backgroundColour,
+  showDot = false,
   ...touchableProps
 }) => {
   const colorScheme = useColorScheme();
@@ -28,7 +36,31 @@ const RoundButton: React.FC<RoundButtonProps> = ({
 
   const iconClr = iconColor ?? Colors[theme].greenText;
   const borderClr = borderColor ?? Colors[theme].greenText;
-  const bgClr = backgroundColour ?? 'transparent';
+  const bgClr = backgroundColour ?? "transparent";
+
+  const styles = StyleSheet.create({
+    container: {
+      padding: wp(2),
+      borderRadius: wp(6),
+      backgroundColor: "rgba(255,255,255,0.9)",
+      justifyContent: "center",
+      alignItems: "center",
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
+    },
+    notificationDot: {
+      position: "absolute",
+      top: wp(1),
+      right: wp(1),
+      width: wp(2),
+      height: wp(2),
+      borderRadius: wp(1),
+      backgroundColor: Colors[theme].redText,
+    },
+  });
 
   return (
     <TouchableOpacity
@@ -41,21 +73,9 @@ const RoundButton: React.FC<RoundButtonProps> = ({
       {...touchableProps}
     >
       <MaterialIcons name={iconName} color={iconClr} size={iconSize} />
+      {showDot && <View style={styles.notificationDot} />}
     </TouchableOpacity>
   );
 };
 
 export default RoundButton;
-
-const styles = StyleSheet.create({
-  container: {
-    position: 'relative',
-    padding: wp(2),
-    borderRadius: wp(6),
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: wp(11),
-    height: wp(11),
-  },
-});

@@ -6,6 +6,7 @@ import RnDropdown from "@/components/RnDropdown";
 import RnInput from "@/components/RnInput";
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
+import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { AdminPricingPlan } from "@/types/Admin";
 import { wp } from "@/utils";
@@ -218,7 +219,7 @@ export default function AdminPricingPlanScreen() {
                               style={[
                                 [
                                   styles.featureButton,
-                                  { backgroundColor: "#FFB3BA" },
+                                  { backgroundColor: Colors[theme].pink },
                                 ],
                               ]}
                               onPress={() => remove(idx)}

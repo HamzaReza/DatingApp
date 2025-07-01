@@ -30,3 +30,20 @@ export type UserAdmin = {
   bio?: string;
   status: UserStatus;
 };
+
+export type AdminEventGenre =
+  | "comedy"
+  | "music"
+  | "theatre"
+  | "sports"
+  | "other";
+
+export type AdminEvent = {
+  id: string;
+  name: string;
+  date: string;
+  time: string;
+  venue: string;
+  genre: AdminEventGenre;
+  seat: string;
+};

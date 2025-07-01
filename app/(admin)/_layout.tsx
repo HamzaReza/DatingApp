@@ -91,6 +91,30 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="event"
+        options={{
+          title: "Event",
+          tabBarIcon: ({ focused }: { focused: boolean; size: number }) => (
+            <View
+              style={[
+                styles.iconContainer,
+                {
+                  backgroundColor: focused
+                    ? Colors[theme].primary
+                    : "transparent",
+                },
+              ]}
+            >
+              <MaterialCommunityIcons
+                name="calendar"
+                size={focused ? 24 : 28}
+                color={focused ? Colors[theme].whiteText : Colors[theme].pink}
+              />
+            </View>
+          ),
+        }}
+      />
     </Tabs>
   );
 }

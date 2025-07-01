@@ -7,11 +7,6 @@ import { StyleSheet } from "react-native";
 
 export default (theme: "light" | "dark") =>
   StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: Colors[theme].background,
-      paddingHorizontal: wp(4),
-    },
     headerTitle: {
       fontSize: FontSize.extraLarge,
       fontFamily: FontFamily.bold,

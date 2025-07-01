@@ -10,6 +10,7 @@ export default function UserLayout() {
       }}
     >
       <Stack.Screen name="users" />
+      <Stack.Screen name="[id]" />
     </Stack>
   );
 }

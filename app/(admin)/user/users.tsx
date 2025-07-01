@@ -7,6 +7,7 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 import { UserStatus } from "@/types/Admin";
 import { wp } from "@/utils";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Image, TouchableOpacity, View } from "react-native";
 
@@ -18,11 +19,8 @@ export default function AdminUsers() {
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
 
-  const [userStatuses, setUserStatuses] = useState(() =>
-    adminUsers.reduce((acc, user) => {
-      acc[user.id] = "pending";
-      return acc;
-    }, {} as Record<string, UserStatus>)
+  const [userStatuses, setUserStatuses] = useState<Record<string, UserStatus>>(
+    () => Object.fromEntries(adminUsers.map((user) => [user.id, user.status]))
   );
 
   const [page, setPage] = useState(1);
@@ -44,7 +42,10 @@ export default function AdminUsers() {
   }, [page]);
 
   const renderUserItem = ({ item: user }: { item: (typeof adminUsers)[0] }) => (
-    <View style={styles.userCard}>
+    <TouchableOpacity
+      style={styles.userCard}
+      onPress={() => router.push(`/user/${user.id}`)}
+    >
       <View
         style={[
           styles.statusTag,
@@ -70,7 +71,7 @@ export default function AdminUsers() {
         </RnText>
       </View>
       <View style={styles.userInfoRow}>
-        <RnText style={styles.userInfoLabel}>Match Score </RnText>
+        <RnText style={styles.userInfoLabel}>Match Score: </RnText>
         <RnText style={styles.matchScore}>{user.matchScore}%</RnText>
       </View>
       <View style={styles.contactColumn}>
@@ -138,7 +139,7 @@ export default function AdminUsers() {
           ))}
         </View>
       )}
-    </View>
+    </TouchableOpacity>
   );
 
   const renderFooter = () => (

@@ -11,7 +11,7 @@ export const adminUsers: UserAdmin[] = [
     email: "alex.johnson@mail.com",
     avatar: "https://randomuser.me/api/portraits/women/1.jpg",
     bio: "Love music and art...",
-    status: "approved",
+    status: "pending",
   },
   {
     id: "2",
@@ -35,7 +35,7 @@ export const adminUsers: UserAdmin[] = [
     email: "john.smith@mail.com",
     avatar: "https://randomuser.me/api/portraits/men/3.jpg",
     bio: "Sports enthusiast.",
-    status: "rejected",
+    status: "pending",
   },
   {
     id: "4",
@@ -47,7 +47,7 @@ export const adminUsers: UserAdmin[] = [
     email: "emily.davis@mail.com",
     avatar: "https://randomuser.me/api/portraits/women/4.jpg",
     bio: "Book lover and writer.",
-    status: "approved",
+    status: "pending",
   },
   {
     id: "5",
@@ -71,7 +71,7 @@ export const adminUsers: UserAdmin[] = [
     email: "sophia.wilson@mail.com",
     avatar: "https://randomuser.me/api/portraits/women/6.jpg",
     bio: "Yoga and wellness.",
-    status: "rejected",
+    status: "pending",
   },
   {
     id: "7",
@@ -83,7 +83,7 @@ export const adminUsers: UserAdmin[] = [
     email: "david.martinez@mail.com",
     avatar: "https://randomuser.me/api/portraits/men/7.jpg",
     bio: "Music producer.",
-    status: "approved",
+    status: "pending",
   },
   {
     id: "8",
@@ -107,7 +107,7 @@ export const adminUsers: UserAdmin[] = [
     email: "james.lee@mail.com",
     avatar: "https://randomuser.me/api/portraits/men/9.jpg",
     bio: "Photographer.",
-    status: "rejected",
+    status: "pending",
   },
   {
     id: "10",
@@ -119,7 +119,7 @@ export const adminUsers: UserAdmin[] = [
     email: "isabella.thomas@mail.com",
     avatar: "https://randomuser.me/api/portraits/women/10.jpg",
     bio: "Artist and painter.",
-    status: "approved",
+    status: "pending",
   },
   {
     id: "11",
@@ -143,7 +143,7 @@ export const adminUsers: UserAdmin[] = [
     email: "mia.moore@mail.com",
     avatar: "https://randomuser.me/api/portraits/women/12.jpg",
     bio: "Nature lover.",
-    status: "rejected",
+    status: "pending",
   },
   {
     id: "13",
@@ -155,7 +155,7 @@ export const adminUsers: UserAdmin[] = [
     email: "william.jackson@mail.com",
     avatar: "https://randomuser.me/api/portraits/men/13.jpg",
     bio: "Entrepreneur.",
-    status: "approved",
+    status: "pending",
   },
   {
     id: "14",
@@ -179,7 +179,7 @@ export const adminUsers: UserAdmin[] = [
     email: "elijah.harris@mail.com",
     avatar: "https://randomuser.me/api/portraits/men/15.jpg",
     bio: "Fitness coach.",
-    status: "rejected",
+    status: "pending",
   },
   {
     id: "16",
@@ -191,7 +191,7 @@ export const adminUsers: UserAdmin[] = [
     email: "amelia.martin@mail.com",
     avatar: "https://randomuser.me/api/portraits/women/16.jpg",
     bio: "Photographer.",
-    status: "approved",
+    status: "pending",
   },
   {
     id: "17",
@@ -215,7 +215,7 @@ export const adminUsers: UserAdmin[] = [
     email: "harper.garcia@mail.com",
     avatar: "https://randomuser.me/api/portraits/women/18.jpg",
     bio: "Animal lover.",
-    status: "rejected",
+    status: "pending",
   },
   {
     id: "19",
@@ -227,7 +227,7 @@ export const adminUsers: UserAdmin[] = [
     email: "alexander.clark@mail.com",
     avatar: "https://randomuser.me/api/portraits/men/19.jpg",
     bio: "Cyclist.",
-    status: "approved",
+    status: "pending",
   },
   {
     id: "20",
@@ -251,7 +251,7 @@ export const adminUsers: UserAdmin[] = [
     email: "daniel.walker@mail.com",
     avatar: "https://randomuser.me/api/portraits/men/21.jpg",
     bio: "Movie buff.",
-    status: "rejected",
+    status: "pending",
   },
   {
     id: "22",
@@ -263,7 +263,7 @@ export const adminUsers: UserAdmin[] = [
     email: "abigail.hall@mail.com",
     avatar: "https://randomuser.me/api/portraits/women/22.jpg",
     bio: "Baker.",
-    status: "approved",
+    status: "pending",
   },
   {
     id: "23",
@@ -287,7 +287,7 @@ export const adminUsers: UserAdmin[] = [
     email: "ella.young@mail.com",
     avatar: "https://randomuser.me/api/portraits/women/24.jpg",
     bio: "Runner.",
-    status: "rejected",
+    status: "pending",
   },
   {
     id: "25",
@@ -299,7 +299,7 @@ export const adminUsers: UserAdmin[] = [
     email: "jackson.king@mail.com",
     avatar: "https://randomuser.me/api/portraits/men/25.jpg",
     bio: "Poet.",
-    status: "approved",
+    status: "pending",
   },
   {
     id: "26",
@@ -323,6 +323,6 @@ export const adminUsers: UserAdmin[] = [
     email: "henry.scott@mail.com",
     avatar: "https://randomuser.me/api/portraits/men/27.jpg",
     bio: "Comedian.",
-    status: "rejected",
+    status: "pending",
   },
 ];

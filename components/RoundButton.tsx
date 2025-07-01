@@ -2,34 +2,45 @@ import { Colors } from '@/constants/Colors';
 import { wp } from '@/utils';
 import { MaterialIcons } from '@expo/vector-icons';
 import React from 'react';
-import { StyleSheet, TouchableOpacity, TouchableOpacityProps } from 'react-native';
+import { StyleSheet, TouchableOpacity, TouchableOpacityProps, useColorScheme } from 'react-native';
 
 interface RoundButtonProps extends TouchableOpacityProps {
-  iconName: keyof typeof MaterialIcons.glyphMap; // valid icon names from MaterialIcons
+  iconName: keyof typeof MaterialIcons.glyphMap;
   iconColor?: string;
   iconSize?: number;
   borderColor?: string;
   onPress?: () => void;
-  backgroundColour?: string; // optional background color
+  backgroundColour?: string;
 }
 
 const RoundButton: React.FC<RoundButtonProps> = ({
   iconName,
-  iconColor = Colors.light.greenText,
+  iconColor,
   iconSize = wp(5),
-  borderColor = Colors.light.greenText,
+  borderColor,
   style,
   onPress,
-  backgroundColour='transparent',
+  backgroundColour,
   ...touchableProps
 }) => {
+  const colorScheme = useColorScheme();
+  const theme = colorScheme === "dark" ? "dark" : "light";
+
+  const iconClr = iconColor ?? Colors[theme].greenText;
+  const borderClr = borderColor ?? Colors[theme].greenText;
+  const bgClr = backgroundColour ?? 'transparent';
+
   return (
     <TouchableOpacity
-      style={[styles.container, { borderColor, backgroundColor: backgroundColour }, style]}
+      style={[
+        styles.container,
+        { borderColor: borderClr, backgroundColor: bgClr },
+        style,
+      ]}
       onPress={onPress}
       {...touchableProps}
     >
-      <MaterialIcons name={iconName} color={iconColor} size={iconSize} />
+      <MaterialIcons name={iconName} color={iconClr} size={iconSize} />
     </TouchableOpacity>
   );
 };
@@ -48,4 +59,3 @@ const styles = StyleSheet.create({
     height: wp(11),
   },
 });
-    

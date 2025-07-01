@@ -3,7 +3,7 @@ import { FontSize } from '@/constants/FontSize'
 import { hp, wp } from '@/utils'
 import { StyleSheet } from 'react-native'
 
-export default StyleSheet.create({
+export default (theme:'dark'|'light')=>StyleSheet.create({
  titleContainer: {
     flexDirection: 'row',
     paddingVertical: hp(2),
@@ -12,14 +12,14 @@ export default StyleSheet.create({
   },
   titleText: {
     fontWeight: 'bold',
-    color: Colors.light.greenText,
+    color: Colors[theme].greenText,
     fontSize: FontSize.extraLarge,
   },
   notificationContainer: {
     position: 'relative',
     padding: wp(2),
     borderRadius: wp(6),
-    borderColor: Colors.light.greenText,
+    borderColor: Colors[theme].greenText,
     borderWidth: 1,
   },
   notificationDot: {
@@ -29,7 +29,7 @@ export default StyleSheet.create({
     width: wp(2),
     height: wp(2),
     borderRadius: wp(1),
-    backgroundColor: Colors.light.redText,
+    backgroundColor: Colors[theme].redText,
   },
   storiesContainer: {
     marginBottom: hp(2),
@@ -53,7 +53,7 @@ export default StyleSheet.create({
     borderRadius: wp(4),
   },
   activeTab: {
-    backgroundColor: Colors.light.background,
+    backgroundColor: Colors[theme].background,
     elevation: 2,
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -61,12 +61,12 @@ export default StyleSheet.create({
   },
   tabText: {
     textAlign: 'center',
-    color: Colors.light.greenText,
+    color: Colors[theme].greenText,
     fontWeight: '700',
     // fontSize: FontSize.small,
   },
   activeTabText: {
-    color: Colors.light.redText,
+    color: Colors[theme].redText,
     fontWeight: 'bold',
     // dont
   },

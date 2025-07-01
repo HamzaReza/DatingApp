@@ -1,14 +1,13 @@
+import createStyles from "@/app/mainScreens/styles/storyView.styles";
 import Container from "@/components/RnContainer";
 import RnInput from "@/components/RnInput";
 import RnText from "@/components/RnText";
 import { Borders } from "@/constants/Borders";
 import { Colors } from "@/constants/Colors";
-import { FontSize } from "@/constants/FontSize";
 import { hp, wp } from "@/utils";
 import Feather from '@expo/vector-icons/Feather';
 import React, { useEffect, useRef, useState } from "react";
-import { Animated, Dimensions, Image, KeyboardAvoidingView, Platform, StyleSheet, TouchableOpacity, View } from "react-native";
-import styles from "@/app/mainScreens/styles/storyView.styles"
+import { Animated, Dimensions, Image, KeyboardAvoidingView, Platform, TouchableOpacity, useColorScheme, View } from "react-native";
 
 const STORIES = [
   {
@@ -34,6 +33,12 @@ const STORIES = [
 const STORY_DURATION = 4000; // ms
 
 export default function StoryView({ navigation }: any) {
+
+
+const colorScheme = useColorScheme();
+  const theme = colorScheme === "dark" ? "dark" : "light";
+  const styles = createStyles(theme);
+
   const [current, setCurrent] = useState(0);
   const [message, setMessage] = useState("");
   const progress = useRef(new Animated.Value(0)).current;
@@ -138,16 +143,16 @@ export default function StoryView({ navigation }: any) {
             containerStyle={{ flex: 1, marginRight: wp(2), marginBottom: 0 }}
             inputContainerStyle={{
               borderWidth: 1,
-              borderColor: Colors.light.gray,
+              borderColor: Colors[theme].gray,
               borderRadius: Borders.radius2,
               backgroundColor: 'rgba(255, 255, 255, 0.2)',
               height: hp(6),
              
             }}
-            style={{ color: Colors.light.whiteText }}
+            style={{ color: Colors[theme].whiteText }}
           />
           <TouchableOpacity style={styles.sendButton}>
-            <Feather name="send" size={25} color={Colors.light.whiteText} />
+            <Feather name="send" size={25} color={Colors[theme].whiteText} />
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>

@@ -1,15 +1,13 @@
+import createStyles from '@/app/eventScreens/styles/events.styles';
 import Container from '@/components/RnContainer';
 import RnText from '@/components/RnText';
 import { Colors } from '@/constants/Colors';
-import { FontSize } from '@/constants/FontSize';
-import { hp, wp } from '@/utils';
 import Entypo from '@expo/vector-icons/Entypo';
 import Feather from '@expo/vector-icons/Feather';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import React from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { FlatList, useColorScheme, View } from 'react-native';
 import EventCard from './components/EventCard';
-import styles from '@/app/eventScreens/styles/events.styles'
 
 
 const dummyEvents = [
@@ -42,12 +40,18 @@ const dummyEvents = [
 
 
 const Events = () => {
+
+ const colorScheme = useColorScheme();
+  const theme = colorScheme === "dark" ? "dark" : "light";
+  const styles = createStyles(theme);
+
+
   return (
     <Container customStyle={styles.mainContainer}>
       <View style={styles.headerContainer}>
         {/* Left Icon */}
         <View style={styles.iconContainer}>
-          <MaterialIcons name="arrow-back-ios-new" size={24} color={Colors.light.primary} />
+          <MaterialIcons name="arrow-back-ios-new" size={24} color={Colors[theme].primary} />
         </View>
         {/* Title */}
         <View style={styles.titleContainer}>
@@ -55,8 +59,8 @@ const Events = () => {
         </View>
         {/* Right Icons */}
         <View style={styles.iconsContainer}>
-          <Feather name="search" size={24} color={Colors.light.primary} />
-          <Entypo name="dots-three-vertical" size={24} color={Colors.light.primary} />
+          <Feather name="search" size={24} color={Colors[theme].primary} />
+          <Entypo name="dots-three-vertical" size={24} color={Colors[theme].primary} />
         </View>
 
        

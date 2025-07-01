@@ -1,12 +1,19 @@
 // import { Camera } from 'expo-camera';
-import styles from '@/app/eventScreens/styles/cardScan.styles';
+import createStyles from '@/app/eventScreens/styles/cardScan.styles';
 import Container from '@/components/RnContainer';
 import { router } from 'expo-router';
 import React from 'react';
-import { Text, View } from 'react-native';
+import { Text, useColorScheme, View } from 'react-native';
 import CustomHeader from './components/EventHeader';
 
 const CardScan = () => {
+
+
+ const colorScheme = useColorScheme();
+  const theme = colorScheme === "dark" ? "dark" : "light";
+  const styles = createStyles(theme);
+
+
 //   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
 // //   const cameraRef = useRef<Camera>(null);
 

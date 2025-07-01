@@ -3,7 +3,7 @@ import { Colors } from "@/constants/Colors";
 import { FontSize } from "@/constants/FontSize";
 import { hp, wp } from "@/utils";
 import React from "react";
-import { Image, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Image, StyleSheet, TouchableOpacity, useColorScheme, View } from "react-native";
 import RnText from "./RnText";
 
 interface MatchCardProps {
@@ -26,6 +26,12 @@ const MatchCard: React.FC<MatchCardProps> = ({
   matchPercentage,
   onPress,
 }) => {
+
+
+const colorScheme = useColorScheme();
+  const theme = colorScheme === "dark" ? "dark" : "light";
+  const styles = createStyles(theme);
+
   return (
     <TouchableOpacity style={styles.card} onPress={onPress}>
       <Image source={{ uri: image }} style={styles.image} />
@@ -52,7 +58,7 @@ const MatchCard: React.FC<MatchCardProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles  = (theme:'dark'|'light')=>StyleSheet.create({
   card: {
     width: wp(42),
     height: hp(28),
@@ -61,7 +67,7 @@ const styles = StyleSheet.create({
     margin: wp(2),
     position: "relative",
     borderWidth: 4,
-    borderColor: Colors.light.redText,
+    borderColor: Colors[theme].redText,
   },
   image: {
     width: "100%",
@@ -75,14 +81,14 @@ const styles = StyleSheet.create({
     position: "absolute",
     alignSelf: "center",
 
-    backgroundColor: Colors.light.redText,
+    backgroundColor: Colors[theme].redText,
     paddingHorizontal: wp(3),
     paddingVertical: wp(1),
     borderBottomLeftRadius: Borders.radius2,
     borderBottomRightRadius: Borders.radius2,
   },
   matchText: {
-    color: Colors.light.background,
+    color: Colors[theme].background,
     fontSize: 10,
     fontWeight: "bold",
   },
@@ -93,7 +99,7 @@ const styles = StyleSheet.create({
     right: wp(2),
   },
   name: {
-    color: Colors.light.whiteText,
+    color: Colors[theme].whiteText,
     fontSize: FontSize.regular,
     fontWeight: "bold",
     marginBottom: hp(0.5),
@@ -106,13 +112,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   location: {
-    color: Colors.light.background,
+    color: Colors[theme].background,
     fontSize: FontSize.extraSmall,
     marginLeft: wp(1),
     textTransform: "uppercase",
   },
   distance: {
-    color: Colors.light.whiteText,
+    color: Colors[theme].whiteText,
     fontSize: FontSize.extraSmall,
     opacity: 0.8,
     textAlign: "center",
@@ -123,7 +129,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(0.1),
     borderRadius: Borders.circle,
     backgroundColor: "rgba(255,255,255,0.2)",
-    borderColor: Colors.light.whiteText,
+    borderColor: Colors[theme].whiteText,
     borderWidth: 0.3,
   },
 });

@@ -6,7 +6,7 @@ import Entypo from '@expo/vector-icons/Entypo';
 import Feather from '@expo/vector-icons/Feather';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import React from 'react';
-import { Image, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Image, StyleSheet, TouchableOpacity, useColorScheme, View } from 'react-native';
 import RnText from './RnText';
 
 interface QuestionCardProps {
@@ -33,6 +33,11 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
   onComment,
   onMore,
 }) => {
+
+const colorScheme = useColorScheme();
+  const theme = colorScheme === "dark" ? "dark" : "light";
+  const styles = createStyles(theme);
+
   return (
     <View style={styles.card}>
       <Image source={{ uri: backgroundImage }} style={styles.backgroundImage} />
@@ -41,7 +46,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
       <View style={styles.content}>
         <View style={styles.categoryContainer}>
           {/* <MapPin size={16} color={Colors.light.background} /> */}
-          <Feather name="map-pin" size={22} color={Colors.dark.whiteText} />
+          <Feather name="map-pin" size={22} color={Colors[theme].whiteText} />
           <RnText style={styles.categoryText}>{category}</RnText>
         </View>
         
@@ -76,7 +81,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles  = (theme:'dark'|'light')=>StyleSheet.create({
   card: {
     width: wp(92),
     height: hp(46),
@@ -108,17 +113,17 @@ const styles = StyleSheet.create({
     paddingVertical: hp(1),
     borderRadius: wp(5),
     alignSelf: 'flex-start',
-    borderColor:Colors.dark.whiteText,
+    borderColor:Colors[theme].whiteText,
     borderWidth:0.2
   },
   categoryText: {
-    color: Colors.light.background,
+    color: Colors[theme].background,
     fontSize: FontSize.regular,
     fontWeight: '600',
     marginLeft: wp(1),
   },
   questionText: {
-    color: Colors.light.background,
+    color: Colors[theme].background,
     fontSize: FontSize.large,
     fontWeight: 'bold',
     lineHeight: 28,
@@ -141,12 +146,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   userName: {
-    color: Colors.light.background,
+    color: Colors[theme].background,
     fontSize: FontSize.small,
     fontWeight: 'bold',
   },
   userLocation: {
-    color: Colors.light.background,
+    color: Colors[theme].background,
     fontSize: FontSize.regular,
     opacity: 0.8,
     textTransform: 'uppercase',

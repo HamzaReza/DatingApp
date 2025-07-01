@@ -3,10 +3,15 @@ import { Colors } from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React from 'react';
-import { Image, TouchableOpacity, View } from 'react-native';
-import styles from '../../app/mainScreens/styles/matchList.styles';
+import { Image, TouchableOpacity, useColorScheme, View } from 'react-native';
+import createStyles from '../../app/mainScreens/styles/matchList.styles';
 
 export default function MatchConfirmation() {
+
+const colorScheme = useColorScheme();
+  const theme = colorScheme === "dark" ? "dark" : "light";
+  const styles = createStyles(theme);
+
   const handleBookEvent = () => {
     console.log('Book event pressed');
   };
@@ -30,7 +35,7 @@ export default function MatchConfirmation() {
       style={styles.backgroundImage} 
     />
     <View style={styles.leftHeartBadge}>
-      <Ionicons name="heart" size={25} color={Colors.light.pink} />
+      <Ionicons name="heart" size={25} color={Colors[theme].pink} />
     </View>
   </View>
   
@@ -41,7 +46,7 @@ export default function MatchConfirmation() {
       style={styles.backgroundImage} 
     />
     <View style={styles.rightHeartBadge}>
-      <Ionicons name="heart" size={25} color={Colors.light.pink} />
+      <Ionicons name="heart" size={25} color={Colors.[theme].pink} />
     </View>
   </View>
 </View>

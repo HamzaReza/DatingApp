@@ -2,7 +2,7 @@ import { Colors } from '@/constants/Colors';
 import { hp, wp } from '@/utils';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, useColorScheme, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 interface CurvedMicInputProps {
@@ -12,10 +12,20 @@ interface CurvedMicInputProps {
 }
 
 const CurvedMicInput: React.FC<CurvedMicInputProps> = ({
+
+
+
+  
   onAttachment,
   onVoiceMessage,
   onKeyboard,
 }) => {
+
+
+const colorScheme = useColorScheme();
+  const theme = colorScheme === "dark" ? "dark" : "light";
+  const styles = createStyles(theme);
+
   return (
     <View style={styles.container}>
       
@@ -43,32 +53,32 @@ const CurvedMicInput: React.FC<CurvedMicInputProps> = ({
               Q 0 ${hp(8)} 0 ${hp(6)}
               Z
             `}
-            fill={Colors.light.whiteText}
+            fill={Colors[theme].whiteText}
           />
         </Svg>
 
         {/* Left Button */}
         <TouchableOpacity style={styles.leftButton} onPress={onAttachment}>
-          <Ionicons name="attach" size={24} color={Colors.light.primary} />
+          <Ionicons name="attach" size={24} color={Colors[theme].primary} />
         </TouchableOpacity>
 
         {/* Right Button */}
         <TouchableOpacity style={styles.rightButton} onPress={onKeyboard}>
-          <Ionicons name="apps" size={24} color={Colors.light.tabIconDefault} />
+          <Ionicons name="apps" size={24} color={Colors[theme].tabIconDefault} />
         </TouchableOpacity>
       </View>
 
       {/* Floating Mic Button in the Pit */}
       <View style={styles.micContainer}>
         <TouchableOpacity style={styles.micButton} onPress={onVoiceMessage}>
-          <Ionicons name="mic" size={28} color={Colors.light.whiteText} />
+          <Ionicons name="mic" size={28} color={Colors[theme].whiteText} />
         </TouchableOpacity>
       </View>
     </View>
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles  = (theme:'dark'|'light')=>StyleSheet.create({
   container: {
     position: 'relative',
     alignItems: 'center',
@@ -124,7 +134,7 @@ const styles = StyleSheet.create({
     width: wp(18),
     height: wp(18),
     borderRadius: wp(9),
-    backgroundColor: Colors.light.pink,
+    backgroundColor: Colors[theme].pink,
     justifyContent: 'center',
     alignItems: 'center',
    

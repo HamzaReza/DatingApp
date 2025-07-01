@@ -4,9 +4,9 @@ import { hp, wp } from "@/utils";
 import { StyleSheet } from "react-native";
 import { Colors } from "react-native/Libraries/NewAppScreen";
 
-export default StyleSheet.create({
+export default (theme:'dark'|'light')=>StyleSheet.create({
   container: {
-    backgroundColor: Colors.light.backgroundSecondary,
+    backgroundColor: Colors[theme].backgroundSecondary,
   },
   camera: {
     flex: 1,
@@ -18,7 +18,7 @@ export default StyleSheet.create({
     paddingTop: hp(4),
   },
   instruction: {
-    color: Colors.light.blackText,
+    color: Colors[theme].blackText,
     fontSize: FontSize.medium,
     marginBottom: hp(4),
     paddingHorizontal: wp(4),
@@ -36,7 +36,7 @@ export default StyleSheet.create({
     position: 'absolute',
     width: wp(10),
     height: wp(10),
-    borderColor: Colors.light.redText,
+    borderColor: Colors[theme].redText,
     borderWidth: 5,
   },
   topLeft: {
@@ -69,13 +69,13 @@ export default StyleSheet.create({
     alignSelf: 'center',
   },
   scanButton: {
-    backgroundColor: Colors.light.redText,
+    backgroundColor: Colors[theme].redText,
     borderRadius: Borders.radius4,
     paddingVertical: hp(1.5),
     paddingHorizontal: wp(25),
   },
   buttonText: {
-    color: Colors.light.whiteText,
+    color: Colors[theme].whiteText,
     fontSize: FontSize.medium,
     fontWeight: '600',
   },

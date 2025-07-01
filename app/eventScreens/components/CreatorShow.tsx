@@ -4,8 +4,7 @@ import { Colors } from '@/constants/Colors'
 import { FontSize } from '@/constants/FontSize'
 import { hp, wp } from '@/utils'
 import React from 'react'
-import { ImageBackground, StyleSheet, View } from 'react-native'
-
+import { ImageBackground, StyleSheet, View, useColorScheme } from 'react-native'
 
 type CreatorShowProps ={
   showDate:string;
@@ -15,17 +14,21 @@ type CreatorShowProps ={
 }
 
 const CreatorShow = ({showDate,showName,showTitle,backgroundImage}:CreatorShowProps) => {
+  const colorScheme = useColorScheme();
+  const theme = colorScheme === "dark" ? "dark" : "light";
+  const themedStyles = styles(theme);
+
   return (
-   <View style={styles.imageBackgroundContainer}>
+   <View style={themedStyles.imageBackgroundContainer}>
     <ImageBackground
-      style={styles.imageBackground}
-      imageStyle={styles.imageBackground} 
+      style={themedStyles.imageBackground}
+      imageStyle={themedStyles.imageBackground} 
       source={{uri: backgroundImage}}
     >
-      <View style={styles.contentPadding}>
-        <RnText style={styles.titleText}>{showName}</RnText>
-        <RnText style={styles.nameText}>{showTitle}</RnText>
-        <RnText style={styles.dateText}>{showDate}</RnText>
+      <View style={themedStyles.contentPadding}>
+        <RnText style={themedStyles.titleText}>{showName}</RnText>
+        <RnText style={themedStyles.nameText}>{showTitle}</RnText>
+        <RnText style={themedStyles.dateText}>{showDate}</RnText>
       </View>
     </ImageBackground>
    </View>
@@ -34,7 +37,7 @@ const CreatorShow = ({showDate,showName,showTitle,backgroundImage}:CreatorShowPr
 
 export default CreatorShow
 
-const styles = StyleSheet.create({
+const styles = (theme: 'dark' | 'light') => StyleSheet.create({
   imageBackgroundContainer: {
     width: wp(37),
     height: hp(24),
@@ -53,19 +56,17 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     alignItems:'center'
   },
-
   titleText:{
-    color:Colors.light.whiteText,
+    color: Colors[theme].whiteText,
     fontWeight:'bold',
     fontSize:FontSize.large
   },
-
   nameText:{
-    color:Colors.light.whiteText,
+    color: Colors[theme].whiteText,
     fontSize:FontSize.small
   },
   dateText:{
-    color:Colors.light.whiteText,
+    color: Colors[theme].whiteText,
     fontSize:FontSize.extraSmall
   }
-})
+});

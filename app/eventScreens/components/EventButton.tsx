@@ -4,11 +4,16 @@ import { Colors } from '@/constants/Colors'
 import { FontSize } from '@/constants/FontSize'
 import { hp, wp } from '@/utils'
 import React from 'react'
-import { StyleSheet, TouchableOpacity } from 'react-native'
+import { StyleSheet, TouchableOpacity, useColorScheme } from 'react-native'
 
 
 
 const EventButton = ({onPress,title='continue'}) => {
+
+ const colorScheme = useColorScheme();
+  const theme = colorScheme === "dark" ? "dark" : "light";
+ 
+
   return (
    <TouchableOpacity style={{
 width:wp(50),
@@ -17,13 +22,13 @@ borderRadius:Borders.radius3,
 justifyContent:'center',
 alignItems:'center',
 alignSelf:'center',
-backgroundColor:Colors.light.pink
+backgroundColor:Colors[theme].pink
    }}
    onPress={onPress}
    >
 <RnText style={{
     textAlign:'center',
-    color:Colors.light.whiteText,
+    color:Colors[theme].whiteText,
     fontWeight:'600',
     fontSize:FontSize.small
 }}>{title}</RnText>
@@ -33,4 +38,3 @@ backgroundColor:Colors.light.pink
 
 export default EventButton
 
-const styles = StyleSheet.create({})

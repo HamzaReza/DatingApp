@@ -1,8 +1,10 @@
-import styles from '@/app/eventScreens/styles/explore.styles';
+import createStyles from '@/app/eventScreens/styles/explore.styles';
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
 import RoundButton from "@/components/RoundButton";
 import { Colors } from "@/constants/Colors";
+// import { useColorScheme } from "@/hooks/useColorScheme";
+
 import { hp } from "@/utils";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -12,7 +14,8 @@ import {
   Image,
   TextInput,
   TouchableOpacity,
-  View
+  View,
+  useColorScheme
 } from "react-native";
 import CreatorShow from "./components/CreatorShow";
 import UpcomingEventCard from "./components/upcomingEventCard";
@@ -49,6 +52,12 @@ const CreatorShowData = [
 
 
 const explore = () => {
+
+
+const colorScheme = useColorScheme();
+  const theme = colorScheme === "dark" ? "dark" : "light";
+  const styles = createStyles(theme);
+
   return (
     <ScrollContainer customStyle={styles.mainContainer}>
       {/* header */}
@@ -56,15 +65,15 @@ const explore = () => {
         <RoundButton
           iconName="menu"
           iconSize={24}
-          borderColor={Colors.light.backgroundSecondary}
+          borderColor={Colors[theme].backgroundSecondary}
         />
 
         <View style={styles.locationContainer}>
           <RoundButton
             iconName="location-off"
             iconSize={22}
-            iconColor={Colors.light.primary}
-            borderColor={Colors.light.background}
+            iconColor={Colors[theme].primary}
+            borderColor={Colors[theme].background}
           />
           <RnText>RajKat, Kujaraj</RnText>
         </View>
@@ -73,9 +82,9 @@ const explore = () => {
           <RoundButton
             iconName="notifications"
             iconSize={22}
-            iconColor={Colors.light.primary}
-            borderColor={Colors.light.background}
-            backgroundColour={Colors.light.whiteText}
+            iconColor={Colors[theme].primary}
+            borderColor={Colors[theme].background}
+            backgroundColour={Colors[theme].whiteText}
           />
         </View>
 
@@ -92,12 +101,12 @@ const explore = () => {
       <View style={styles.searchContainer}>
         <TextInput
           placeholder="Search Events, Creators, etc."
-          placeholderTextColor={Colors.light.tabIconDefault}
+          placeholderTextColor={Colors[theme].tabIconDefault}
           style={styles.searchInput}
         />
 
         <View style={styles.searchIconContainer}>
-          <Ionicons name="search" size={20} color={Colors.light.pink} />
+          <Ionicons name="search" size={20} color={Colors[theme].pink} />
         </View>
       </View>
 

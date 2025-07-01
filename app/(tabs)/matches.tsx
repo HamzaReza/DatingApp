@@ -1,4 +1,4 @@
-import styles from '@/app/tabStyles/matches.styles';
+import createStyles from '@/app/tabStyles/matches.styles';
 import MatchCard from '@/components/MatchCard';
 import PrimaryHeader from '@/components/PrimaryHeader';
 import ScrollContainer from '@/components/RnScrollContainer';
@@ -8,7 +8,7 @@ import { hp, wp } from '@/utils';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import React, { useState } from 'react';
-import { FlatList, View } from 'react-native';
+import { FlatList, useColorScheme, View } from 'react-native';
 
 type Match = {
   id: string;
@@ -63,6 +63,11 @@ const matches: Match[] = [
 ];
 
 export default function Matches() {
+
+const colorScheme = useColorScheme();
+  const theme = colorScheme === "dark" ? "dark" : "light";
+  const styles = createStyles(theme);
+
   const [likedCount] = useState(32);
   const [connectCount] = useState(16);
   const [totalMatches] = useState(47);
@@ -82,14 +87,14 @@ export default function Matches() {
   return (
     <ScrollContainer customStyle={{marginTop:hp(3)}}>
       {/* Header */}
-    <StatusBar style="dark" backgroundColor={Colors.light.background} />
+    <StatusBar style="dark" backgroundColor={Colors[theme].background} />
      <PrimaryHeader
   title="Matches"
   leftIconName="arrow-left"
 
   onLeftPress={()=>console.log('')}
   onRightPress={()=>console.log()}
-  titleColor={Colors.light.greenText}
+  titleColor={Colors[theme].greenText}
   leftIconSize={18}
 
 />
@@ -97,8 +102,8 @@ export default function Matches() {
       {/* Stats Section */}
       <View style={styles.statsContainer}>
         <View style={styles.statItem}>
-          <View style={[styles.statCircle, { backgroundColor: Colors.light.redText }]}>
-            <Ionicons name="heart" size={20} color={Colors.light.background} />
+          <View style={[styles.statCircle, { backgroundColor: Colors[theme].redText }]}>
+            <Ionicons name="heart" size={20} color={Colors[theme].background} />
           </View>
           <View style={styles.statTextContainers}>
               <RnText style={styles.statLabel}>Likes</RnText>
@@ -109,8 +114,8 @@ export default function Matches() {
         </View>
         
         <View style={styles.statItem}>
-          <View style={[styles.statCircle, { backgroundColor: Colors.light.greenText }]}>
-            <Ionicons name="people" size={20} color={Colors.light.background} />
+          <View style={[styles.statCircle, { backgroundColor: Colors[theme].greenText }]}>
+            <Ionicons name="people" size={20} color={Colors[theme].background} />
           </View>
           <View style={styles.statTextContainers}>
              <RnText style={styles.statLabel}>Connect</RnText>
@@ -125,7 +130,7 @@ export default function Matches() {
       <View >
         <View style={styles.statTextContainers}>
                <RnText style={styles.sectionTitle}>Your Matches</RnText>
-               <RnText style={[styles.sectionTitle,{color:Colors.light.redText}]}>{totalMatches}</RnText>
+               <RnText style={[styles.sectionTitle,{color:Colors[theme].redText}]}>{totalMatches}</RnText>
         </View>
      
         <View style={styles.section}>

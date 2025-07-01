@@ -4,7 +4,7 @@ import { FontSize } from "@/constants/FontSize";
 import { hp, wp } from "@/utils";
 import SimpleLineIcons from "@expo/vector-icons/SimpleLineIcons";
 import React from "react";
-import { Pressable, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Pressable, StyleSheet, TouchableOpacity, View, useColorScheme } from "react-native";
 import RnText from "./RnText";
 
 type SimpleLineIconsName = React.ComponentProps<typeof SimpleLineIcons>["name"];
@@ -23,8 +23,8 @@ interface PrimaryHeaderProps {
   showLeftIcon?: boolean;
   showRightIcon?: boolean;
   borderWidth?: number;
-  backgroundColor?:string
-  borderColor?:string
+  backgroundColor?: string;
+  borderColor?: string;
 }
 
 const PrimaryHeader: React.FC<PrimaryHeaderProps> = ({
@@ -33,62 +33,71 @@ const PrimaryHeader: React.FC<PrimaryHeaderProps> = ({
   rightIconName = "options",
   onLeftPress = () => {},
   onRightPress = () => {},
-  leftIconColor = Colors.light.redText,
-  rightIconColor = Colors.light.redText,
-  titleColor = Colors.light.greenText,
+  leftIconColor,
+  rightIconColor,
+  titleColor,
   leftIconSize = 24,
   rightIconSize = 24,
   showLeftIcon = true,
   showRightIcon = true,
   borderWidth = 0.5,
-  backgroundColor='',
-  borderColor=rightIconColor
+  backgroundColor,
+  borderColor,
 }) => {
+  const colorScheme = useColorScheme();
+  const theme = colorScheme === "dark" ? "dark" : "light";
+
+  // Use theme colors if not provided via props
+  const leftIconClr = leftIconColor ?? Colors[theme].redText;
+  const rightIconClr = rightIconColor ?? Colors[theme].redText;
+  const ttlColor = titleColor ?? Colors[theme].greenText;
+  const bgColor = backgroundColor ?? Colors[theme].background;
+  const brdColor = borderColor ?? Colors[theme].primary;
+
   return (
     <View style={styles.header}>
       {showLeftIcon && (
         <TouchableOpacity
           onPress={onLeftPress}
           style={{
-            borderColor: borderColor,
+            borderColor: brdColor,
             borderWidth: borderWidth,
             width: wp(9),
             height: wp(9),
             borderRadius: Borders.circle,
             alignItems: "center",
             justifyContent: "center",
-            backgroundColor:backgroundColor
-            
+            backgroundColor: bgColor,
           }}
         >
           <SimpleLineIcons
             name={leftIconName}
             size={leftIconSize}
-            color={leftIconColor}
+            color={leftIconClr}
           />
         </TouchableOpacity>
       )}
 
-      <RnText style={[styles.title, { color: titleColor }]}>{title}</RnText>
+      <RnText style={[styles.title, { color: ttlColor }]}>{title}</RnText>
 
       {showRightIcon ? (
         <TouchableOpacity
           onPress={onRightPress}
           style={{
-            borderColor: borderColor,
+            borderColor: brdColor,
             borderWidth: 0.5,
             width: wp(9),
             height: wp(9),
             borderRadius: Borders.circle,
             alignItems: "center",
             justifyContent: "center",
-            backgroundColor:backgroundColor
+            backgroundColor: bgColor,
           }}
         >
           <SimpleLineIcons
             name={rightIconName}
             size={rightIconSize}
-            color={rightIconColor}
+            color={rightIconClr}
           />
         </TouchableOpacity>
       ) : (

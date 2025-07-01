@@ -3,7 +3,7 @@ import { FontSize } from "@/constants/FontSize";
 import { hp, wp } from "@/utils";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { StyleSheet, TouchableOpacity } from "react-native";
+import { StyleSheet, TouchableOpacity, useColorScheme } from "react-native";
 import RnText from "./RnText";
 
 interface InterestTagProps {
@@ -19,6 +19,12 @@ const InterestTag: React.FC<InterestTagProps> = ({
   isSelected = false,
   onPress,
 }) => {
+
+const colorScheme = useColorScheme();
+  const theme = colorScheme === "dark" ? "dark" : "light";
+  const styles = createStyles(theme);
+
+
   return (
     <TouchableOpacity
       style={[styles.tag, isSelected && styles.selectedTag]}
@@ -28,7 +34,7 @@ const InterestTag: React.FC<InterestTagProps> = ({
         <Ionicons
           name={icon}
           size={16}
-          color={isSelected ? Colors.light.background : Colors.light.redText}
+          color={isSelected ? Colors[theme].background : Colors[theme].redText}
           style={styles.icon}
         />
       )}
@@ -39,7 +45,7 @@ const InterestTag: React.FC<InterestTagProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles  = (theme:'dark'|'light')=>StyleSheet.create({
   tag: {
     flexDirection: "row",
     alignItems: "center",
@@ -47,23 +53,23 @@ const styles = StyleSheet.create({
     paddingVertical: hp(1),
     borderRadius: wp(5),
     borderWidth: 1,
-    borderColor: Colors.light.greenText,
+    borderColor: Colors[theme].greenText,
     marginRight: wp(2),
     marginBottom: hp(1),
   },
   selectedTag: {
-    backgroundColor: Colors.light.redText,
+    backgroundColor: Colors[theme].redText,
   },
   icon: {
     marginRight: wp(1),
   },
   text: {
     fontSize: FontSize.regular,
-    color: Colors.light.redText,
+    color: Colors[theme].redText,
     fontWeight: "600",
   },
   selectedText: {
-    color: Colors.light.background,
+    color: Colors[theme].background,
   },
 });
 export default InterestTag;

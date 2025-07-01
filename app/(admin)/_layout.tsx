@@ -12,14 +12,11 @@ export default function TabLayout() {
     tabBarStyle: {
       borderWidth: 0,
       borderTopWidth: 0,
-      backgroundColor: Colors[theme].background,
+      backgroundColor: "#FFB3BA",
       height: hp(8),
       marginHorizontal: wp(4),
-      marginBottom: hp(2),
       borderRadius: wp(12),
       position: "absolute",
-      alignItems: "center",
-      justifyContent: "center",
     },
     iconContainer: {
       width: wp(10),
@@ -61,7 +58,7 @@ export default function TabLayout() {
               <MaterialCommunityIcons
                 name="view-dashboard"
                 size={focused ? 24 : 28}
-                color={focused ? Colors[theme].whiteText : Colors[theme].pink}
+                color={Colors[theme].whiteText}
               />
             </View>
           ),
@@ -85,7 +82,7 @@ export default function TabLayout() {
               <MaterialCommunityIcons
                 name="account-group"
                 size={focused ? 24 : 28}
-                color={focused ? Colors[theme].whiteText : Colors[theme].pink}
+                color={Colors[theme].whiteText}
               />
             </View>
           ),
@@ -109,7 +106,7 @@ export default function TabLayout() {
               <MaterialCommunityIcons
                 name="calendar"
                 size={focused ? 24 : 28}
-                color={focused ? Colors[theme].whiteText : Colors[theme].pink}
+                color={Colors[theme].whiteText}
               />
             </View>
           ),

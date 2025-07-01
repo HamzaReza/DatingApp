@@ -46,4 +46,5 @@ export type AdminEvent = {
   venue: string;
   genre: AdminEventGenre;
   seat: string;
+  price: number;
 };

@@ -1,3 +1,4 @@
+import { BottomSheetHandleProps } from "@gorhom/bottom-sheet";
 import { IconNode, TextProps, ViewProps } from "@rneui/base";
 import { ReactElement, ReactNode } from "react";
 import {
@@ -191,4 +192,57 @@ export interface RnDropdownProps {
   >;
   setValue: React.Dispatch<React.SetStateAction<any>>;
   loading?: boolean;
+}
+
+export interface RnBottomSheetProps {
+  isVisible: boolean;
+  onClose: () => void;
+  children: ReactNode;
+  enablePanDownToClose?: boolean;
+  enableOverDrag?: boolean;
+  backgroundStyle?: StyleProp<ViewStyle>;
+  handleIndicatorStyle?: StyleProp<ViewStyle>;
+  containerStyle?: StyleProp<ViewStyle>;
+  handleStyle?: StyleProp<ViewStyle>;
+  handleComponent?: React.FC<BottomSheetHandleProps> | null;
+  onChange?: (index: number) => void;
+  onAnimate?: (fromIndex: number, toIndex: number) => void;
+  animatedIndex?: any;
+  animatedPosition?: any;
+  keyboardBehavior?: "interactive" | "extend" | "fillParent";
+  keyboardBlurBehavior?: "none" | "restore";
+  android_keyboardInputMode?: "adjustResize" | "adjustPan";
+  enableContentPanningGesture?: boolean;
+  enableHandlePanningGesture?: boolean;
+  enableOverDrag?: boolean;
+  enablePanDownToClose?: boolean;
+  enableDynamicSizing?: boolean;
+  animateOnMount?: boolean;
+  detached?: boolean;
+  style?: StyleProp<ViewStyle>;
+}
+
+export interface RnDateTimePickerProps {
+  value: Date;
+  onChange: (event: any, selectedDate?: Date) => void;
+  mode?: "date" | "time" | "datetime";
+  display?: "default" | "spinner" | "calendar" | "clock";
+  placeholder?: string;
+  label?: string;
+  error?: string;
+  errorStyle?: StyleProp<TextStyle>;
+  style?: StyleProp<ViewStyle>;
+  containerStyle?: StyleProp<ViewStyle>;
+  minimumDate?: Date;
+  maximumDate?: Date;
+  minuteInterval?: 1 | 2 | 3 | 4 | 5 | 6 | 10 | 12 | 15 | 20 | 30;
+  timeZoneOffsetInMinutes?: number;
+  timeZoneName?: string;
+  textColor?: string;
+  accentColor?: string;
+  neutralButtonLabel?: string;
+  positiveButtonLabel?: string;
+  negativeButtonLabel?: string;
+  is24Hour?: boolean;
+  disabled?: boolean;
 }

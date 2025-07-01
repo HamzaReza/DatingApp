@@ -28,7 +28,6 @@ export default (theme: "light" | "dark") =>
     eventTitle: {
       fontSize: FontSize.large,
       fontFamily: FontFamily.bold,
-      color: Colors[theme].blackText,
       marginBottom: hp(2),
       textAlign: "center",
     },
@@ -40,14 +39,11 @@ export default (theme: "light" | "dark") =>
     },
     label: {
       fontSize: FontSize.small,
-      color: Colors[theme].blackText,
-      fontFamily: FontFamily.medium,
+      fontFamily: FontFamily.semiBold,
     },
     value: {
       fontSize: FontSize.small,
-      color: Colors[theme].blackText,
       marginTop: hp(0.5),
-      fontFamily: FontFamily.regular,
     },
     qrSection: {
       alignItems: "center",
@@ -58,16 +54,69 @@ export default (theme: "light" | "dark") =>
       height: wp(30),
     },
     createBtn: {
-      marginTop: hp(6),
+      marginTop: hp(2),
       backgroundColor: Colors[theme].pink,
       width: wp(70),
       height: hp(5),
     },
     dashedLine: {
       borderBottomWidth: 2,
-      borderStyle: "dashed",
+      borderStyle: "solid",
       borderColor: Colors[theme].background,
       width: "100%",
       marginVertical: hp(2),
+    },
+    priceContainer: {
+      alignItems: "center",
+      marginBottom: hp(2),
+    },
+    priceText: {
+      fontSize: FontSize.large,
+      fontFamily: FontFamily.bold,
+      color: Colors[theme].pink,
+    },
+    // Form styles
+    formScrollView: {
+      flex: 1,
+    },
+    formContainer: {
+      paddingVertical: hp(2),
+    },
+    formTitle: {
+      textAlign: "center",
+      marginBottom: hp(3),
+      fontSize: FontSize.large,
+      fontFamily: FontFamily.bold,
+    },
+    formRowContainer: {
+      flexDirection: "row",
+      marginBottom: hp(3),
+    },
+    formGenreInput: {
+      marginVertical: hp(1),
+    },
+    formHalfField: {
+      flex: 1,
+    },
+    formHalfFieldLeft: {
+      marginRight: wp(2),
+    },
+    formHalfFieldRight: {
+      marginLeft: wp(2),
+    },
+    formErrorText: {
+      color: Colors[theme].redText,
+      fontSize: FontSize.regular,
+      fontFamily: FontFamily.regular,
+      marginBottom: hp(2),
+    },
+    modalCreateBtn: {
+      marginBottom: hp(5),
+      backgroundColor: Colors[theme].pink,
+      width: wp(70),
+      height: hp(5),
+    },
+    formSeparator: {
+      width: wp(1),
     },
   });

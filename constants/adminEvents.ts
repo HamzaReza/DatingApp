@@ -5,10 +5,11 @@ export const adminEvents: AdminEvent[] = [
     id: "1",
     name: "Ghar By Zakir Khan",
     date: "13 Mar, 2023",
-    time: "07:PM",
+    time: "07:00 PM",
     venue: "The Cheese Box Studios, Ahmedabad",
     genre: "comedy",
     seat: "05",
+    price: 1500,
   },
   {
     id: "2",
@@ -18,6 +19,7 @@ export const adminEvents: AdminEvent[] = [
     venue: "Blue Frog, Mumbai",
     genre: "music",
     seat: "12",
+    price: 800,
   },
   {
     id: "3",
@@ -27,6 +29,7 @@ export const adminEvents: AdminEvent[] = [
     venue: "Prithvi Theatre, Mumbai",
     genre: "theatre",
     seat: "A7",
+    price: 1200,
   },
   {
     id: "4",
@@ -36,5 +39,6 @@ export const adminEvents: AdminEvent[] = [
     venue: "Salt Lake Stadium, Kolkata",
     genre: "sports",
     seat: "B2",
+    price: 500,
   },
 ];

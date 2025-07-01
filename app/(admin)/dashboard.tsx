@@ -10,21 +10,24 @@ import {
 } from "@/constants/dashboardData";
 import { FontSize } from "@/constants/FontSize";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { setToken } from "@/redux/slices/userSlice";
 import { hp, wp } from "@/utils";
 import {
   FontAwesome5,
   Ionicons,
   MaterialCommunityIcons,
 } from "@expo/vector-icons";
+import { router } from "expo-router";
 import React, { useMemo, useState } from "react";
 import { FlatList, View } from "react-native";
 import { BarChart, LineChart } from "react-native-gifted-charts";
+import { useDispatch } from "react-redux";
 
 export default function Dashboard() {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
-
+  const dispatch = useDispatch();
   // Dropdown state
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState("monthly");
@@ -80,7 +83,15 @@ export default function Dashboard() {
 
   return (
     <ScrollContainer>
-      <RnText style={styles.headerTitle}>Dashboard</RnText>
+      <RnText
+        style={styles.headerTitle}
+        onPress={() => {
+          router.replace("/onboarding");
+          dispatch(setToken(false));
+        }}
+      >
+        Dashboard
+      </RnText>
       <FlatList
         data={dashboardStats}
         numColumns={2}

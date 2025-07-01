@@ -6,7 +6,7 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 import { RnOtpProps } from "@/types";
 import { hp } from "@/utils/Dimensions";
 import React, { Fragment } from "react";
-import { StyleSheet, View } from "react-native";
+import { Platform, StyleSheet, View } from "react-native";
 import {
   CodeField,
   Cursor,
@@ -33,6 +33,7 @@ const RnOtp = ({
     cell: {
       width: hp(7),
       height: hp(7),
+      lineHeight: Platform.OS === "ios" ? hp(7) : undefined,
       fontSize: FontSize.large,
       fontFamily: FontFamily.semiBold,
       color: Colors[theme].blackText,

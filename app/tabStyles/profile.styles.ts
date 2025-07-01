@@ -8,10 +8,10 @@ const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 const IMAGE_HEIGHT = hp(60);
 const HEADER_HEIGHT = hp(8);
  
- export default StyleSheet.create({
+ export default (theme:'dark'|'light')=>StyleSheet.create({
   container: {
      flex: 1,
-     backgroundColor: Colors.light.background,
+     backgroundColor: Colors[theme].background,
    },
    header: {
      flexDirection: 'row',
@@ -80,7 +80,7 @@ const HEADER_HEIGHT = hp(8);
      elevation: 8,
    },
    likeButton: {
-     backgroundColor: Colors.light.redText,
+     backgroundColor: Colors[theme].redText,
      width: wp(20),
      height: wp(20),
      borderRadius: wp(10),
@@ -95,7 +95,7 @@ const HEADER_HEIGHT = hp(8);
      height: IMAGE_HEIGHT - hp(8),
    },
    contentContainer: {
-     backgroundColor: Colors.light.background,
+     backgroundColor: Colors[theme].background,
      borderTopLeftRadius: wp(6),
      borderTopRightRadius: wp(6),
      paddingTop: hp(6),
@@ -122,14 +122,14 @@ const HEADER_HEIGHT = hp(8);
    name: {
      fontSize: FontSize.extraLarge,
      fontWeight: 'bold',
-     color: Colors.light.blackText,
+     color: Colors[theme].blackText,
    },
    sendButton: {
      padding: wp(2),
    },
    profession: {
      fontSize: FontSize.small,
-     color: Colors.light.blackText,
+     color: Colors[theme].blackText,
    },
    section: {
      paddingHorizontal: wp(4),
@@ -138,12 +138,12 @@ const HEADER_HEIGHT = hp(8);
    sectionTitle: {
      fontSize: FontSize.large,
      fontWeight: 'bold',
-     color: Colors.light.blackText,
+     color: Colors[theme].blackText,
      marginBottom: hp(1),
    },
    bio: {
      fontSize: FontSize.small,
-     color: Colors.light.blackText,
+     color: Colors[theme].blackText,
      lineHeight: 24,
    },
    locationContainer: {
@@ -153,22 +153,22 @@ const HEADER_HEIGHT = hp(8);
    },
    distance: {
      fontSize: FontSize.regular,
-     color: Colors.light.redText,
+     color: Colors[theme].redText,
      marginLeft: wp(1),
    },
    location: {
     fontSize: FontSize.small,
-     color: Colors.light.blackText,
+     color: Colors[theme].blackText,
    },
    about: {
   fontSize: FontSize.small,
-     color: Colors.light.blackText,
+     color: Colors[theme].blackText,
      lineHeight: 24,
      marginBottom: hp(1),
    },
    readMore: {
     fontSize: FontSize.small,
-     color: Colors.light.redText,
+     color: Colors[theme].redText,
      fontWeight: '600',
    },
    interestsContainer: {
@@ -184,7 +184,7 @@ const HEADER_HEIGHT = hp(8);
    },
    seeAll: {
     fontSize: FontSize.small,
-     color: Colors.light.redText,
+     color: Colors[theme].redText,
      fontWeight: '600',
    },
    gallery: {
@@ -219,7 +219,7 @@ const HEADER_HEIGHT = hp(8);
      width: wp(8),
      height: wp(8),
      borderRadius: wp(4),
-     backgroundColor: Colors.light.redText,
+     backgroundColor: Colors[theme].redText,
      justifyContent: 'center',
      alignItems: 'center',
    },
@@ -227,19 +227,19 @@ const HEADER_HEIGHT = hp(8);
    //modal
    modalBackground: {
     height:hp(100),
-    backgroundColor: Colors.light.whiteText,
+    backgroundColor: Colors[theme].whiteText,
     justifyContent: "center",
     // alignItems: "center",
   },
   closeButton: {
     
    
-    backgroundColor: Colors.light.whiteText,
+    backgroundColor: Colors[theme].whiteText,
     borderRadius: Borders.radius1,
     width: wp(10),
     height: wp(10),
     borderWidth: 1,
-    borderColor: Colors.light.gray,
+    borderColor: Colors[theme].gray,
     marginHorizontal: wp(4),
     marginVertical: hp(2),
     alignItems:'center',
@@ -251,7 +251,7 @@ const HEADER_HEIGHT = hp(8);
     justifyContent: "center",
     alignItems: "center",
     width: wp(100),
-    backgroundColor: Colors.light.whiteText,
+    backgroundColor: Colors[theme].whiteText,
     height:hp(70),
     marginBottom: hp(2),
     alignSelf: "center",
@@ -280,6 +280,6 @@ const HEADER_HEIGHT = hp(8);
     marginBottom: hp(2),
   },
   selectedThumbnail: {
-    borderColor: Colors.light.pink,
+    borderColor: Colors[theme].pink,
   },
 })

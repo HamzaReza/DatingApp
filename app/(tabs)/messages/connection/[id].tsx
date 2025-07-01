@@ -1,4 +1,4 @@
-import styles from '@/app/tabStyles/connections.styles';
+import createStyles from '@/app/tabStyles/connections.styles';
 import CurvedMicInput from "@/components/CurvedMicInputProps";
 import Container from "@/components/RnContainer";
 import RnText from "@/components/RnText";
@@ -12,11 +12,17 @@ import {
   Image,
   ImageBackground,
   TouchableOpacity,
+  useColorScheme,
   View
 } from "react-native";
 
 export default function Connection() {
   const { id } = useLocalSearchParams();
+
+
+  const colorScheme = useColorScheme();
+    const theme = colorScheme === "dark" ? "dark" : "light";
+    const styles = createStyles(theme);
 
   const handleBackPress = () => {
     router.back();
@@ -45,9 +51,9 @@ export default function Connection() {
       <View style={styles.header}>
         <RoundButton
           iconName="arrow-back-ios-new"
-          iconColor={Colors.light.whiteText}
+          iconColor={Colors[theme].whiteText}
           iconSize={wp(5)}
-          borderColor={Colors.light.gray}
+          borderColor={Colors[theme].gray}
           onPress={handleBackPress}
         />
       </View>
@@ -74,7 +80,7 @@ export default function Connection() {
         <RnText style={styles.readReceiptTitle}>
           Know when{" "}
           <RnText
-            style={[styles.readReceiptTitle, { color: Colors.light.pink }]}
+            style={[styles.readReceiptTitle, { color: Colors[theme].pink }]}
           >
             Clara
           </RnText>{" "}
@@ -88,7 +94,7 @@ export default function Connection() {
           <Ionicons
             name="checkmark-done-sharp"
             size={16}
-            color={Colors.light.whiteText}
+            color={Colors[theme].whiteText}
           />
           <RnText style={styles.readReceiptButtonText}>
             Get Read Receipts

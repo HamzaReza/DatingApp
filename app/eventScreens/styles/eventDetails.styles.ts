@@ -4,10 +4,10 @@ import { FontSize } from "@/constants/FontSize";
 import { hp, wp } from "@/utils";
 import { StyleSheet } from "react-native";
 
-export default StyleSheet.create({
+export default (theme:'dark'|'light')=>StyleSheet.create({
   mainContainer: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: Colors[theme].background,
   },
   backgroundImageContainer: {
     width: wp(100),
@@ -33,11 +33,11 @@ export default StyleSheet.create({
   },
   dateText: {
     fontSize: FontSize.large,
-    color: Colors.light.whiteText,
+    color: Colors[theme].whiteText,
   },
   nameText: {
     fontSize: FontSize.extraLarge,
-    color: Colors.light.whiteText,
+    color: Colors[theme].whiteText,
     fontWeight: '800',
     marginBottom: hp(2),
   },
@@ -46,7 +46,7 @@ export default StyleSheet.create({
     paddingTop: hp(2),
   },
   sectionTitle: {
-    color: Colors.light.pink,
+    color: Colors[theme].pink,
     fontWeight: '600',
     fontSize: FontSize.large,
     marginBottom: wp(2),
@@ -73,13 +73,13 @@ export default StyleSheet.create({
   },
   likesText: {
     fontSize: FontSize.medium,
-    color: Colors.light.pink,
+    color: Colors[theme].pink,
     fontWeight: '600',
   },
   aboutText: {
     marginTop: wp(1),
     fontSize: FontSize.small,
-    color: '#333',
+    color: Colors[theme].whiteText,
     lineHeight: wp(5),
   },
   bottomBar: {
@@ -89,32 +89,32 @@ export default StyleSheet.create({
     padding: wp(4),
     borderTopWidth: 1,
     borderColor: '#eee',
-    backgroundColor: Colors.light.background,
+    backgroundColor: Colors[theme].background,
     elevation:10
   },
   priceContainer: {
     borderWidth: 1.5,
-    borderColor: Colors.light.pink,
+    borderColor: Colors[theme].pink,
     borderRadius: Borders.radius1,
     paddingVertical: wp(5),
     paddingHorizontal: wp(6),
   },
   priceText: {
-    color: Colors.light.pink,
+    color: Colors[theme].pink,
     fontWeight: 'bold',
     fontSize: FontSize.medium,
   },
   buyButton: {
-    backgroundColor: Colors.light.pink,
+    backgroundColor: Colors[theme].pink,
     paddingVertical: wp(5),
     paddingHorizontal: wp(20),
      borderRadius: Borders.radius1,
     
     borderWidth:1,
-    borderColor:Colors.light.pink
+    borderColor:Colors[theme].pink
   },
   buyText: {
-    color: Colors.light.whiteText,
+    color: Colors[theme].whiteText,
     fontWeight: 'bold',
     fontSize: FontSize.medium,
   },

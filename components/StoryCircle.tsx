@@ -3,7 +3,7 @@ import { FontSize } from '@/constants/FontSize';
 import { hp } from '@/utils';
 import { AntDesign } from '@expo/vector-icons';
 import React from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 
 type Props = {
   image: string;
@@ -13,13 +13,19 @@ type Props = {
 };
 
 const StoryCircle: React.FC<Props> = ({ image, username, isOwn, onPress }) => {
+
+
+const colorScheme = useColorScheme();
+  const theme = colorScheme === "dark" ? "dark" : "light";
+  const styles = createStyles(theme);
+
   return (
     <TouchableOpacity style={[styles.container,{marginLeft:isOwn?0:hp(1.5)}]} onPress={onPress}>
       <View style={[styles.imageWrapper, isOwn && styles.ownStoryBorder]}>
         <Image source={{ uri: image }} style={styles.image} />
         {isOwn && (
           <View style={styles.plusIcon}>
-            <AntDesign name="pluscircle" size={20} color={Colors.light.greenText} />
+            <AntDesign name="pluscircle" size={20} color={Colors[theme].greenText} />
           </View>
         )}
       </View>
@@ -29,17 +35,17 @@ const StoryCircle: React.FC<Props> = ({ image, username, isOwn, onPress }) => {
     </TouchableOpacity>
   );
 };
-const styles = StyleSheet.create({
+const createStyles  = (theme:'dark'|'light')=>StyleSheet.create({
   container: {
     alignItems: 'center',
     width: hp(8), 
     
   },
   imageWrapper: {
-    padding: hp(0.2),            // padding around the image
-    borderRadius: hp(5),         // make it fully round
-    borderWidth: hp(0.25),       // responsive border width
-    borderColor: Colors.light.greenText,
+    padding: hp(0.2),            
+    borderRadius: hp(5),         
+    borderWidth: hp(0.25),      
+    borderColor: Colors[theme].greenText,
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
@@ -48,20 +54,20 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
   },
   image: {
-    width: hp(7),                // size of image inside
+    width: hp(7),                
     height: hp(7),
     borderRadius: hp(4),
   },
   plusIcon: {
     position: 'absolute',
-    bottom: -hp(0.5),            // badge position bottom
-    right: -hp(0.5),             // badge position right
+    bottom: -hp(0.5),            
+    right: -hp(0.5),             
   },
   username: {
     marginTop: hp(0.8),
     fontSize:FontSize.regular,
     textAlign: 'center',
-    color: Colors.light.redText,
+    color: Colors[theme].redText,
   },
 });
 

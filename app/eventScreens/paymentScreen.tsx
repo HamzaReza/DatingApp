@@ -1,4 +1,4 @@
-import styles from '@/app/eventScreens/styles/paymentScreen.styles';
+import createStyles from '@/app/eventScreens/styles/paymentScreen.styles';
 import Container from "@/components/RnContainer";
 import RnInput from "@/components/RnInput";
 import RnModal from "@/components/RnModal";
@@ -11,6 +11,7 @@ import React, { useState } from "react";
 import {
   TextInput,
   TouchableOpacity,
+  useColorScheme,
   View
 } from "react-native";
 import EventButton from "./components/EventButton";
@@ -43,12 +44,20 @@ const PaymentScreen = () => {
   const [voucher, setVoucher] = useState("");
   const [modalVisible,setModalVisible] = useState(false)
 
+
+const colorScheme = useColorScheme();
+  const theme = colorScheme === "dark" ? "dark" : "light";
+  const styles = createStyles(theme);
+
+  
   return (
     <>
-    <Container customStyle={{backgroundColor:Colors.light.backgroundSecondary}} >
+    <Container customStyle={{backgroundColor:Colors[theme].backgroundSecondary}} >
 
 
-      <CustomHeader title="Payment" rightIcon="scan" onRightPress={()=>router.push('/eventScreens/cardScan')}/>
+      <CustomHeader title="Payment" rightIcon="scan" onRightPress={() => router.push('/eventScreens/cardScan')} onBackPress={function (): void {
+          throw new Error('Function not implemented.');
+        } }/>
 
       <View style={styles.section}>
         <RnText style={styles.label}>Payment Method</RnText>
@@ -94,7 +103,7 @@ const PaymentScreen = () => {
           <TextInput
             placeholder="VOUCHER CODE"
             style={styles.voucherInput}
-            placeholderTextColor={Colors.light.redText}
+            placeholderTextColor={Colors[theme].redText}
             value={voucher}
             onChangeText={setVoucher}
           />

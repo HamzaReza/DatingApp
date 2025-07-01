@@ -1,4 +1,4 @@
-import styles from '@/app/eventScreens/styles/eventDetails.styles';
+import createStyles from '@/app/eventScreens/styles/eventDetails.styles';
 import RnText from '@/components/RnText';
 import RoundButton from '@/components/RoundButton';
 import { Colors } from '@/constants/Colors';
@@ -6,9 +6,15 @@ import { hp, wp } from '@/utils';
 import { Entypo, FontAwesome, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React from 'react';
-import { Image, ImageBackground, ScrollView, TouchableOpacity, View } from 'react-native';
+import { Image, ImageBackground, ScrollView, TouchableOpacity, useColorScheme, View } from 'react-native';
 
 const EventDetails = () => {
+
+ const colorScheme = useColorScheme();
+  const theme = colorScheme === "dark" ? "dark" : "light";
+  const styles = createStyles(theme);
+
+
   return (
     <View style={styles.mainContainer}>
       <ScrollView contentContainerStyle={{ paddingBottom: hp(16) }}>
@@ -22,10 +28,10 @@ const EventDetails = () => {
           >
             {/* Header Actions */}
             <View style={styles.header}>
-              <RoundButton iconName={'arrow-back'} backgroundColour={Colors.light.background} iconColor={Colors.light.pink} onPress={()=>router.back()} />
+              <RoundButton iconName={'arrow-back'} backgroundColour={Colors[theme].background} iconColor={Colors[theme].pink} onPress={()=>router.back()} />
               <View style={styles.subheader}>
-                <RoundButton iconName={'share'} backgroundColour={Colors.light.background} iconColor={Colors.light.pink} onPress={()=>router.back()}/>
-                <RoundButton iconName={'favorite'} backgroundColour={Colors.light.background} iconColor={Colors.light.pink}/>
+                <RoundButton iconName={'share'} backgroundColour={Colors[theme].background} iconColor={Colors[theme].pink} onPress={()=>router.back()}/>
+                <RoundButton iconName={'favorite'} backgroundColour={Colors[theme].background} iconColor={Colors[theme].pink}/>
               </View>
             </View>
 
@@ -33,7 +39,7 @@ const EventDetails = () => {
             <View>
               <View style={styles.datePlaceContainer}>
                 <RnText style={styles.dateText}>13th March</RnText>
-                <Entypo name="dot-single" size={30} color={Colors.light.whiteText} />
+                <Entypo name="dot-single" size={30} color={Colors[theme].whiteText} />
                 <RnText style={styles.dateText}>Ahmedabad</RnText>
               </View>
               <RnText style={styles.nameText}>Ghar by Zakir Khan</RnText>
@@ -45,18 +51,18 @@ const EventDetails = () => {
         <View style={styles.section}>
           <RnText style={styles.sectionTitle}>Venue</RnText>
           <View style={styles.venueRow}>
-            <Ionicons name="location-outline" size={20} color={Colors.light.pink} />
+            <Ionicons name="location-outline" size={20} color={Colors[theme].pink} />
             <RnText>The Cheese Box Studios, Ahmedabad</RnText>
           </View>
           <View style={styles.venueRow}>
-            <MaterialCommunityIcons name="drama-masks" size={20} color={Colors.light.pink} />
+            <MaterialCommunityIcons name="drama-masks" size={20} color={Colors[theme].pink} />
             <RnText>Comedy</RnText>
             <View style={{ width: wp(4) }} />
-            <Ionicons name="calendar-outline" size={20} color={Colors.light.pink} />
+            <Ionicons name="calendar-outline" size={20} color={Colors[theme].pink} />
             <RnText>13th Mar, Saturday</RnText>
           </View>
           <View style={styles.venueRow}>
-            <MaterialCommunityIcons name="clock-time-five-outline" size={20} color={Colors.light.pink} />
+            <MaterialCommunityIcons name="clock-time-five-outline" size={20} color={Colors[theme].pink} />
             <RnText>7:00 - 9:00 PM</RnText>
           </View>
         </View>
@@ -72,7 +78,7 @@ const EventDetails = () => {
             <RnText style={styles.creatorName}>Zakir Khan</RnText>
             <View style={{ flex: 1 }} />
             <RnText style={styles.likesText}>5.6K</RnText>
-            <FontAwesome name="heart-o" size={20} color={Colors.light.pink} style={{ marginLeft: wp(1) }} />
+            <FontAwesome name="heart-o" size={20} color={Colors[theme].pink} style={{ marginLeft: wp(1) }} />
           </View>
         </View>
 

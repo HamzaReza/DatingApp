@@ -4,10 +4,10 @@ import { FontSize } from '@/constants/FontSize';
 import { hp, wp } from '@/utils';
 import { StyleSheet } from 'react-native';
 
-export default StyleSheet.create({
+export default (theme:'dark'|'light') =>StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.light.primary,
+    backgroundColor: Colors[theme].primary,
   },
   recentSection: {
     paddingHorizontal: wp(4),
@@ -24,10 +24,10 @@ export default StyleSheet.create({
   recentTitle: {
     fontSize: FontSize.small,
     fontWeight: "700",
-    color: Colors.light.whiteText,
+    color: Colors[theme].whiteText,
   },
   createGroupButton: {
-    backgroundColor: Colors.light.pink,
+    backgroundColor: Colors[theme].pink,
     paddingHorizontal: wp(3),
     paddingVertical: hp(0.3),
     borderRadius: wp(5),
@@ -35,7 +35,7 @@ export default StyleSheet.create({
     justifyContent:'center'
   },
   createGroupText: {
-    color: Colors.light.whiteText,
+    color: Colors[theme].whiteText,
     fontSize: FontSize.small,
     fontWeight: "700",
   },
@@ -69,14 +69,14 @@ export default StyleSheet.create({
   
 },
 likesText: {
-  color: Colors.light.whiteText,
+  color: Colors[theme].whiteText,
   fontSize: FontSize.regular,
   fontWeight: "bold",
   marginLeft: wp(1),
 },
   messagesContainer: {
     flex: 1,
-    backgroundColor: Colors.light.background,
+    backgroundColor: Colors[theme].background,
     borderTopLeftRadius: wp(6),
     borderTopRightRadius: wp(6),
    

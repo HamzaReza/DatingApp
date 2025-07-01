@@ -4,7 +4,7 @@ import { Colors } from "@/constants/Colors";
 import { FontSize } from "@/constants/FontSize";
 import { hp, wp } from "@/utils";
 import React from "react";
-import { ImageBackground, StyleSheet, View } from "react-native";
+import { ImageBackground, StyleSheet, View, useColorScheme } from "react-native";
 
 type UpcomingEventCardProps = {
   backgroundImage: string;
@@ -21,24 +21,28 @@ const UpcomingEventCard: React.FC<UpcomingEventCardProps> = ({
   date,
   location,
 }) => {
+  const colorScheme = useColorScheme();
+  const theme = colorScheme === "dark" ? "dark" : "light";
+  const themedStyles = styles(theme);
+
   return (
-    <View style={styles.imageBackgroundContainer}>
+    <View style={themedStyles.imageBackgroundContainer}>
       <ImageBackground
         source={{ uri: backgroundImage }}
-        style={styles.imageBackground}
+        style={themedStyles.imageBackground}
         resizeMode="cover"
       >
-        <View style={styles.eventStatusConatiner}>
-          <RnText style={styles.statusText}>{status}</RnText>
+        <View style={themedStyles.eventStatusConatiner}>
+          <RnText style={themedStyles.statusText}>{status}</RnText>
         </View>
 
-        <View style={styles.bottomContainer}>
-          <View style={styles.titleDateContainer}>
-            <RnText style={styles.titleText}>{title}</RnText>
-            <RnText style={styles.dateTimeText}>{date}</RnText>
+        <View style={themedStyles.bottomContainer}>
+          <View style={themedStyles.titleDateContainer}>
+            <RnText style={themedStyles.titleText}>{title}</RnText>
+            <RnText style={themedStyles.dateTimeText}>{date}</RnText>
           </View>
-          <View style={styles.locationContainer}>
-            <RnText style={styles.locationText}>{location}</RnText>
+          <View style={themedStyles.locationContainer}>
+            <RnText style={themedStyles.locationText}>{location}</RnText>
           </View>
         </View>
       </ImageBackground>
@@ -48,7 +52,7 @@ const UpcomingEventCard: React.FC<UpcomingEventCardProps> = ({
 
 export default UpcomingEventCard;
 
-const styles = StyleSheet.create({
+const styles = (theme: 'dark' | 'light') => StyleSheet.create({
   imageBackgroundContainer: {
     width: "100%",
     height: hp(24),
@@ -56,7 +60,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     marginVertical: hp(1),
     borderRadius: Borders.radius2,
-    backgroundColor: Colors.light.gray,
+    backgroundColor: Colors[theme].gray,
   },
   imageBackground: {
     width: wp(100),
@@ -66,13 +70,13 @@ const styles = StyleSheet.create({
   },
   eventStatusConatiner: {
     borderRadius: Borders.radius2,
-    backgroundColor: Colors.light.whiteText,
+    backgroundColor: Colors[theme].whiteText,
     padding: wp(0.5),
     paddingHorizontal: wp(2),
     alignSelf: "flex-start",
   },
   statusText: {
-    color: Colors.light.pink,
+    color: Colors[theme].pink,
   },
   bottomContainer: {
     flexDirection: "row",
@@ -85,11 +89,11 @@ const styles = StyleSheet.create({
   titleText: {
     fontSize: FontSize.medium,
     marginBottom: wp(2),
-    color: Colors.light.whiteText,
+    color: Colors[theme].whiteText,
   },
   dateTimeText: {
     fontSize: FontSize.small,
-    color: Colors.light.whiteText,
+    color: Colors[theme].whiteText,
   },
   locationContainer: {
     alignItems: "flex-end",
@@ -97,6 +101,6 @@ const styles = StyleSheet.create({
   },
   locationText: {
     fontSize: FontSize.small,
-    color: Colors.light.whiteText,
+    color: Colors[theme].whiteText,
   },
 });

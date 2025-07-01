@@ -4,10 +4,10 @@ import { FontSize } from '@/constants/FontSize';
 import { hp, wp } from '@/utils';
 import { StyleSheet } from 'react-native';
 
-export default StyleSheet.create({
+export default (theme:'dark'|'light')=> StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.light.background,
+    backgroundColor: Colors[theme].background,
   },
   backgroundImages: {
     flex: 1,
@@ -46,11 +46,11 @@ export default StyleSheet.create({
   width: wp(12),
   height: wp(12),
   borderRadius: Borders.circle,
-  backgroundColor: Colors.light.whiteText,
+  backgroundColor: Colors[theme].whiteText,
   justifyContent: 'center',
   alignItems: 'center',
   borderWidth: 2,
-  borderColor: Colors.light.whiteText,
+  borderColor: Colors[theme].whiteText,
   elevation: 5,
 },
 rightHeartBadge: {
@@ -60,11 +60,11 @@ rightHeartBadge: {
   width: wp(12),
   height: wp(12),
   borderRadius: Borders.circle,
-  backgroundColor: Colors.light.whiteText,
+  backgroundColor: Colors[theme].whiteText,
   justifyContent: 'center',
   alignItems: 'center',
   borderWidth: 2,
-  borderColor: Colors.light.whiteText,
+  borderColor: Colors[theme].whiteText,
   elevation: 5,
 },
   content: {
@@ -75,13 +75,13 @@ rightHeartBadge: {
   title: {
     fontSize: FontSize.extraLarge,
     fontWeight: 'bold',
-    color: Colors.light.pink,
+    color: Colors[theme].pink,
     textAlign: 'center',
     marginBottom: hp(1),
   },
   subtitle: {
     fontSize: FontSize.medium,
-    color: Colors.light.tabIconDefault,
+    color: Colors[theme].tabIconDefault,
     textAlign: 'center',
     marginBottom: hp(4),
     lineHeight: 20,
@@ -93,13 +93,13 @@ rightHeartBadge: {
     gap: hp(2),
   },
   bookButton: {
-    backgroundColor: Colors.light.pink,
+    backgroundColor: Colors[theme].pink,
     paddingVertical: hp(1.6),
     borderRadius: Borders.radius2,
     alignItems: 'center',
   },
   bookButtonText: {
-    color: Colors.light.whiteText,
+    color: Colors[theme].whiteText,
     fontSize: FontSize.large,
     fontWeight: 'bold',
   },
@@ -111,7 +111,7 @@ rightHeartBadge: {
    
   },
   messageButtonText: {
-    color: Colors.light.pink,
+    color: Colors[theme].pink,
     fontSize: FontSize.large,
      fontWeight: 'bold',
   },
@@ -122,7 +122,7 @@ rightHeartBadge: {
     width: wp(10),
     height: wp(10),
     borderRadius: wp(5),
-    backgroundColor: Colors.light.gray,
+    backgroundColor: Colors[theme].gray,
     justifyContent: 'center',
     alignItems: 'center',
   },

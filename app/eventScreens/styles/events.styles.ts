@@ -3,7 +3,7 @@ import { FontSize } from "@/constants/FontSize";
 import { hp, wp } from "@/utils";
 import { StyleSheet } from "react-native";
 
-export default StyleSheet.create({
+export default (theme:'dark'|'light')=>StyleSheet.create({
   headerContainer: {
     width: wp(100),
     height: hp(7),
@@ -41,14 +41,14 @@ export default StyleSheet.create({
   },
   mainContainer: {
      marginVertical: hp(2),
-     backgroundColor:Colors.light.backgroundSecondary
+     backgroundColor:Colors[theme].backgroundSecondary
 
   },
   titleText: {
     fontWeight: 'bold',
     textAlign: 'center',
     fontSize: FontSize.large,
-    color:Colors.light.primary
+    color:Colors[theme].primary
   },
   detailsContainer:{
     alignSelf:'center',

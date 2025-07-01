@@ -4,7 +4,7 @@ import { FontSize } from '@/constants/FontSize';
 import { hp, wp } from '@/utils';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, useColorScheme } from 'react-native';
 
 type Props = {
   title: string;
@@ -14,7 +14,7 @@ type Props = {
   onRightPress?: () => void;
   backgroundColor?: string;
   textColor?: string;
-  titleColor?:string
+  titleColor?: string;
 };
 
 const CustomHeader = ({
@@ -23,27 +23,35 @@ const CustomHeader = ({
   leftIcon = 'arrow-back',
   rightIcon,
   onRightPress,
-  backgroundColor = 'white',
-  textColor = Colors.light.pink,
-  titleColor=Colors.light.blackText
+  backgroundColor,
+  textColor,
+  titleColor,
 }: Props) => {
+  const colorScheme = useColorScheme();
+  const theme = colorScheme === "dark" ? "dark" : "light";
+
+  // Use theme colors if not provided via props
+  const bg = backgroundColor ?? Colors[theme].background;
+  const txtColor = textColor ?? Colors[theme].pink;
+  const ttlColor = titleColor ?? Colors[theme].blackText;
+
   return (
     <View style={styles.headerContainer}>
       <TouchableOpacity
         onPress={onBackPress}
-        style={[styles.iconButton, { backgroundColor }]}
+        style={[styles.iconButton, { backgroundColor: bg }]}
       >
-        <Ionicons name={leftIcon as any} size={20} color={textColor} />
+        <Ionicons name={leftIcon as any} size={20} color={txtColor} />
       </TouchableOpacity>
 
-      <Text style={[styles.title, { color: titleColor }]}>{title}</Text>
+      <Text style={[styles.title, { color: ttlColor }]}>{title}</Text>
 
       {rightIcon ? (
         <TouchableOpacity
           onPress={onRightPress}
-          style={[styles.iconButton, { backgroundColor }]}
+          style={[styles.iconButton, { backgroundColor: bg }]}
         >
-          <Ionicons name={rightIcon as any} size={20} color={textColor} />
+          <Ionicons name={rightIcon as any} size={20} color={txtColor} />
         </TouchableOpacity>
       ) : (
         <View style={{ width: wp(10) }} />
@@ -60,7 +68,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: hp(2),
-   
   },
   iconButton: {
     width: wp(10),

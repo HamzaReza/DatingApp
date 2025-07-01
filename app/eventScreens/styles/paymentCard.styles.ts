@@ -4,23 +4,23 @@ import { FontSize } from "@/constants/FontSize";
 import { hp, wp } from "@/utils";
 import { StyleSheet } from "react-native";
 
-export default StyleSheet.create({
+export default (theme:'dark'|'light')=> StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.light.backgroundSecondary,
+    backgroundColor: Colors[theme].backgroundSecondary,
 
   },
   sectionTitle: {
     fontSize: FontSize.large,
     fontWeight: '600',
     marginTop: wp(7),
-    color: '#111',
+    color: Colors[theme].blackText,
     marginBottom:wp(5)
   },
   card: {
     width: wp(80),
     height: hp(20),
-    backgroundColor: '#FF7B8A',
+    backgroundColor: Colors[theme].pink,
     borderRadius: Borders.radius2,
     padding: wp(5),
     alignSelf: 'flex-start',
@@ -33,7 +33,7 @@ export default StyleSheet.create({
     justifyContent: 'space-between',
   },
   cardName: {
-    color: 'white',
+    color: Colors[theme].background,
     fontSize: FontSize.large,
     fontWeight: '600',
   },
@@ -41,18 +41,18 @@ export default StyleSheet.create({
     width: wp(6),
     height: wp(6),
     borderRadius:Borders.circle,
-    backgroundColor: 'white',
+    backgroundColor: Colors[theme].background,
   },
   cardNumber: {
     marginTop: wp(8),
     fontSize: FontSize.large,
     fontWeight: '600',
-    color: '#111',
+    color: Colors[theme].blackText,
   },
   cardExp: {
     marginTop: wp(2),
     fontSize: FontSize.small,
-    color: '#111',
+    color: Colors[theme].blackText,
   },
   confirmButton: {
     position: 'absolute',

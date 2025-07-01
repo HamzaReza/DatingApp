@@ -4,7 +4,7 @@ import { FontSize } from "@/constants/FontSize"
 import { hp, wp } from "@/utils"
 import { StyleSheet } from "react-native"
 
- export default StyleSheet.create({
+ export default (theme:'dark'|'light')=>StyleSheet.create({
     container: {
        flex: 1,
        backgroundColor: "transparent",
@@ -12,7 +12,7 @@ import { StyleSheet } from "react-native"
    
      modalContainer: {
        height: hp(87), // Set height to 85% of the screen
-       backgroundColor: Colors.light.background,
+       backgroundColor: Colors[theme].background,
        marginTop: "auto", // Push modal to the bottom
        borderTopLeftRadius: wp(6),
        borderTopRightRadius: wp(6),
@@ -58,7 +58,7 @@ import { StyleSheet } from "react-native"
        bottom: -2,
        borderRadius: wp(7),
        borderWidth: 2,
-       borderColor: Colors.light.redText,
+       borderColor: Colors[theme].redText,
      },
      userDetails: {
        flex: 1,
@@ -66,12 +66,12 @@ import { StyleSheet } from "react-native"
      userName: {
        fontSize: FontSize.small,
        fontWeight: "600",
-       color: Colors.light.blackText,
+       color: Colors[theme].blackText,
        marginBottom: hp(0.3),
      },
      userStatus: {
        fontSize: FontSize.regular,
-       color: Colors.light.primary,
+       color: Colors[theme].primary,
      },
    
      dateSeparator: {
@@ -109,32 +109,32 @@ import { StyleSheet } from "react-native"
        marginBottom: hp(0.5),
      },
      ownBubble: {
-       backgroundColor: Colors.light.sentMessage,
+       backgroundColor: Colors[theme].sentMessage,
        borderRadius: Borders.radius1,
      },
      otherBubble: {
-       backgroundColor: Colors.light.recievedMessage,
+       backgroundColor: Colors[theme].recievedMessage,
        borderRadius: Borders.radius1,
      },
      messageText: {
        fontSize: FontSize.regular,
      },
      ownMessageText: {
-       color: Colors.light.blackText,
+       color: Colors[theme].blackText,
      },
      otherMessageText: {
-       color: Colors.light.blackText,
+       color: Colors[theme].blackText,
      },
      messageTime: {
        fontSize: FontSize.extraSmall,
-       color: Colors.light.blackText,
+       color: Colors[theme].blackText,
        marginHorizontal: wp(2),
      },
      inputContainer: {
        flexDirection: "row",
        paddingHorizontal: wp(4),
    
-       backgroundColor: Colors.light.background,
+       backgroundColor: Colors[theme].background,
      },
      sendButton: {
        width: wp(12),
@@ -143,7 +143,7 @@ import { StyleSheet } from "react-native"
        justifyContent: "center",
        alignItems: "center",
        borderWidth: 1,
-       borderColor: Colors.light.gray,
+       borderColor: Colors[theme].gray,
      },
      chatHeaderGradient: {
        flexDirection: "row",
@@ -159,7 +159,7 @@ import { StyleSheet } from "react-native"
        padding: wp(3),
        alignItems: "center",
        justifyContent: "center",
-       borderColor: Colors.light.tabIconDefault,
+       borderColor: Colors[theme].tabIconDefault,
        borderWidth: 0.5,
        borderRadius: Borders.radius2,
        marginRight: wp(3),
@@ -167,7 +167,7 @@ import { StyleSheet } from "react-native"
      dateLine: {
        flex: 1,
        height: 1,
-       backgroundColor: Colors.light.gray,
+       backgroundColor: Colors[theme].gray,
        marginHorizontal: wp(2),
      }, 
  })

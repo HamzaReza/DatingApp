@@ -1,7 +1,7 @@
+import createStyles from '@/app/tabStyles/chat.styles';
 import RnInput from "@/components/RnInput";
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
-import { Borders } from "@/constants/Borders";
 import { Colors } from "@/constants/Colors";
 import { FontSize } from "@/constants/FontSize";
 import { hp, wp } from "@/utils";
@@ -15,15 +15,14 @@ import {
   FlatList,
   Image,
   StatusBar,
-  StyleSheet,
   TouchableOpacity,
-  View,
+  useColorScheme,
+  View
 } from "react-native";
 import {
   GestureHandlerRootView,
   PanGestureHandler as RNGHPanGestureHandler,
 } from "react-native-gesture-handler";
-import styles from '@/app/tabStyles/chat.styles'
 
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
@@ -63,6 +62,11 @@ const chatMessages: ChatMessage[] = [
 ];
 
 export default function Chat() {
+
+const colorScheme = useColorScheme();
+  const theme = colorScheme === "dark" ? "dark" : "light";
+  const styles = createStyles(theme);
+
   const { id } = useLocalSearchParams();
   const [message, setMessage] = useState("");
   const translateY = useRef(new Animated.Value(0)).current;
@@ -142,7 +146,7 @@ export default function Chat() {
     <GestureHandlerRootView style={styles.container}>
       <StatusBar
         barStyle="light-content"
-        backgroundColor={Colors.light.primary}
+        backgroundColor={Colors[theme].primary}
       />
 
       <Animated.View
@@ -193,7 +197,7 @@ export default function Chat() {
               <Ionicons
                 name="ellipsis-vertical"
                 size={22}
-                color={Colors.light.blackText}
+                color={Colors[theme].blackText}
               />
             </TouchableOpacity>
           </View>
@@ -220,22 +224,22 @@ export default function Chat() {
               value={message}
               onChangeText={setMessage}
               placeholder="Send message"
-              style={{ fontSize: FontSize.small, color: Colors.light.blackText }}
+              style={{ fontSize: FontSize.small, color: Colors[theme].blackText }}
               containerStyle={{ flex: 1, marginRight: wp(3), marginBottom: 0 }}
               inputContainerStyle={{
                 borderWidth: 1,
-                borderColor: Colors.light.gray,
+                borderColor: Colors[theme].gray,
                 borderRadius: wp(6),
                 paddingHorizontal: wp(4),
                 minHeight: hp(6),
-                backgroundColor: Colors.light.background,
+                backgroundColor: Colors[theme].background,
               }}
             />
             <TouchableOpacity
               style={styles.sendButton}
               onPress={handleSendMessage}
             >
-              <Feather name="send" size={20} color={Colors.light.pink} />
+              <Feather name="send" size={20} color={Colors[theme].pink} />
             </TouchableOpacity>
           </View>
         </ScrollContainer>

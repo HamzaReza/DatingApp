@@ -4,12 +4,12 @@ import { FontSize } from "@/constants/FontSize";
 import { hp, wp } from "@/utils";
 import { StyleSheet } from "react-native";
 
- export default StyleSheet.create({
+ export default (theme:'dark'|'light')=>StyleSheet.create({
   container: {
     paddingHorizontal: 0,
     paddingVertical: 0,
     flex: 1,
-    backgroundColor: "#000",
+    backgroundColor: Colors[theme].background,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -32,7 +32,7 @@ import { StyleSheet } from "react-native";
   },
   timelineBarFilled: {
     height: 4,
-    backgroundColor: Colors.light.pink,
+    backgroundColor: Colors[theme].pink,
     borderRadius: 2,
     width: "100%",
     position: "absolute",
@@ -56,7 +56,7 @@ import { StyleSheet } from "react-native";
    
   },
   profileName: {
-    color: Colors.light.blackText,
+    color: Colors[theme].blackText,
     fontWeight: "bold",
     fontSize: FontSize.small,
     textAlign: "center",
@@ -103,7 +103,7 @@ height: hp(6),
     justifyContent: "center",
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     borderRadius: Borders.radius2,
-    borderColor: Colors.light.gray,
+    borderColor: Colors[theme].gray,
     borderWidth: 1,
   },
 });

@@ -1,9 +1,10 @@
-import styles from "@/app/tabStyles/home.styles";
+import createStyles from "@/app/tabStyles/home.styles";
 import QuestionCard from "@/components/QuestionCard";
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
 import StoryCircle from "@/components/StoryCircle";
 import { Colors } from "@/constants/Colors";
+import { useColorScheme } from "@/hooks/useColorScheme";
 import { setToken } from "@/redux/slices/userSlice";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { router } from "expo-router";
@@ -111,6 +112,13 @@ const questions: Question[] = [
 ];
 
 export default function Home() {
+
+
+ const colorScheme = useColorScheme();
+  const theme = colorScheme === "dark" ? "dark" : "light";
+  const styles = createStyles(theme);
+
+
   const [activeTab, setActiveTab] = useState<
     "Make Friends" | "Search Partners"
   >("Make Friends");
@@ -146,7 +154,7 @@ export default function Home() {
           XYZ
         </RnText>
         <TouchableOpacity style={styles.notificationContainer}>
-        <MaterialIcons name="notifications-none" size={24} color={Colors.dark.greenText} onPress={()=>router.push('/eventScreens/explore')} />
+        <MaterialIcons name="notifications-none" size={24} color={Colors[theme].greenText} onPress={()=>router.push('/eventScreens/explore')} />
           {hasNotification && <View style={styles.notificationDot} />}
         </TouchableOpacity>
       </View>

@@ -3,7 +3,7 @@ import { FontSize } from '@/constants/FontSize';
 import { hp, wp } from '@/utils';
 import { StyleSheet } from 'react-native';
 
-export default StyleSheet.create({
+export default (theme:'dark'|'light')=>StyleSheet.create({
    statsContainer: {
         flexDirection: 'row',
         // justifyContent: 'center',
@@ -26,12 +26,12 @@ export default StyleSheet.create({
       statNumber: {
         fontSize: FontSize.regular,
         fontWeight: 'bold',
-        color: Colors.light.redText,
+        color: Colors[theme].redText,
       
       },
       statLabel: {
         fontSize: FontSize.regular,
-        color: Colors.light.greenText,
+        color: Colors[theme].greenText,
       },
       section: {
        alignItems:'center'
@@ -39,7 +39,7 @@ export default StyleSheet.create({
       sectionTitle: {
         fontSize: FontSize.large,
         fontWeight: 'bold',
-        color: Colors.light.greenText,
+        color: Colors[theme].greenText,
         marginBottom: hp(2),
       },
       matchesList: {

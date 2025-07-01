@@ -1,4 +1,4 @@
-import styles from '@/app/tabStyles/messages.styles';
+import createStyles from '@/app/tabStyles/messages.styles';
 import { MessageItem } from "@/components/MessageItem";
 import PrimaryHeader from "@/components/PrimaryHeader";
 import RnText from "@/components/RnText";
@@ -15,6 +15,7 @@ import {
   SafeAreaView,
   StyleSheet,
   TouchableOpacity,
+  useColorScheme,
   View
 } from "react-native";
 
@@ -118,6 +119,9 @@ const messages: Message[] = [
 
 export default function Messages() {
 
+  const colorScheme = useColorScheme();
+    const theme = colorScheme === "dark" ? "dark" : "light";
+    const styles = createStyles(theme);
 
 
   const handleBackPress = () => {
@@ -152,7 +156,7 @@ export default function Messages() {
         <Image source={{ uri: item.image }} style={styles.recentMatchImage} />
         {item.likes && (
           <View style={styles.likesOverlay}>
-            <Ionicons name="heart" size={28} color={Colors.light.whiteText} />
+            <Ionicons name="heart" size={28} color={Colors[theme].whiteText} />
             <RnText style={styles.likesText}>{item.likes}</RnText>
           </View>
         )}
@@ -180,7 +184,7 @@ export default function Messages() {
   resizeMode="cover"
 >
       <LinearGradient
-        colors={[Colors.light.primary, Colors.light.pink]}
+        colors={[Colors[theme].primary, Colors[theme].pink]}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 2 }}
          style={[StyleSheet.absoluteFill]}
@@ -189,8 +193,8 @@ export default function Messages() {
         <View style={{paddingHorizontal: wp(4)}}>
           <PrimaryHeader
             title="Messages"
-            titleColor={Colors.light.whiteText}
-            leftIconColor={Colors.light.whiteText}
+            titleColor={Colors[theme].whiteText}
+            leftIconColor={Colors[theme].whiteText}
             showRightIcon={false}
             borderWidth={0.5}
             leftIconSize={17}

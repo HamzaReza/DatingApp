@@ -5,7 +5,7 @@ import { wp } from '@/utils';
 import { Entypo } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 
 type Props = {
   title: string;
@@ -17,6 +17,11 @@ type Props = {
 
 
 const EventCard = ({ title, date, location, price, imageUrl }: Props) => {
+
+ const colorScheme = useColorScheme();
+  const theme = colorScheme === "dark" ? "dark" : "light";
+ const styles = createStyles(theme)
+
   return (
     <View style={styles.cardContainer}>
       {/* 1. Image Container */}
@@ -49,10 +54,10 @@ const EventCard = ({ title, date, location, price, imageUrl }: Props) => {
 
 export default EventCard;
 
-const styles = StyleSheet.create({
+const createStyles = (theme:'dark'|'light')=>StyleSheet.create({
   cardContainer: {
     flexDirection: 'row',
-    backgroundColor: Colors.light.background,
+    backgroundColor: Colors[theme].background,
     borderRadius: Borders.radius2,
     padding: wp(3),
     marginVertical: wp(2),
@@ -87,7 +92,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     flexShrink: 1,
     flexWrap: 'wrap',
-    color: '#111',
+    color: Colors[theme].blackText,
   },
   subInfo: {
     flexDirection: 'row',
@@ -95,11 +100,11 @@ const styles = StyleSheet.create({
     marginTop: wp(1),
   },
   date: {
-    color: '#888',
+    color: Colors[theme].tabIconDefault,
     fontSize: FontSize.extraSmall,
   },
   location: {
-    color: '#888',
+   color: Colors[theme].tabIconDefault,
     fontSize: FontSize.extraSmall,
   },
   actionContainer: {

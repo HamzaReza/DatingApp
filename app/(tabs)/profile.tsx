@@ -1,5 +1,5 @@
 
-import styles from "@/app/tabStyles/profile.styles";
+import createStyles from "@/app/tabStyles/profile.styles";
 import InterestTag from "@/components/InterestTag";
 import RnText from "@/components/RnText";
 import RoundButton from "@/components/RoundButton";
@@ -15,6 +15,7 @@ import {
   Modal,
   Pressable,
   TouchableOpacity,
+  useColorScheme,
   View
 } from "react-native";
 
@@ -49,6 +50,11 @@ const profileData = {
 };
 
 export default function Profile() {
+
+ const colorScheme = useColorScheme();
+  const theme = colorScheme === "dark" ? "dark" : "light";
+  const styles = createStyles(theme);
+
   const [modalVisible, setModalVisible] = useState(false);
 const [selectedIndex, setSelectedIndex] = useState(0);
   const [showFullAbout, setShowFullAbout] = useState(false);
@@ -118,7 +124,7 @@ const [selectedIndex, setSelectedIndex] = useState(0);
           <Ionicons
             name="chevron-back"
             size={24}
-            color={Colors.light.redText}
+            color={Colors[theme].redText}
           />
         </TouchableOpacity>
 
@@ -126,7 +132,7 @@ const [selectedIndex, setSelectedIndex] = useState(0);
           <Ionicons
             name="create-outline"
             size={24}
-            color={Colors.light.redText}
+            color={Colors[theme].redText}
           />
         </TouchableOpacity>
       </View>
@@ -161,21 +167,21 @@ const [selectedIndex, setSelectedIndex] = useState(0);
           style={styles.actionButton}
           onPress={handleDislikePress}
         >
-          <Ionicons name="close" size={28} color={Colors.light.greenText}/>
+          <Ionicons name="close" size={28} color={Colors[theme].greenText}/>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.actionButton, styles.likeButton]}
           onPress={handleLikePress}
         >
-          <Ionicons name="heart" size={32} color={Colors.light.whiteText}/>
+          <Ionicons name="heart" size={32} color={Colors[theme].whiteText}/>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.actionButton}
           onPress={handleSuperLikePress}
         >
-          <Ionicons name="star" size={28} color={Colors.light.greenText} />
+          <Ionicons name="star" size={28} color={Colors[theme].greenText} />
         </TouchableOpacity>
       </Animated.View>
 
@@ -211,8 +217,8 @@ const [selectedIndex, setSelectedIndex] = useState(0);
               <RoundButton
                 iconName="send"
                 iconSize={26}
-                iconColor={Colors.light.redText}
-                borderColor={Colors.light.redText}
+                iconColor={Colors[theme].redText}
+                borderColor={Colors.[theme].redText}
               />
             </TouchableOpacity>
           </View>
@@ -230,7 +236,7 @@ const [selectedIndex, setSelectedIndex] = useState(0);
               <Ionicons
                 name="location"
                 size={16}
-                color={Colors.light.redText}
+                color={Colors[theme].redText}
               />
               <RnText style={styles.distance}>{profileData.distance}</RnText>
             </View>
@@ -287,7 +293,7 @@ const [selectedIndex, setSelectedIndex] = useState(0);
                     <Ionicons
                       name="play"
                       size={20}
-                      color={Colors.light.whiteText}
+                      color={Colors[theme].whiteText}
                     />
                   </View>
                 </TouchableOpacity>
@@ -318,7 +324,7 @@ const [selectedIndex, setSelectedIndex] = useState(0);
       style={styles.closeButton}
       onPress={() => setModalVisible(false)}
     >
-      <Ionicons name="arrow-back" size={25} color={Colors.light.pink} />
+      <Ionicons name="arrow-back" size={25} color={Colors[theme].pink} />
     </TouchableOpacity>
     </View>
    

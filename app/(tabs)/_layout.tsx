@@ -7,10 +7,14 @@ import {
   Octicons,
 } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, useColorScheme, View } from "react-native";
 
 
 export default function TabLayout() {
+
+const colorScheme = useColorScheme();
+const theme = colorScheme === "dark" ? "dark" : "light";
+
   return (
     <Tabs
       screenOptions={{
@@ -19,7 +23,7 @@ export default function TabLayout() {
         tabBarStyle: {
           borderWidth: 0,
           borderTopWidth: 0,
-          backgroundColor: Colors.light.background,
+          backgroundColor: Colors[theme].background,
           height: hp(8),
           marginHorizontal: wp(4),
           marginBottom: hp(2),
@@ -29,7 +33,7 @@ export default function TabLayout() {
           justifyContent: "center", // Center vertically
         },
 
-        tabBarActiveTintColor: Colors.light.whiteText,
+        tabBarActiveTintColor: Colors[theme].whiteText,
         tabBarInactiveTintColor: "#FFB3BA",
         tabBarShowLabel: false,
         tabBarIconStyle: {
@@ -60,7 +64,7 @@ export default function TabLayout() {
                 styles.iconContainer,
                 {
                   backgroundColor: focused
-                    ? Colors.light.primary
+                    ? Colors[theme].primary
                     : "transparent",
                 },
               ]}
@@ -69,7 +73,7 @@ export default function TabLayout() {
                 name="home"
                 size={focused ? 24 : 28}
                 color={
-                  focused ? Colors.light.whiteText : "rgba(255, 88, 98, 0.8)"
+                  focused ? Colors[theme].whiteText : "rgba(255, 88, 98, 0.8)"
                 }
               />
             </View>
@@ -100,7 +104,7 @@ export default function TabLayout() {
                 styles.iconContainer,
                 {
                   backgroundColor: focused
-                    ? Colors.light.primary
+                    ? Colors[theme].primary
                     : "transparent",
                 },
               ]}
@@ -109,7 +113,7 @@ export default function TabLayout() {
                 name="compass"
                 size={focused ? 24 : 28}
                 color={
-                  focused ? Colors.light.whiteText : "rgba(255, 88, 98, 0.8)"
+                  focused ? Colors[theme].whiteText : "rgba(255, 88, 98, 0.8)"
                 }
               />
             </View>
@@ -138,7 +142,7 @@ export default function TabLayout() {
                 styles.iconContainer,
                 {
                   backgroundColor: focused
-                    ? Colors.light.primary
+                    ? Colors[theme].primary
                     : "transparent",
                 },
               ]}
@@ -147,7 +151,7 @@ export default function TabLayout() {
                 name="add"
                 size={focused ? 24 : 32}
                 color={
-                  focused ? Colors.light.whiteText : "rgba(255, 88, 98, 0.8)"
+                  focused ? Colors[theme].whiteText : "rgba(255, 88, 98, 0.8)"
                 }
               />
             </View>
@@ -176,7 +180,7 @@ export default function TabLayout() {
                 styles.iconContainer,
                 {
                   backgroundColor: focused
-                    ? Colors.light.primary
+                    ? Colors[theme].primary
                     : "transparent",
                 },
               ]}
@@ -185,7 +189,7 @@ export default function TabLayout() {
                 name="user-friends"
                 size={focused ? 24 : 22}
                 color={
-                  focused ? Colors.light.whiteText : "rgba(255, 88, 98, 0.8)"
+                  focused ? Colors[theme].whiteText : "rgba(255, 88, 98, 0.8)"
                 }
               />
             </View>
@@ -214,7 +218,7 @@ export default function TabLayout() {
                 styles.iconContainer,
                 {
                   backgroundColor: focused
-                    ? Colors.light.primary
+                    ? Colors[theme].primary
                     : "transparent",
                 },
               ]}
@@ -223,7 +227,7 @@ export default function TabLayout() {
                 name="chatbubble-sharp"
                 size={focused ? 24 : 22}
                 color={
-                  focused ? Colors.light.whiteText : "rgba(255, 88, 98, 0.8)"
+                  focused ? Colors[theme].whiteText : "rgba(255, 88, 98, 0.8)"
                 }
               />
             </View>
@@ -252,7 +256,7 @@ export default function TabLayout() {
                 styles.iconContainer,
                 {
                   backgroundColor: focused
-                    ? Colors.light.primary
+                    ? Colors[theme].primary
                     : "transparent",
                 },
               ]}
@@ -261,7 +265,7 @@ export default function TabLayout() {
                 name="ticket"
                 size={focused ? 24 : 22}
                 color={
-                  focused ? Colors.light.whiteText : "rgba(255, 88, 98, 0.8)"
+                  focused ? Colors[theme].whiteText : "rgba(255, 88, 98, 0.8)"
                 }
               />
             </View>

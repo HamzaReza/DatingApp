@@ -17,7 +17,7 @@ export default (theme: 'light' | 'dark') => StyleSheet.create({
     alignItems: "center",
   },
   locationText: {
-    color: Colors.light.greenText,
+    color: Colors[theme].greenText,
     fontSize: FontSize.regular,
     fontWeight: "600",
     marginHorizontal: wp(1),
@@ -25,7 +25,7 @@ export default (theme: 'light' | 'dark') => StyleSheet.create({
   title: {
     fontSize: FontSize.extraLarge,
     fontWeight: "bold",
-    color: Colors.light.greenText,
+    color: Colors[theme].greenText,
   },
   headerActions: {
     flexDirection: "row",
@@ -42,18 +42,18 @@ export default (theme: 'light' | 'dark') => StyleSheet.create({
   sectionTitle: {
     fontSize: FontSize.large,
     fontWeight: "bold",
-    color: Colors.light.greenText,
+    color: Colors[theme].greenText,
     marginBottom: hp(1),
   },
   hugText: {
     fontSize: FontSize.large,
     fontWeight: "bold",
-    color: Colors.light.redText,
+    color: Colors[theme].redText,
     marginBottom: hp(2),
   },
   sectionSubtitle: {
     fontSize: FontSize.regular,
-    color: Colors.light.blackText,
+    color: Colors[theme].blackText,
     marginBottom: hp(2),
   },
   interestsContainer: {
@@ -64,7 +64,7 @@ export default (theme: 'light' | 'dark') => StyleSheet.create({
     position: "relative",
   },
   connectButton: {
-    backgroundColor: Colors.light.redText,
+    backgroundColor: Colors[theme].redText,
     paddingHorizontal: wp(4),
     paddingVertical: hp(1),
     borderRadius: wp(5),
@@ -72,13 +72,13 @@ export default (theme: 'light' | 'dark') => StyleSheet.create({
     marginBottom: hp(2),
   },
   connectText: {
-    color: Colors.light.background,
+    color: Colors[theme].background,
     fontSize: FontSize.regular,
     fontWeight: "600",
   },
   mapContainer: {
     height: hp(25),
-    backgroundColor: Colors.light.greenText,
+    backgroundColor: Colors[theme].greenText,
     borderRadius: wp(4),
     position: "relative",
     overflow: "hidden",
@@ -89,7 +89,7 @@ export default (theme: 'light' | 'dark') => StyleSheet.create({
     alignItems: "center",
   },
   mapText: {
-    color: Colors.light.greenText,
+    color: Colors[theme].greenText,
     marginTop: hp(1),
   },
   userPins: {
@@ -104,7 +104,7 @@ export default (theme: 'light' | 'dark') => StyleSheet.create({
     width: "100%",
     height: "100%",
     borderRadius: wp(4),
-    backgroundColor: Colors.light.redText,
+    backgroundColor: Colors[theme].redText,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -114,7 +114,7 @@ export default (theme: 'light' | 'dark') => StyleSheet.create({
     justifyContent: "space-between",
   },
   viewAllText: {
-    color: Colors.light.greenText,
+    color: Colors[theme].greenText,
   },
   filterModalContainer: {
     backgroundColor: Colors[theme].background,
@@ -122,7 +122,7 @@ export default (theme: 'light' | 'dark') => StyleSheet.create({
     padding: wp(4),
   },
   applyFilterButton: {
-    backgroundColor: Colors.light.redText,
+    backgroundColor: Colors[theme].redText,
     borderRadius: Borders.circle,
     paddingVertical: hp(2),
     paddingHorizontal: wp(8),
@@ -134,12 +134,12 @@ export default (theme: 'light' | 'dark') => StyleSheet.create({
   filterHeaderText: {
     fontSize: FontSize.large,
     fontFamily: FontFamily.semiBold,
-    color: Colors.light.redText,
+    color: Colors[theme].redText,
     textAlign: 'center',
     marginBottom: hp(2),
   },
   filterHeaderSubText: {
-    color: Colors.light.redText,
+    color: Colors[theme].redText,
     textAlign: 'center',
     marginBottom: hp(4),
   },

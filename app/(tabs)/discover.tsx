@@ -180,14 +180,14 @@ export default function Discover() {
       <View style={styles.header}>
         <View>
           <View style={styles.locationContainer}>
-            <Ionicons name="location" size={16} color={Colors.light.redText} />
+            <Ionicons name="location" size={16} color={Colors[theme].redText} />
             <TouchableOpacity>
               <RnText style={styles.locationText}>{selectedLocation}</RnText>
             </TouchableOpacity>
             <Ionicons
               name="chevron-down"
               size={16}
-              color={Colors.light.redText}
+              color={Colors[theme].redText}
             />
           </View>
 
@@ -199,8 +199,8 @@ export default function Discover() {
             <RoundButton
               iconName="search"
               iconSize={24}
-              iconColor={Colors.light.redText}
-              borderColor={Colors.light.redText}
+              iconColor={Colors[theme].redText}
+              borderColor={Colors[theme].redText}
               onPress={() => console.log("Pressed")}
             />
           </TouchableOpacity>
@@ -208,8 +208,8 @@ export default function Discover() {
             <RoundButton
               iconName="tune"
               iconSize={24}
-              iconColor={Colors.light.redText}
-              borderColor={Colors.light.redText}
+              iconColor={Colors[theme].redText}
+              borderColor={Colors[theme].redText}
               onPress={() => setFilterModal(true)}
             />
           </TouchableOpacity>
@@ -271,7 +271,7 @@ export default function Discover() {
         <View style={styles.aroundMeContainer}>
           <View style={styles.mapContainer}>
             <View style={styles.mapPlaceholder}>
-              <Ionicons name="map" size={40} color={Colors.light.redText} />
+              <Ionicons name="map" size={40} color={Colors[theme].redText} />
               <RnText style={styles.mapText}>Map View</RnText>
             </View>
 
@@ -281,7 +281,7 @@ export default function Discover() {
                   <Ionicons
                     name="person"
                     size={16}
-                    color={Colors.light.background}
+                    color={Colors[theme].background}
                   />
                 </View>
               </View>
@@ -293,7 +293,7 @@ export default function Discover() {
                   <Ionicons
                     name="person"
                     size={16}
-                    color={Colors.light.background}
+                    color={Colors[theme].background}
                   />
                 </View>
               </View>

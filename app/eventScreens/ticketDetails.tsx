@@ -1,14 +1,20 @@
-import styles from '@/app/eventScreens/styles/ticketDetails.styles'
+import createStyles from '@/app/eventScreens/styles/ticketDetails.styles'
 import Container from '@/components/RnContainer'
 import RnText from '@/components/RnText'
 import { router } from 'expo-router'
 import React, { useState } from 'react'
-import { TouchableOpacity, View } from 'react-native'
+import { TouchableOpacity, useColorScheme, View } from 'react-native'
 import EventButton from './components/EventButton'
 import CustomHeader from './components/EventHeader'
 
 
 const ticketDetails = () => {
+
+const colorScheme = useColorScheme();
+  const theme = colorScheme === "dark" ? "dark" : "light";
+  const styles = createStyles(theme);
+
+
   const [selected, setSelected] = useState<'vip' | 'economy'>('vip');
   const [seatCount, setSeatCount] = useState(1);
 

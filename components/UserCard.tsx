@@ -3,7 +3,7 @@ import { Colors } from "@/constants/Colors";
 import { FontSize } from "@/constants/FontSize";
 import { hp, wp } from "@/utils";
 import React from "react";
-import { Image, StyleSheet, View } from "react-native";
+import { Image, StyleSheet, useColorScheme, View } from "react-native";
 import RnText from "./RnText";
 
 interface UserCardProps {
@@ -24,7 +24,18 @@ const UserCard: React.FC<UserCardProps> = ({
   image,
   isNew = false,
 }) => {
+
+
+
+  const colorScheme = useColorScheme();
+    const theme = colorScheme === "dark" ? "dark" : "light";
+    const styles = createStyles(theme);
+  
   return (
+
+
+
+    
     <View style={styles.card}>
       <Image source={{ uri: image }} style={styles.image} />
       <View style={styles.overlay} />
@@ -52,7 +63,7 @@ const UserCard: React.FC<UserCardProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles  = (theme:'dark'|'light')=>StyleSheet.create({
   card: {
     width: wp(28),
     height: hp(22),
@@ -73,13 +84,13 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: wp(2),
     left: wp(2),
-    backgroundColor: Colors.light.redText,
+    backgroundColor: Colors[theme].redText,
     paddingHorizontal: wp(2),
     paddingVertical: wp(1),
     borderRadius: Borders.radius1,
   },
   newText: {
-    color: Colors.light.background,
+    color: Colors[theme].background,
     fontSize: FontSize.extraSmall,
     fontWeight: "bold",
   },
@@ -90,7 +101,7 @@ const styles = StyleSheet.create({
     right: wp(2),
   },
   name: {
-    color: Colors.light.whiteText,
+    color: Colors[theme].whiteText,
     fontSize: FontSize.regular,
     fontWeight: "bold",
     marginBottom: hp(0.5),
@@ -103,13 +114,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   location: {
-    color: Colors.light.background,
+    color: Colors[theme].background,
     fontSize: FontSize.extraSmall,
     marginLeft: wp(1),
     textTransform: "uppercase",
   },
   distance: {
-    color: Colors.light.whiteText,
+    color: Colors[theme].whiteText,
     fontSize: FontSize.extraSmall,
     opacity: 0.8,
     textAlign: "center",
@@ -120,7 +131,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: wp(0.1),
     borderRadius: Borders.circle,
     backgroundColor: "rgba(255,255,255,0.2)",
-    borderColor: Colors.light.whiteText,
+    borderColor: Colors[theme].whiteText,
     borderWidth: 0.3,
   },
 });

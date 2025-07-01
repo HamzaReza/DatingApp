@@ -3,7 +3,7 @@ import { Colors } from "@/constants/Colors";
 import { FontSize } from "@/constants/FontSize";
 import { hp, wp } from "@/utils";
 import React from "react";
-import { Image, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Image, StyleSheet, TouchableOpacity, useColorScheme, View } from "react-native";
 
 type MessageItemProps = {
   name: string;
@@ -23,8 +23,16 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   isOnline,
   unread,
   onPress,
-}) => (
-  <TouchableOpacity style={styles.messageItem} onPress={onPress}>
+}) => 
+  {
+
+
+const colorScheme = useColorScheme();
+  const theme = colorScheme === "dark" ? "dark" : "light";
+  const styles = createStyles(theme);
+
+  return(
+     <TouchableOpacity style={styles.messageItem} onPress={onPress}>
     <View style={styles.messageImageContainer}>
       <Image source={{ uri: image }} style={styles.messageImage} />
       {isOnline && <View style={styles.onlineIndicator} />}
@@ -49,9 +57,12 @@ export const MessageItem: React.FC<MessageItemProps> = ({
      
     </View>
   </TouchableOpacity>
-);
+  )
+}
+ 
 
-const styles = StyleSheet.create({
+
+const createStyles  = (theme:'dark'|'light')=>StyleSheet.create({
   messageItem: {
     flexDirection: "row",
     alignItems: "center",
@@ -75,9 +86,9 @@ const styles = StyleSheet.create({
     width: wp(4),
     height: wp(4),
     borderRadius: wp(2),
-    backgroundColor: Colors.light.primary,
+    backgroundColor: Colors[theme].primary,
     borderWidth: 2,
-    borderColor: Colors.light.background,
+    borderColor: Colors[theme].background,
   },
   messageContent: {
     flex: 1,
@@ -85,12 +96,12 @@ const styles = StyleSheet.create({
   messageName: {
     fontSize: 16,
     fontWeight: "800",
-    color: Colors.light.blackText,
+    color: Colors[theme].blackText,
     marginBottom: hp(0.5),
   },
   messageText: {
     fontSize: FontSize.regular,
-    color: Colors.light.tabIconDefault,
+    color: Colors[theme].tabIconDefault,
   },
   messageEnd: {
     alignItems: "flex-end",
@@ -102,13 +113,13 @@ const styles = StyleSheet.create({
   messageTime: {
     fontSize: 12,
     fontWeight:'800',
-    color: Colors.light.tabIconDefault,
+    color: Colors[theme].tabIconDefault,
   },
   unreadDot: {
     width: wp(2.5),
     height: wp(2.5),
     borderRadius: wp(1.25),
-    backgroundColor: Colors.light.primary,
+    backgroundColor: Colors[theme].primary,
     marginLeft: wp(1),
     alignSelf: "center",
   },

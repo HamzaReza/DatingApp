@@ -23,7 +23,7 @@ export const Colors = {
     greenText: "#76CABB",
     whiteText: "#FFF",
     redText: "#DB4437",
-    background: "#FFF",
+    background: "black",
     icon: "#000",
     tabIconDefault: "#687076",
     button: "#76CABB",
@@ -33,6 +33,6 @@ export const Colors = {
     recievedMessage:'#FFc4c4',
     sentMessage:'#ffc3d3',
     placeholderText: '#678999',
-    backgroundSecondary:'#F5F5F5',
+    backgroundSecondary:'black',
   },
 };

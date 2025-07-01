@@ -1,19 +1,24 @@
+import createStyles from '@/app/eventScreens/styles/ticket.styles';
 import Container from '@/components/RnContainer';
 import RnText from '@/components/RnText';
-import { Borders } from '@/constants/Borders';
 import { Colors } from '@/constants/Colors';
-import { FontSize } from '@/constants/FontSize';
-import { hp, wp } from '@/utils';
+import { wp } from '@/utils';
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { Image, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Image, TouchableOpacity, useColorScheme, View } from 'react-native';
 import CustomHeader from './components/EventHeader';
-import styles from '@/app/eventScreens/styles/ticket.styles'
 
 
 const TicketScreen = () => {
+
+
+const colorScheme = useColorScheme();
+  const theme = colorScheme === "dark" ? "dark" : "light";
+  const styles = createStyles(theme);
+
+
   return (
-    <Container customStyle={{ backgroundColor: Colors.light.backgroundSecondary }}>
+    <Container customStyle={{ backgroundColor: Colors[theme].backgroundSecondary }}>
       <CustomHeader
         title="Tickets"
         onBackPress={() => {}}
@@ -65,7 +70,7 @@ const TicketScreen = () => {
       {/* Download Button */}
       <TouchableOpacity style={styles.downloadBtn}>
         <RnText style={styles.downloadText}>Download Image</RnText>
-        <Ionicons name="download-outline" size={20} color={Colors.light.whiteText} style={{ marginLeft: wp(2) }} />
+        <Ionicons name="download-outline" size={20} color={Colors[theme].whiteText} style={{ marginLeft: wp(2) }} />
       </TouchableOpacity>
     </Container>
   );

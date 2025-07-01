@@ -6,6 +6,7 @@ import {
   BottomSheetBackdrop,
   BottomSheetBackdropProps,
   BottomSheetModal,
+  BottomSheetScrollView,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import React, { useCallback, useEffect, useRef } from "react";
@@ -35,6 +36,7 @@ const RnBottomSheet: React.FC<RnBottomSheetProps> = ({
   animateOnMount = true,
   detached = false,
   style,
+  scroll,
 }) => {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
@@ -141,9 +143,17 @@ const RnBottomSheet: React.FC<RnBottomSheetProps> = ({
       style={[styles.containerStyle, style]}
       onDismiss={onClose}
     >
-      <BottomSheetView style={styles.contentContainerStyle}>
-        {children}
-      </BottomSheetView>
+      {scroll ? (
+        <BottomSheetScrollView
+          contentContainerStyle={styles.contentContainerStyle}
+        >
+          {children}
+        </BottomSheetScrollView>
+      ) : (
+        <BottomSheetView style={styles.contentContainerStyle}>
+          {children}
+        </BottomSheetView>
+      )}
     </BottomSheetModal>
   );
 };

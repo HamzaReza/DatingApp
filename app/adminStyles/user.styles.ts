@@ -97,7 +97,6 @@ export default (theme: "light" | "dark") =>
       marginTop: hp(1),
     },
     statusButton: {
-      //   flex: 1,
       borderRadius: Borders.radius1,
       paddingVertical: hp(0.7),
       marginHorizontal: wp(0.5),
@@ -123,7 +122,7 @@ export default (theme: "light" | "dark") =>
       alignItems: "center",
       justifyContent: "center",
       marginTop: hp(4),
-      marginBottom: hp(15),
+      marginBottom: hp(12),
     },
     paginationButton: {
       width: wp(10),

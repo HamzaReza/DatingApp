@@ -48,3 +48,12 @@ export type AdminEvent = {
   seat: string;
   price: number;
 };
+
+export type AdminPricingPlan = {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  duration: string; // e.g., 'monthly', 'yearly', 'lifetime'
+  features: string[];
+};

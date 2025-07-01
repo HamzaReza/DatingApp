@@ -220,6 +220,7 @@ export interface RnBottomSheetProps {
   animateOnMount?: boolean;
   detached?: boolean;
   style?: StyleProp<ViewStyle>;
+  scroll?: boolean;
 }
 
 export interface RnDateTimePickerProps {

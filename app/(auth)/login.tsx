@@ -30,7 +30,7 @@ export default function Login() {
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
       router.dismissAll();
-      router.push("/(tabs)/home");
+      router.push("/main/home");
       dispatch(setToken(true));
     } catch (error) {
       console.error(error);
@@ -77,8 +77,23 @@ export default function Login() {
                 <View style={styles.orLine} />
               </View>
               <View style={styles.socialContainer}>
-                <SocialIcon type="google" />
-                <SocialIcon type="apple" light />
+                <SocialIcon
+                  type="google"
+                  onPress={() => {
+                    router.dismissAll();
+                    router.push("/main/home");
+                    dispatch(setToken(true));
+                  }}
+                />
+                <SocialIcon
+                  type="apple"
+                  light
+                  onPress={() => {
+                    router.dismissAll();
+                    router.push("/main/home");
+                    dispatch(setToken(true));
+                  }}
+                />
               </View>
             </View>
             <View style={styles.footer}>

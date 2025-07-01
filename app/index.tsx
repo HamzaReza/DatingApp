@@ -10,7 +10,7 @@ export default function Index() {
     if (user?.role === "admin") {
       return <Redirect href="/dashboard" />;
     } else {
-      return <Redirect href="/home" />;
+      return <Redirect href="/main/home" />;
     }
   } else {
     return <Redirect href="/onboarding" />;

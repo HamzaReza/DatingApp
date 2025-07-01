@@ -10,7 +10,7 @@ import {
 } from "@/constants/dashboardData";
 import { FontSize } from "@/constants/FontSize";
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { setToken } from "@/redux/slices/userSlice";
+import { setToken, setUser } from "@/redux/slices/userSlice";
 import { hp, wp } from "@/utils";
 import {
   FontAwesome5,
@@ -28,7 +28,7 @@ export default function Dashboard() {
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
   const dispatch = useDispatch();
-  // Dropdown state
+
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState("monthly");
   const [dropdownItems, setDropdownItems] = useState([
@@ -36,12 +36,10 @@ export default function Dashboard() {
     { label: "Yearly", value: "yearly" },
   ]);
 
-  // Dynamic data based on selected period
   const progressData = useMemo(() => {
     if (selectedPeriod === "monthly") {
       return monthlyProgressData;
     } else {
-      // Yearly data from 2025 to current year
       const currentYear = new Date().getFullYear();
       const years = [];
       for (let year = 2025; year <= currentYear; year++) {
@@ -87,6 +85,7 @@ export default function Dashboard() {
         style={styles.headerTitle}
         onPress={() => {
           router.replace("/onboarding");
+          dispatch(setUser(null));
           dispatch(setToken(false));
         }}
       >

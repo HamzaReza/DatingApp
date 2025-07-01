@@ -42,7 +42,7 @@ export default function Religion() {
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
       router.dismissAll();
-      router.push("/home");
+      router.push("/main/home");
       dispatch(setToken(true));
     } catch (error) {
       console.error(error);

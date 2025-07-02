@@ -1,10 +1,8 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import createStyles from "@/app/mainScreens/styles/storyView.styles";
-import Container from "@/components/RnContainer";
 import RnInput from "@/components/RnInput";
 import RnText from "@/components/RnText";
-import { Borders } from "@/constants/Borders";
 import { Colors } from "@/constants/Colors";
-import { hp, wp } from "@/utils";
 import Feather from "@expo/vector-icons/Feather";
 import { router } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
@@ -12,6 +10,8 @@ import {
   Animated,
   Dimensions,
   Image,
+  ImageBackground,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
@@ -53,6 +53,7 @@ export default function StoryView() {
   const [current, setCurrent] = useState(0);
   const [message, setMessage] = useState("");
   const [isPaused, setIsPaused] = useState(false);
+  const [isInputFocused, setIsInputFocused] = useState(false);
   const progress = useRef(new Animated.Value(0)).current;
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
@@ -93,13 +94,12 @@ export default function StoryView() {
   };
 
   useEffect(() => {
-    // Reset timer when story changes
     elapsedTimeRef.current = 0;
     animationStartTimeRef.current = Date.now();
-    setIsPaused(false); // Reset pause state when story changes
-    progress.setValue(0); // Reset progress to 0
+    setIsPaused(false);
+    progress.setValue(0);
+    forceInputBlur();
 
-    // Clear any existing timers
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
@@ -111,7 +111,7 @@ export default function StoryView() {
   }, [current]);
 
   useEffect(() => {
-    if (!isPaused) {
+    if (!isPaused && !isInputFocused) {
       const anim = startProgressAnimation(elapsedTimeRef.current);
       startStoryTimer(STORY_DURATION - elapsedTimeRef.current);
 
@@ -122,7 +122,7 @@ export default function StoryView() {
         }
       };
     }
-  }, [current, isPaused]);
+  }, [current, isPaused, isInputFocused]);
 
   const handleStoryNavigation = (direction: "next" | "prev") => {
     if (direction === "next") {
@@ -137,34 +137,46 @@ export default function StoryView() {
   };
 
   const handlePressIn = () => {
-    // Reset long press flag
     isLongPressRef.current = false;
 
-    // Start long press timer
     longPressTimeoutRef.current = setTimeout(() => {
       setIsPaused(true);
       isLongPressRef.current = true;
 
-      // Calculate elapsed time when pausing
       elapsedTimeRef.current = Date.now() - animationStartTimeRef.current;
     }, 500);
   };
 
   const handlePressOut = () => {
-    // Clear long press timer
     if (longPressTimeoutRef.current) {
       clearTimeout(longPressTimeoutRef.current);
       longPressTimeoutRef.current = null;
     }
 
-    // Resume if paused
     if (isPaused) {
       setIsPaused(false);
     }
   };
 
+  const handleInputFocus = () => {
+    setIsInputFocused(true);
+    setIsPaused(true);
+    elapsedTimeRef.current = Date.now() - animationStartTimeRef.current;
+  };
+
+  const handleInputBlur = () => {
+    setIsInputFocused(false);
+    setIsPaused(false);
+  };
+
+  const forceInputBlur = () => {
+    setIsInputFocused(false);
+    setIsPaused(false);
+    setMessage("");
+    Keyboard.dismiss();
+  };
+
   const handlePress = (e: any) => {
-    // Only navigate if it wasn't a long press
     if (!isLongPressRef.current) {
       const { locationX } = e.nativeEvent;
       if (locationX < Dimensions.get("window").width / 2) {
@@ -174,85 +186,77 @@ export default function StoryView() {
       }
     }
 
-    // Reset the long press flag
     isLongPressRef.current = false;
   };
 
   return (
-    <Container customStyle={styles.container}>
-      {/* Timeline Bar */}
-      <View style={styles.timelineContainer}>
-        {STORIES.map((_, idx) => (
-          <View key={idx} style={styles.timelineBarBg}>
-            {idx < current ? (
-              <View style={styles.timelineBarFilled} />
-            ) : idx === current ? (
-              <Animated.View
-                key={`progress-${current}`}
-                style={[
-                  styles.timelineBarFilled,
-                  {
-                    width: progress.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: ["0%", "100%"],
-                    }),
-                  },
-                ]}
-              />
-            ) : null}
-          </View>
-        ))}
-      </View>
-
-      {/* Profile image and name */}
-      <View style={styles.profileContainer}>
-        <Image
-          source={{ uri: STORIES[current].profile }}
-          style={styles.profileImage}
-        />
-        <RnText style={styles.profileName}>{STORIES[current].name}</RnText>
-      </View>
-
-      {/* Story Image */}
+    <ImageBackground
+      source={{ uri: STORIES[current].image }}
+      imageStyle={styles.storyImage}
+      style={{ flex: 1 }}
+      resizeMode="cover"
+    >
       <TouchableOpacity
-        style={styles.storyTouchable}
         activeOpacity={1}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         onPress={handlePress}
+        style={styles.storyTouchable}
       >
-        <Image
-          source={{ uri: STORIES[current].image }}
-          style={styles.storyImage}
-          resizeMode="cover"
-        />
-      </TouchableOpacity>
+        <View>
+          <View style={styles.timelineContainer}>
+            {STORIES.map((_, idx) => (
+              <View key={idx} style={styles.timelineBarBg}>
+                {idx < current ? (
+                  <View style={styles.timelineBarFilled} />
+                ) : idx === current ? (
+                  <Animated.View
+                    key={`progress-${current}`}
+                    style={[
+                      styles.timelineBarFilled,
+                      {
+                        width: progress.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: ["0%", "100%"],
+                        }),
+                      },
+                    ]}
+                  />
+                ) : null}
+              </View>
+            ))}
+          </View>
 
-      {/* Message Input at Bottom */}
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        style={styles.inputWrapper}
-      >
-        <View style={styles.inputContainer}>
-          <RnInput
-            value={message}
-            onChangeText={setMessage}
-            placeholder="Send message"
-            containerStyle={{ flex: 1, marginRight: wp(2), marginBottom: 0 }}
-            inputContainerStyle={{
-              borderWidth: 1,
-              borderColor: Colors[theme].gray,
-              borderRadius: Borders.radius2,
-              backgroundColor: "rgba(255, 255, 255, 0.2)",
-              height: hp(6),
-            }}
-            style={{ color: Colors[theme].whiteText }}
-          />
-          <TouchableOpacity style={styles.sendButton}>
-            <Feather name="send" size={25} color={Colors[theme].whiteText} />
-          </TouchableOpacity>
+          <View style={styles.profileContainer}>
+            <Image
+              source={{ uri: STORIES[current].profile }}
+              style={styles.profileImage}
+            />
+            <RnText style={styles.profileName}>{STORIES[current].name}</RnText>
+          </View>
         </View>
-      </KeyboardAvoidingView>
-    </Container>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={styles.inputWrapper}
+        >
+          <View style={styles.bottomView}>
+            <RnInput
+              value={message}
+              onChangeText={setMessage}
+              placeholder="Send message"
+              onFocus={handleInputFocus}
+              onBlur={handleInputBlur}
+              containerStyle={styles.containerStyle}
+              inputContainerStyle={styles.inputContainerStyle}
+              style={styles.inputStyle}
+              noError={true}
+            />
+            <TouchableOpacity style={styles.sendButton}>
+              <Feather name="send" size={25} color={Colors[theme].whiteText} />
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </TouchableOpacity>
+    </ImageBackground>
   );
 }

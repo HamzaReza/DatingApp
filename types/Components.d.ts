@@ -28,6 +28,7 @@ export interface RnInputProps {
   placeholder: string;
   leftIcon?: IconNode;
   rightIcon?: IconNode;
+  noError?: boolean;
 }
 
 export interface RnPhoneInputProps {

@@ -26,6 +26,7 @@ const RnInput: React.FC<RnInputProps> = ({
   placeholder,
   leftIcon,
   rightIcon,
+  noError = false,
 }) => {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
@@ -67,7 +68,7 @@ const RnInput: React.FC<RnInputProps> = ({
       value={value}
       keyboardType={keyboardType}
       secureTextEntry={secureTextEntry}
-      ErrorComponent={errorMessage}
+      ErrorComponent={noError ? undefined : errorMessage}
       renderErrorMessage={Boolean(error)}
       allowFontScaling={false}
       style={[styles.style, style]}

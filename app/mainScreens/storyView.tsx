@@ -52,32 +52,79 @@ export default function StoryView() {
 
   const [current, setCurrent] = useState(0);
   const [message, setMessage] = useState("");
+  const [isPaused, setIsPaused] = useState(false);
   const progress = useRef(new Animated.Value(0)).current;
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
+  const isLongPressRef = useRef(false);
+  const animationStartTimeRef = useRef<number>(0);
+  const elapsedTimeRef = useRef<number>(0);
 
-  useEffect(() => {
-    progress.setValue(0);
-    const anim = Animated.timing(progress, {
-      toValue: 1,
-      duration: STORY_DURATION,
-      useNativeDriver: false,
-    });
-    anim.start();
+  const startStoryTimer = (remainingTime: number = STORY_DURATION) => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
 
-    const timeout = setTimeout(() => {
+    timeoutRef.current = setTimeout(() => {
       if (current < STORIES.length - 1) {
         setCurrent(current + 1);
       } else {
         router.back();
       }
-    }, STORY_DURATION);
+    }, remainingTime);
+  };
 
-    return () => {
-      anim.stop();
-      clearTimeout(timeout);
-    };
+  const startProgressAnimation = (elapsedTime: number = 0) => {
+    const remainingTime = STORY_DURATION - elapsedTime;
+    const progressValue = elapsedTime / STORY_DURATION;
+
+    progress.setValue(progressValue);
+    animationStartTimeRef.current = Date.now() - elapsedTime;
+
+    const anim = Animated.timing(progress, {
+      toValue: 1,
+      duration: remainingTime,
+      useNativeDriver: false,
+    });
+    anim.start();
+    return anim;
+  };
+
+  useEffect(() => {
+    // Reset timer when story changes
+    elapsedTimeRef.current = 0;
+    animationStartTimeRef.current = Date.now();
+    setIsPaused(false); // Reset pause state when story changes
+    progress.setValue(0); // Reset progress to 0
+
+    // Clear any existing timers
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    if (longPressTimeoutRef.current) {
+      clearTimeout(longPressTimeoutRef.current);
+      longPressTimeoutRef.current = null;
+    }
   }, [current]);
 
-  const handlePress = (direction: "next" | "prev") => {
+  useEffect(() => {
+    if (!isPaused) {
+      const anim = startProgressAnimation(elapsedTimeRef.current);
+      startStoryTimer(STORY_DURATION - elapsedTimeRef.current);
+
+      return () => {
+        anim.stop();
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+        }
+      };
+    }
+  }, [current, isPaused]);
+
+  const handleStoryNavigation = (direction: "next" | "prev") => {
     if (direction === "next") {
       if (current < STORIES.length - 1) {
         setCurrent(current + 1);
@@ -87,6 +134,48 @@ export default function StoryView() {
     } else if (direction === "prev" && current > 0) {
       setCurrent(current - 1);
     }
+  };
+
+  const handlePressIn = () => {
+    // Reset long press flag
+    isLongPressRef.current = false;
+
+    // Start long press timer
+    longPressTimeoutRef.current = setTimeout(() => {
+      setIsPaused(true);
+      isLongPressRef.current = true;
+
+      // Calculate elapsed time when pausing
+      elapsedTimeRef.current = Date.now() - animationStartTimeRef.current;
+    }, 500);
+  };
+
+  const handlePressOut = () => {
+    // Clear long press timer
+    if (longPressTimeoutRef.current) {
+      clearTimeout(longPressTimeoutRef.current);
+      longPressTimeoutRef.current = null;
+    }
+
+    // Resume if paused
+    if (isPaused) {
+      setIsPaused(false);
+    }
+  };
+
+  const handlePress = (e: any) => {
+    // Only navigate if it wasn't a long press
+    if (!isLongPressRef.current) {
+      const { locationX } = e.nativeEvent;
+      if (locationX < Dimensions.get("window").width / 2) {
+        handleStoryNavigation("prev");
+      } else {
+        handleStoryNavigation("next");
+      }
+    }
+
+    // Reset the long press flag
+    isLongPressRef.current = false;
   };
 
   return (
@@ -99,6 +188,7 @@ export default function StoryView() {
               <View style={styles.timelineBarFilled} />
             ) : idx === current ? (
               <Animated.View
+                key={`progress-${current}`}
                 style={[
                   styles.timelineBarFilled,
                   {
@@ -127,14 +217,9 @@ export default function StoryView() {
       <TouchableOpacity
         style={styles.storyTouchable}
         activeOpacity={1}
-        onPress={(e) => {
-          const { locationX } = e.nativeEvent;
-          if (locationX < Dimensions.get("window").width / 2) {
-            handlePress("prev");
-          } else {
-            handlePress("next");
-          }
-        }}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        onPress={handlePress}
       >
         <Image
           source={{ uri: STORIES[current].image }}

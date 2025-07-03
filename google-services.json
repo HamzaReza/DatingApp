@@ -29,6 +29,13 @@
             {
               "client_id": "949979854608-nvfh2ig0kp6mc4t7742mo813pkosjfbg.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "949979854608-om4b8gp9g3npi8fhk6rjjgga2117pjno.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.dating.app"
+              }
             }
           ]
         }

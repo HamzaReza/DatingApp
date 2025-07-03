@@ -6,7 +6,7 @@ import RnText from "@/components/RnText";
 import RnWheelPicker from "@/components/RnWheelPicker";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { AgeValues } from "@/types";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { Formik } from "formik";
 import { useState } from "react";
 import { View } from "react-native";
@@ -30,12 +30,16 @@ export default function Age() {
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
   const [isLoading, setIsLoading] = useState(false);
+  const params = useLocalSearchParams();
 
   const handleAgeSubmit = async (values: AgeValues) => {
     setIsLoading(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      router.push("/gender");
+      router.push({
+        pathname: "/gender",
+        params: { ...params, age: values.age },
+      });
     } catch (error) {
       console.error(error);
     } finally {

@@ -7,7 +7,7 @@ import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { PhotoValues } from "@/types";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { Formik } from "formik";
 import { useState } from "react";
 import { View } from "react-native";
@@ -23,13 +23,17 @@ export default function Photo() {
   const styles = createStyles(theme);
   const [isLoading, setIsLoading] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
+  const params = useLocalSearchParams();
 
   const handlePhotoSubmit = async (values: PhotoValues) => {
     if (!values.photo) return;
     setIsLoading(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      router.push("/location");
+      router.push({
+        pathname: "/location",
+        params: { ...params, photo: values.photo },
+      });
     } catch (error) {
       console.error(error);
     } finally {

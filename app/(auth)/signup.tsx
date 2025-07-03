@@ -4,13 +4,16 @@ import RnPhoneInput from "@/components/RnPhoneInput";
 import RnProgressBar from "@/components/RnProgressBar";
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
+import { authenticateWithPhone } from "@/firebase";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { setConfirmation } from "@/redux/slices/userSlice";
 import { SignupValues } from "@/types";
 import { router } from "expo-router";
 import { Formik } from "formik";
 import React, { useRef, useState } from "react";
 import { TouchableOpacity, View } from "react-native";
 import PhoneInput from "react-native-phone-number-input";
+import { useDispatch } from "react-redux";
 import * as Yup from "yup";
 
 const signupSchema = Yup.object().shape({
@@ -23,14 +26,23 @@ export default function Signup() {
   const styles = createStyles(theme);
   const [isLoading, setIsLoading] = useState(false);
   const phoneInput = useRef<PhoneInput>(null);
+  const dispatch = useDispatch();
 
   const handleSignup = async (values: SignupValues) => {
     setIsLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const callingCode = `+${phoneInput.current?.state?.code}`;
+      const cleanPhone = phoneInput?.current?.state?.number;
+
+      const formattedPhone = `${callingCode}${cleanPhone}`;
+
+      const confirmation = await authenticateWithPhone(formattedPhone);
+
+      dispatch(setConfirmation(confirmation));
+
       router.push({
         pathname: "/otp",
-        params: { phone: values.phone },
+        params: { phone: formattedPhone },
       });
     } catch (error) {
       console.error("Signup error:", error);
@@ -42,7 +54,7 @@ export default function Signup() {
   return (
     <ScrollContainer topBar={<RnProgressBar progress={1 / 11} />}>
       <Formik
-        initialValues={{ phone: "" }}
+        initialValues={{ phone: __DEV__ ? "3360102900" : "" }}
         validationSchema={signupSchema}
         onSubmit={handleSignup}
         validateOnChange

@@ -7,6 +7,7 @@ const initialState: UserState = {
   token: null,
   deviceLocation: null,
   locationPermissionGranted: false,
+  confirmation: null,
 };
 
 const userSlice = createSlice({
@@ -25,6 +26,9 @@ const userSlice = createSlice({
     setLocationPermissionGranted: (state, action: PayloadAction<boolean>) => {
       state.locationPermissionGranted = action.payload;
     },
+    setConfirmation: (state, action: PayloadAction<any>) => {
+      state.confirmation = action.payload;
+    },
     removeUser: (state, action: PayloadAction<any>) => {
       state.user = null;
       state.token = null;
@@ -40,6 +44,7 @@ export const {
   setDeviceLocation,
   setLocationPermissionGranted,
   removeUser,
+  setConfirmation,
 } = userSlice.actions;
 
 export default userSlice.reducer;

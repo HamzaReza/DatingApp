@@ -5,4 +5,5 @@ export interface UserState {
   token: string | null;
   deviceLocation: LocationObject | null;
   locationPermissionGranted: boolean;
+  confirmation: any | null;
 }

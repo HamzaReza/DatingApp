@@ -4,22 +4,28 @@ import RnOtp from "@/components/RnOtp";
 import RnProgressBar from "@/components/RnProgressBar";
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
+import { getUserByUid, saveUserToDatabase, verifyCode } from "@/firebase";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { RootState } from "@/redux/store";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getAuth } from "@react-native-firebase/auth";
 import { router, useLocalSearchParams } from "expo-router";
 import { Formik } from "formik";
 import React, { useState } from "react";
 import { TouchableOpacity, View } from "react-native";
+import { useSelector } from "react-redux";
 import * as Yup from "yup";
 
 const otpSchema = Yup.object().shape({
   otp: Yup.string()
-    .length(4, "OTP must be 4 digits")
+    .length(6, "OTP must be 6 digits")
     .required("OTP is required"),
 });
 
 export default function OtpScreen() {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
+  const { confirmation } = useSelector((state: RootState) => state.user);
   const styles = createStyles(theme);
   const { phone } = useLocalSearchParams();
   const [isLoading, setIsLoading] = useState(false);
@@ -28,10 +34,38 @@ export default function OtpScreen() {
   const handleVerify = async (values: { otp: string }) => {
     setIsLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      router.replace("/name");
+      await verifyCode(confirmation, values.otp).then(async () => {
+        const auth = getAuth();
+        const user = auth.currentUser;
+
+        if (user) {
+          // Check if user already exists in database
+          const existingUser = await getUserByUid(user.uid);
+
+          if (existingUser) {
+            // User exists, check if profile is complete
+            if (existingUser.isProfileComplete) {
+              // Profile is complete, navigate to main home
+              AsyncStorage.clear();
+              router.replace("/main/home");
+            } else {
+              // Profile is incomplete, continue with onboarding
+              AsyncStorage.clear();
+              router.replace("/name");
+            }
+          } else {
+            // User doesn't exist, create new user and start onboarding
+            await saveUserToDatabase(user.uid, {
+              phoneNumber: phoneNumber as string,
+            }).then(() => {
+              AsyncStorage.clear();
+              router.replace("/name");
+            });
+          }
+        }
+      });
     } catch (error) {
-      console.error(error);
+      console.error("Verification error:", error);
     } finally {
       setIsLoading(false);
     }
@@ -59,7 +93,6 @@ export default function OtpScreen() {
               value={values.otp}
               verifyCode={(code) => setFieldValue("otp", code)}
               isError={!!errors.otp}
-              cell={4}
               style={styles.otp}
               error={errors.otp}
             />

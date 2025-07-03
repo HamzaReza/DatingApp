@@ -6,9 +6,9 @@ import RnText from "@/components/RnText";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { LocationValues } from "@/types";
 import * as Location from "expo-location";
-import { router } from "expo-router";
-import { Formik } from "formik";
-import { useState } from "react";
+import { router, useLocalSearchParams } from "expo-router";
+import { Formik, FormikProps } from "formik";
+import { useRef, useState } from "react";
 import { View } from "react-native";
 import * as Yup from "yup";
 
@@ -21,13 +21,14 @@ export default function LocationScreen() {
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
   const [isLoading, setIsLoading] = useState(false);
+  const formikRef = useRef<FormikProps<LocationValues>>(null);
+  const params = useLocalSearchParams();
 
   const handleLocationSubmit = async (values: LocationValues) => {
     if (!values.location) return;
     setIsLoading(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      // router.push("/(tabs)");
     } catch (error) {
       console.error(error);
     } finally {
@@ -47,11 +48,14 @@ export default function LocationScreen() {
       }
 
       const location = await Location.getCurrentPositionAsync({});
-      setFieldValue("location", {
+      formikRef.current?.setFieldValue("location", {
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
       });
-      router.push("/profession");
+      router.push({
+        pathname: "/profession",
+        params: { ...params, location: formikRef.current?.values.location },
+      });
     } catch (error) {
       console.error(error);
       alert("Error getting location");
@@ -70,6 +74,7 @@ export default function LocationScreen() {
         initialValues={{ location: null }}
         validationSchema={locationSchema}
         onSubmit={handleLocationSubmit}
+        innerRef={formikRef}
       >
         {({ values, setFieldValue, handleSubmit, errors }) => (
           <View style={styles.innerContainer}>
@@ -82,7 +87,7 @@ export default function LocationScreen() {
             <RnButton
               title="Get Location"
               style={[styles.button]}
-              onPress={() => handleLocationAccess(setFieldValue)}
+              onPress={() => handleLocationAccess()}
               disabled={isLoading}
               loading={isLoading}
             />

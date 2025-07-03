@@ -5,7 +5,7 @@ import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { InterestsValues } from "@/types";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { Formik } from "formik";
 import { useState } from "react";
 import { Pressable, TextInput, View } from "react-native";
@@ -39,13 +39,17 @@ export default function Interests() {
   const styles = createStyles(theme);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const params = useLocalSearchParams();
 
   const handleInterestsSubmit = async (values: InterestsValues) => {
     if (!values.interests.length) return;
     setIsLoading(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      router.push("/photo");
+      router.push({
+        pathname: "/photo",
+        params: { ...params, interests: values.interests },
+      });
     } catch (error) {
       console.error(error);
     } finally {

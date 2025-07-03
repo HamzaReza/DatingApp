@@ -6,7 +6,7 @@ import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { NameValues } from "@/types";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { Formik } from "formik";
 import React, { useState } from "react";
 import { View } from "react-native";
@@ -21,12 +21,16 @@ export default function Name() {
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
   const [isLoading, setIsLoading] = useState(false);
+  const params = useLocalSearchParams();
 
   const handleNameSubmit = async (values: NameValues) => {
     setIsLoading(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      router.push("/email");
+      router.push({
+        pathname: "/email",
+        params: { ...params, name: values.name },
+      });
     } catch (error) {
       console.error(error);
     } finally {

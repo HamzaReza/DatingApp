@@ -6,7 +6,7 @@ import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { EmailValues } from "@/types";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { Formik } from "formik";
 import React, { useState } from "react";
 import { View } from "react-native";
@@ -27,12 +27,16 @@ export default function Email() {
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
   const [isLoading, setIsLoading] = useState(false);
+  const params = useLocalSearchParams();
 
   const handleEmailSubmit = async (values: EmailValues) => {
     setIsLoading(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      router.push("/age");
+      router.push({
+        pathname: "/age",
+        params: { ...params, email: values.email },
+      });
     } catch (error) {
       console.error(error);
     } finally {

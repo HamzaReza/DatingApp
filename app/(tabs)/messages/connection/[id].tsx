@@ -1,10 +1,9 @@
-import createStyles from '@/app/tabStyles/connections.styles';
+import createStyles from "@/app/tabStyles/connections.styles";
 import CurvedMicInput from "@/components/CurvedMicInputProps";
 import Container from "@/components/RnContainer";
 import RnText from "@/components/RnText";
 import RoundButton from "@/components/RoundButton";
 import { Colors } from "@/constants/Colors";
-import { wp } from "@/utils";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import React from "react";
@@ -13,16 +12,15 @@ import {
   ImageBackground,
   TouchableOpacity,
   useColorScheme,
-  View
+  View,
 } from "react-native";
 
 export default function Connection() {
   const { id } = useLocalSearchParams();
 
-
   const colorScheme = useColorScheme();
-    const theme = colorScheme === "dark" ? "dark" : "light";
-    const styles = createStyles(theme);
+  const theme = colorScheme === "dark" ? "dark" : "light";
+  const styles = createStyles(theme);
 
   const handleBackPress = () => {
     router.back();
@@ -50,10 +48,9 @@ export default function Connection() {
 
       <View style={styles.header}>
         <RoundButton
-          iconName="arrow-back-ios-new"
-          iconColor={Colors[theme].whiteText}
-          iconSize={wp(5)}
-          borderColor={Colors[theme].gray}
+          iconName="chevron-left"
+          iconColor={Colors[theme].primary}
+          iconSize={22}
           onPress={handleBackPress}
         />
       </View>
@@ -117,4 +114,3 @@ export default function Connection() {
     </Container>
   );
 }
-

@@ -88,7 +88,6 @@ export default function Matches() {
       {/* Header */}
       <PrimaryHeader
         title="Matches"
-        leftIconName="arrow-left"
         onLeftPress={() => console.log("")}
         onRightPress={() => console.log()}
         titleColor={Colors[theme].greenText}

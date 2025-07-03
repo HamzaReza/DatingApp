@@ -14,7 +14,6 @@ interface RoundButtonProps extends TouchableOpacityProps {
   iconName?: keyof typeof MaterialIcons.glyphMap;
   iconColor?: string;
   iconSize?: number;
-  borderColor?: string;
   onPress?: () => void;
   backgroundColour?: string;
   showDot?: boolean;
@@ -25,7 +24,6 @@ const RoundButton: React.FC<RoundButtonProps> = ({
   iconName,
   iconColor,
   iconSize = wp(5),
-  borderColor,
   style,
   onPress,
   backgroundColour,
@@ -37,7 +35,6 @@ const RoundButton: React.FC<RoundButtonProps> = ({
   const theme = colorScheme === "dark" ? "dark" : "light";
 
   const iconClr = iconColor ?? Colors[theme].greenText;
-  const borderClr = borderColor ?? Colors[theme].greenText;
   const bgClr = backgroundColour ?? "transparent";
 
   const styles = StyleSheet.create({
@@ -70,7 +67,7 @@ const RoundButton: React.FC<RoundButtonProps> = ({
     <TouchableOpacity
       style={[
         styles.container,
-        { borderColor: borderClr, backgroundColor: bgClr },
+        { backgroundColor: bgClr },
         style,
         !noShadow && styles.shadow,
       ]}

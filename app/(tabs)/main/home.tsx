@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import createStyles from "@/app/tabStyles/home.styles";
 import QuestionCard from "@/components/QuestionCard";
 import Container from "@/components/RnContainer";
@@ -6,10 +7,16 @@ import RoundButton from "@/components/RoundButton";
 import StoryCircle from "@/components/StoryCircle";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { setToken } from "@/redux/slices/userSlice";
+import {
+  setDeviceLocation,
+  setLocationPermissionGranted,
+  setToken,
+} from "@/redux/slices/userSlice";
 import { hp } from "@/utils";
+import { requestLocationPermission } from "@/utils/Permission";
+import * as Location from "expo-location";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FlatList, TouchableOpacity, View } from "react-native";
 import { useDispatch } from "react-redux";
 
@@ -124,6 +131,28 @@ export default function Home() {
 
   const dispatch = useDispatch();
 
+  // Get user's current location
+  const getCurrentLocation = async () => {
+    try {
+      const permissionGranted = await requestLocationPermission();
+      if (permissionGranted) {
+        dispatch(setLocationPermissionGranted(true));
+        const location = await Location.getCurrentPositionAsync({});
+        dispatch(setDeviceLocation(location));
+      } else {
+        console.log("Location permission denied");
+        dispatch(setLocationPermissionGranted(false));
+      }
+    } catch (error) {
+      console.error("Error getting location:", error);
+      dispatch(setLocationPermissionGranted(false));
+    }
+  };
+
+  useEffect(() => {
+    getCurrentLocation();
+  }, []);
+
   const handleStoryPress = (story: Story) => {
     router.push(`/mainScreens/storyView`);
 
@@ -155,8 +184,7 @@ export default function Home() {
           <RoundButton
             iconName="notifications-none"
             iconSize={24}
-            iconColor={Colors[theme].greenText}
-            borderColor={Colors[theme].background}
+            iconColor={Colors[theme].primary}
             backgroundColour={Colors[theme].whiteText}
             onPress={() => router.push("/main/notification")}
             showDot={hasNotification}
@@ -164,8 +192,7 @@ export default function Home() {
           <RoundButton
             iconName="tv"
             iconSize={24}
-            iconColor={Colors[theme].greenText}
-            borderColor={Colors[theme].background}
+            iconColor={Colors[theme].primary}
             backgroundColour={Colors[theme].whiteText}
             onPress={() => router.push("/eventScreens/explore")}
           />

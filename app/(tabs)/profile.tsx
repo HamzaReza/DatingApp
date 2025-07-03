@@ -1,5 +1,6 @@
 import createStyles from "@/app/tabStyles/profile.styles";
 import InterestTag from "@/components/InterestTag";
+import Container from "@/components/RnContainer";
 import RnText from "@/components/RnText";
 import RoundButton from "@/components/RoundButton";
 import { Colors } from "@/constants/Colors";
@@ -115,9 +116,9 @@ export default function Profile() {
   });
 
   return (
-    <View style={styles.container}>
+    <Container>
       {/* Fixed Header */}
-      <View style={styles.header}>
+      {/* <View style={styles.header}>
         <TouchableOpacity onPress={handleBackPress} style={styles.headerButton}>
           <Ionicons
             name="chevron-back"
@@ -133,6 +134,24 @@ export default function Profile() {
             color={Colors[theme].redText}
           />
         </TouchableOpacity>
+      </View> */}
+
+      <View style={styles.header}>
+        <RoundButton
+          iconName="chevron-left"
+          iconSize={22}
+          iconColor={Colors[theme].primary}
+          backgroundColour={Colors[theme].whiteText}
+          onPress={handleBackPress}
+        />
+        <View />
+        <RoundButton
+          iconName="edit"
+          iconSize={22}
+          iconColor={Colors[theme].primary}
+          backgroundColour={Colors[theme].whiteText}
+          onPress={handleEditPress}
+        />
       </View>
 
       {/* Animated Profile Image */}
@@ -215,8 +234,7 @@ export default function Profile() {
               <RoundButton
                 iconName="send"
                 iconSize={26}
-                iconColor={Colors[theme].redText}
-                borderColor={Colors[theme].redText}
+                iconColor={Colors[theme].primary}
               />
             </TouchableOpacity>
           </View>
@@ -363,6 +381,6 @@ export default function Profile() {
           />
         </View>
       </Modal>
-    </View>
+    </Container>
   );
 }

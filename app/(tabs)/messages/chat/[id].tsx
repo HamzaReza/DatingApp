@@ -1,12 +1,11 @@
-import createStyles from '@/app/tabStyles/chat.styles';
+import createStyles from "@/app/tabStyles/chat.styles";
 import RnInput from "@/components/RnInput";
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
 import { Colors } from "@/constants/Colors";
 import { FontSize } from "@/constants/FontSize";
 import { hp, wp } from "@/utils";
-import { Ionicons } from "@expo/vector-icons";
-import Feather from "@expo/vector-icons/Feather";
+import { MaterialIcons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useRef, useState } from "react";
 import {
@@ -17,13 +16,12 @@ import {
   StatusBar,
   TouchableOpacity,
   useColorScheme,
-  View
+  View,
 } from "react-native";
 import {
   GestureHandlerRootView,
   PanGestureHandler as RNGHPanGestureHandler,
 } from "react-native-gesture-handler";
-
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -62,8 +60,7 @@ const chatMessages: ChatMessage[] = [
 ];
 
 export default function Chat() {
-
-const colorScheme = useColorScheme();
+  const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
 
@@ -71,10 +68,6 @@ const colorScheme = useColorScheme();
   const [message, setMessage] = useState("");
   const translateY = useRef(new Animated.Value(0)).current;
   const gestureRef = useRef<RNGHPanGestureHandler>(null);
-
-  const handleBackPress = () => {
-    router.back();
-  };
 
   const handleMorePress = () => {
     console.log("More options");
@@ -194,8 +187,8 @@ const colorScheme = useColorScheme();
               onPress={handleMorePress}
               style={styles.headerIconButton}
             >
-              <Ionicons
-                name="ellipsis-vertical"
+              <MaterialIcons
+                name="more-vert"
                 size={22}
                 color={Colors[theme].blackText}
               />
@@ -224,7 +217,10 @@ const colorScheme = useColorScheme();
               value={message}
               onChangeText={setMessage}
               placeholder="Send message"
-              style={{ fontSize: FontSize.small, color: Colors[theme].blackText }}
+              style={{
+                fontSize: FontSize.small,
+                color: Colors[theme].blackText,
+              }}
               containerStyle={{ flex: 1, marginRight: wp(3), marginBottom: 0 }}
               inputContainerStyle={{
                 borderWidth: 1,
@@ -239,7 +235,7 @@ const colorScheme = useColorScheme();
               style={styles.sendButton}
               onPress={handleSendMessage}
             >
-              <Feather name="send" size={20} color={Colors[theme].pink} />
+              <MaterialIcons name="send" size={20} color={Colors[theme].pink} />
             </TouchableOpacity>
           </View>
         </ScrollContainer>
@@ -247,4 +243,3 @@ const colorScheme = useColorScheme();
     </GestureHandlerRootView>
   );
 }
-

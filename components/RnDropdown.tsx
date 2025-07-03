@@ -8,7 +8,28 @@ import React from "react";
 import { StyleSheet, Text } from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
 
-const RnDropdown: React.FC<RnDropdownProps> = (props) => {
+const RnDropdown: React.FC<RnDropdownProps> = ({
+  items,
+  open,
+  dropdownText,
+  placeholderStyle,
+  emptyText,
+  onChangeValue,
+  setOpen,
+  setItems,
+  setValue,
+  onOpen,
+  value,
+  min,
+  max,
+  zIndex,
+  zIndexInverse,
+  placeholder,
+  style,
+  dropDownContainerStyle,
+  disabled,
+  loading,
+}) => {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
 
@@ -49,41 +70,37 @@ const RnDropdown: React.FC<RnDropdownProps> = (props) => {
 
   return (
     <DropDownPicker
-      onOpen={props.onOpen}
+      onOpen={onOpen}
       listMode="SCROLLVIEW"
       mode="BADGE"
       scrollViewProps={{
         nestedScrollEnabled: true,
       }}
-      value={props.value}
-      items={props.items}
-      open={props.open}
-      multiple={props.multiple}
-      min={props.min}
-      max={props.max}
-      zIndex={props.zIndex}
-      zIndexInverse={props.zIndexInverse}
-      placeholder={props.placeholder}
-      placeholderStyle={[
-        styles.dropdownPlaceholderStyle,
-        props.placeholderStyle,
-      ]}
+      value={value}
+      items={items}
+      open={open}
+      min={min}
+      max={max}
+      zIndex={zIndex}
+      zIndexInverse={zIndexInverse}
+      placeholder={placeholder}
+      placeholderStyle={[styles.dropdownPlaceholderStyle, placeholderStyle]}
       ListEmptyComponent={() => {
-        return <Text style={styles.emptyText}>{props.emptyText}</Text>;
+        return <Text style={styles.emptyText}>{emptyText}</Text>;
       }}
-      onChangeValue={props.onChangeValue}
-      labelStyle={styles.dropdownText}
-      style={[styles.style, props.style]}
+      onChangeValue={onChangeValue}
+      labelStyle={[styles.dropdownText, dropdownText]}
+      style={[styles.style, style]}
       dropDownContainerStyle={[
         styles.dropDownContainerStyle,
-        props.dropDownContainerStyle,
+        dropDownContainerStyle,
       ]}
-      disabled={props.disabled}
-      listItemLabelStyle={styles.dropdownText}
-      setOpen={props.setOpen}
-      setItems={props.setItems}
-      setValue={props.setValue}
-      loading={props.loading}
+      disabled={disabled}
+      listItemLabelStyle={[styles.dropdownText, dropdownText]}
+      setOpen={setOpen}
+      setItems={setItems}
+      setValue={setValue}
+      loading={loading}
     />
   );
 };

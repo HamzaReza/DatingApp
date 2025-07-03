@@ -175,7 +175,6 @@ export interface RnDropdownProps {
   value: any;
   items: { label: string; value: any; [key: string]: any }[];
   open: boolean;
-  multiple?: boolean;
   min?: number;
   max?: number;
   zIndex?: number;
@@ -193,6 +192,7 @@ export interface RnDropdownProps {
   >;
   setValue: React.Dispatch<React.SetStateAction<any>>;
   loading?: boolean;
+  dropdownText?: StyleProp<TextStyle>;
 }
 
 export interface RnBottomSheetProps {

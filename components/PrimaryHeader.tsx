@@ -2,17 +2,23 @@ import { Borders } from "@/constants/Borders";
 import { Colors } from "@/constants/Colors";
 import { FontSize } from "@/constants/FontSize";
 import { hp, wp } from "@/utils";
-import SimpleLineIcons from "@expo/vector-icons/SimpleLineIcons";
+import { MaterialIcons } from "@expo/vector-icons";
 import React from "react";
-import { Pressable, StyleSheet, TouchableOpacity, View, useColorScheme } from "react-native";
+import {
+  Pressable,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+  useColorScheme,
+} from "react-native";
 import RnText from "./RnText";
 
-type SimpleLineIconsName = React.ComponentProps<typeof SimpleLineIcons>["name"];
+type MaterialIconsName = React.ComponentProps<typeof MaterialIcons>["name"];
 
 interface PrimaryHeaderProps {
   title?: string;
-  leftIconName?: SimpleLineIconsName;
-  rightIconName?: SimpleLineIconsName;
+  leftIconName?: MaterialIconsName;
+  rightIconName?: MaterialIconsName;
   onLeftPress?: () => void;
   onRightPress?: () => void;
   leftIconColor?: string;
@@ -29,8 +35,8 @@ interface PrimaryHeaderProps {
 
 const PrimaryHeader: React.FC<PrimaryHeaderProps> = ({
   title = "",
-  leftIconName = "arrow-left",
-  rightIconName = "options",
+  leftIconName = "chevron-left",
+  rightIconName = "more-vert",
   onLeftPress = () => {},
   onRightPress = () => {},
   leftIconColor,
@@ -70,7 +76,7 @@ const PrimaryHeader: React.FC<PrimaryHeaderProps> = ({
             backgroundColor: bgColor,
           }}
         >
-          <SimpleLineIcons
+          <MaterialIcons
             name={leftIconName}
             size={leftIconSize}
             color={leftIconClr}
@@ -94,7 +100,7 @@ const PrimaryHeader: React.FC<PrimaryHeaderProps> = ({
             backgroundColor: bgColor,
           }}
         >
-          <SimpleLineIcons
+          <MaterialIcons
             name={rightIconName}
             size={rightIconSize}
             color={rightIconClr}

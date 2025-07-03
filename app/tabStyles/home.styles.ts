@@ -30,7 +30,7 @@ export default (theme: "dark" | "light") =>
     tabContainer: {
       flexDirection: "row",
       justifyContent: "space-between",
-      backgroundColor: "rgba(118,202,187,0.2)",
+      backgroundColor: Colors[theme].primaryOpaque,
       borderRadius: wp(5),
       marginBottom: hp(1),
       padding: wp(1.5),

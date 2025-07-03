@@ -1,118 +1,106 @@
 import { Borders } from "@/constants/Borders";
 import { Colors } from "@/constants/Colors";
+import { FontFamily } from "@/constants/FontFamily";
 import { FontSize } from "@/constants/FontSize";
 import { hp, wp } from "@/utils";
 import { StyleSheet } from "react-native";
 
-export default (theme: 'dark' | 'light') => StyleSheet.create({
-  mainContainer: {
-    backgroundColor: Colors[theme].backgroundSecondary,
-    flex: 1,
-  },
-  ticketTypeHeader: {
-    fontWeight: '600',
-    fontSize: FontSize.large,
-    marginTop: wp(6),
-    marginBottom: wp(2),
-    color: Colors[theme].blackText,
-  },
-  tabContainer: {
-    flexDirection: 'row',
-    backgroundColor: Colors[theme].backgroundSecondary,
-    borderRadius: Borders.radius2,
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: wp(2),
-  },
-  tabButton: {
-    paddingVertical: wp(1),
-    height: hp(6),
-    borderRadius: Borders.radius2,
-    backgroundColor: 'rgba(118,202,187,0.4)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginHorizontal: wp(1),
-  },
-  vipButton: {
-    width: wp(30),
-  },
-  economyButton: {
-    width: wp(45),
-  },
-  tabButtonActive: {
-    backgroundColor: Colors[theme].primary,
-  },
-  tabText: {
-    color: Colors[theme].redText,
-    fontWeight: 'bold',
-    fontSize: FontSize.small,
-  },
-  tabTextActive: {
-    color: Colors[theme].whiteText,
-  },
-  seatSelectorContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: 'rgba(118,202,187,0.4)',
-    borderRadius: Borders.radius2,
-    padding: wp(3),
-    width: wp(92),
-    alignSelf: 'center',
-  },
-  seatSelectorLabel: {
-    fontWeight: 'bold',
-    fontSize: FontSize.small,
-    color: Colors[theme].primary,
-  },
-  seatSelectorControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-  },
-  seatButton: {
-    width: wp(10),
-    height: wp(10),
-    borderRadius: Borders.radius2,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderColor: Colors[theme].pink,
-    borderWidth: 0.5,
-  },
-  seatButtonText: {
-    color: Colors[theme].pink,
-    fontSize: FontSize.large,
-  },
-  seatCount: {
-    fontSize: FontSize.large,
-    color: Colors[theme].pink,
-    minWidth: wp(6),
-    textAlign: 'center',
-  },
-  singlePriceContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  mutiplyText: {
-    width: '100%',
-    textAlign: 'right',
-  },
-  horizontaLine: {
-    height: 2,
-    backgroundColor: Colors[theme].gray,
-    width: '100%',
-    marginVertical: hp(3),
-  },
-  totalPrice: {
-    color: Colors[theme].pink,
-    fontSize: FontSize.small,
-    fontWeight: '700',
-  },
-  buttonContainer: {
-    width: wp(50),
-    alignSelf: 'center',
-    marginTop: hp(20),
-  },
-});
+export default (theme: "dark" | "light") =>
+  StyleSheet.create({
+    headerContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingBottom: hp(1),
+    },
+    headerText: {
+      color: Colors[theme].primary,
+      fontSize: FontSize.extraLarge,
+      fontFamily: FontFamily.semiBold,
+    },
+    ticketTypeHeader: {
+      fontSize: FontSize.large,
+      fontFamily: FontFamily.medium,
+      marginTop: wp(6),
+      marginBottom: wp(2),
+    },
+    tabContainer: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    tabButton: {
+      backgroundColor: "gray",
+      borderRadius: Borders.radius2,
+    },
+    vipButton: {
+      width: wp(42),
+    },
+    economyButton: {
+      width: wp(42),
+    },
+    tabButtonActive: {
+      backgroundColor: Colors[theme].primary,
+    },
+    tabText: {
+      color: Colors[theme].whiteText,
+      fontSize: FontSize.small,
+    },
+    seatSelectorContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      alignSelf: "center",
+      backgroundColor: Colors[theme].primaryOpaque,
+      borderRadius: Borders.radius1,
+      // padding: wp(1),
+      width: wp(92),
+    },
+    seatSelectorControls: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      width: "100%",
+    },
+    seatButton: {
+      paddingHorizontal: wp(4),
+      paddingVertical: hp(1),
+      borderRadius: Borders.radius1,
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: Colors[theme].pink,
+    },
+    seatButtonText: {
+      color: Colors[theme].whiteText,
+      fontSize: FontSize.large,
+    },
+    seatCount: {
+      fontSize: FontSize.large,
+      color: Colors[theme].pink,
+      textAlign: "center",
+    },
+    singlePriceContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    mutiplyText: {
+      width: "100%",
+      textAlign: "right",
+    },
+    horizontaLine: {
+      height: 2,
+      backgroundColor: Colors[theme].gray,
+      width: "100%",
+      marginVertical: hp(3),
+    },
+    totalPrice: {
+      color: Colors[theme].pink,
+      fontSize: FontSize.large,
+      fontFamily: FontFamily.semiBold,
+    },
+    continueButton: {
+      marginTop: hp(10),
+      backgroundColor: Colors[theme].pink,
+    },
+  });

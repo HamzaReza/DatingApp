@@ -204,7 +204,6 @@ export interface RnBottomSheetProps {
   backgroundStyle?: StyleProp<ViewStyle>;
   handleIndicatorStyle?: StyleProp<ViewStyle>;
   containerStyle?: StyleProp<ViewStyle>;
-  handleStyle?: StyleProp<ViewStyle>;
   handleComponent?: React.FC<BottomSheetHandleProps> | null;
   onChange?: (index: number) => void;
   onAnimate?: (fromIndex: number, toIndex: number) => void;

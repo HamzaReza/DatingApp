@@ -5,13 +5,13 @@ import RoundButton from "@/components/RoundButton";
 import { Colors } from "@/constants/Colors";
 // import { useColorScheme } from "@/hooks/useColorScheme";
 
+import RnInput from "@/components/RnInput";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React from "react";
+import React, { useState } from "react";
 import {
   FlatList,
   Image,
-  TextInput,
   TouchableOpacity,
   View,
   useColorScheme,
@@ -56,9 +56,10 @@ const Explore = () => {
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
 
+  const [searchValue, setSearchValue] = useState("");
+
   return (
     <ScrollContainer>
-      {/* header */}
       <View style={styles.headerContainer}>
         <RoundButton
           iconName="chevron-left"
@@ -68,15 +69,15 @@ const Explore = () => {
           backgroundColour={Colors[theme].whiteText}
           onPress={() => router.back()}
         />
-
         <View style={styles.centerContainer}>
           <RoundButton
             iconName="location-off"
             iconSize={22}
             iconColor={Colors[theme].primary}
             borderColor={Colors[theme].background}
+            backgroundColour={Colors[theme].whiteText}
           />
-          <RnText>RajKat, Kujaraj</RnText>
+          <RnText style={styles.locationText}>RajKat, Kujaraj</RnText>
         </View>
         <Image
           source={{
@@ -86,20 +87,18 @@ const Explore = () => {
         />
       </View>
 
-      <View style={styles.searchContainer}>
-        <TextInput
-          placeholder="Search Events, Creators, etc."
-          placeholderTextColor={Colors[theme].tabIconDefault}
-          style={styles.searchInput}
-        />
-
-        <View style={styles.searchIconContainer}>
+      <RnInput
+        placeholder="Search Events, Creators, etc."
+        containerStyle={styles.searchInput}
+        value={searchValue}
+        onChangeText={setSearchValue}
+        rightIcon={
           <Ionicons name="search" size={20} color={Colors[theme].pink} />
-        </View>
-      </View>
+        }
+        noError
+      />
 
       <View style={styles.upcomingEventsContainer}>
-        <View></View>
         <RnText style={styles.upcomingEventsText}>Upcoming Events</RnText>
         <View style={styles.upcomingCardContainer}>
           <UpcomingEventCard

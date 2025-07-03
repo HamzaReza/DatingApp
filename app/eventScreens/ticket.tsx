@@ -1,30 +1,34 @@
-import createStyles from '@/app/eventScreens/styles/ticket.styles';
-import Container from '@/components/RnContainer';
-import RnText from '@/components/RnText';
-import { Colors } from '@/constants/Colors';
-import { wp } from '@/utils';
-import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
-import { Image, TouchableOpacity, useColorScheme, View } from 'react-native';
-import CustomHeader from './components/EventHeader';
-
+import createStyles from "@/app/eventScreens/styles/ticket.styles";
+import RnButton from "@/components/RnButton";
+import Container from "@/components/RnContainer";
+import RnText from "@/components/RnText";
+import RoundButton from "@/components/RoundButton";
+import { Colors } from "@/constants/Colors";
+import { hp } from "@/utils/Dimensions";
+import { router } from "expo-router";
+import React from "react";
+import { useColorScheme, View } from "react-native";
+import QRCode from "react-native-qrcode-svg";
 
 const TicketScreen = () => {
-
-
-const colorScheme = useColorScheme();
+  const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
 
-
   return (
-    <Container customStyle={{ backgroundColor: Colors[theme].backgroundSecondary }}>
-      <CustomHeader
-        title="Tickets"
-        onBackPress={() => {}}
-        rightIcon="scan-outline"
-        onRightPress={() => {}}
-      />
+    <Container>
+      <View style={styles.headerContainer}>
+        <RoundButton
+          iconName="chevron-left"
+          iconSize={22}
+          iconColor={Colors[theme].primary}
+          borderColor={Colors[theme].background}
+          backgroundColour={Colors[theme].whiteText}
+          onPress={() => router.back()}
+        />
+        <RnText style={styles.headerTitle}>Tickets</RnText>
+        <RoundButton noShadow />
+      </View>
 
       <View style={styles.ticketCardWrapper}>
         <View style={styles.ticketCard}>
@@ -58,23 +62,24 @@ const colorScheme = useColorScheme();
 
           {/* QR + Divider Section */}
           <View style={styles.ticketBottomSection}>
-            <Image
-              source={require('@/assets/images/qr.png')} // Replace with real QR or SVG
-              style={styles.qr}
-              resizeMode="cover"
+            <QRCode
+              value="TICKET-12345-EVENT-GHAR-BY-ZAKIR-KHAN"
+              size={hp(20)}
+              logo={require("@/assets/images/react-logo.png")}
             />
           </View>
         </View>
       </View>
 
-      {/* Download Button */}
-      <TouchableOpacity style={styles.downloadBtn}>
-        <RnText style={styles.downloadText}>Download Image</RnText>
-        <Ionicons name="download-outline" size={20} color={Colors[theme].whiteText} style={{ marginLeft: wp(2) }} />
-      </TouchableOpacity>
+      <RnButton
+        title="Download Image"
+        style={[styles.downloadBtn, styles.downloadText]}
+        icon="download"
+        onPress={() => router.dismissAll()}
+        noRightIcon
+      />
     </Container>
   );
 };
 
 export default TicketScreen;
-

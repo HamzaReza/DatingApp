@@ -11,13 +11,14 @@ import {
 } from "react-native";
 
 interface RoundButtonProps extends TouchableOpacityProps {
-  iconName: keyof typeof MaterialIcons.glyphMap;
+  iconName?: keyof typeof MaterialIcons.glyphMap;
   iconColor?: string;
   iconSize?: number;
   borderColor?: string;
   onPress?: () => void;
   backgroundColour?: string;
   showDot?: boolean;
+  noShadow?: boolean;
 }
 
 const RoundButton: React.FC<RoundButtonProps> = ({
@@ -29,6 +30,7 @@ const RoundButton: React.FC<RoundButtonProps> = ({
   onPress,
   backgroundColour,
   showDot = false,
+  noShadow = false,
   ...touchableProps
 }) => {
   const colorScheme = useColorScheme();
@@ -40,11 +42,13 @@ const RoundButton: React.FC<RoundButtonProps> = ({
 
   const styles = StyleSheet.create({
     container: {
-      padding: wp(2),
+      padding: wp(1.5),
       borderRadius: wp(6),
       backgroundColor: "rgba(255,255,255,0.9)",
       justifyContent: "center",
       alignItems: "center",
+    },
+    shadow: {
       shadowColor: "#000",
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.1,
@@ -68,6 +72,7 @@ const RoundButton: React.FC<RoundButtonProps> = ({
         styles.container,
         { borderColor: borderClr, backgroundColor: bgClr },
         style,
+        !noShadow && styles.shadow,
       ]}
       onPress={onPress}
       {...touchableProps}

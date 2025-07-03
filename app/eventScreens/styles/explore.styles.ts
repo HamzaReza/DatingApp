@@ -1,5 +1,6 @@
 import { Borders } from "@/constants/Borders";
 import { Colors } from "@/constants/Colors";
+import { FontFamily } from "@/constants/FontFamily";
 import { FontSize } from "@/constants/FontSize";
 import { hp, wp } from "@/utils";
 import { StyleSheet } from "react-native";
@@ -17,6 +18,9 @@ export default (theme: "light" | "dark") =>
       alignItems: "center",
       justifyContent: "center",
     },
+    locationText: {
+      marginLeft: wp(1),
+    },
     profileImage: {
       width: wp(10),
       height: wp(10),
@@ -30,16 +34,7 @@ export default (theme: "light" | "dark") =>
       marginBottom: hp(2),
     },
     searchInput: {
-      width: "100%",
-      height: hp(7),
-      backgroundColor: Colors[theme].whiteText,
-      borderRadius: Borders.radius2,
-      paddingHorizontal: wp(4),
-      color: Colors[theme].blackText,
-      borderWidth: 1,
-      borderColor: Colors[theme].gray,
-      alignItems: "center",
-      justifyContent: "center",
+      marginVertical: hp(1),
     },
     searchIconContainer: {
       position: "absolute",
@@ -58,8 +53,7 @@ export default (theme: "light" | "dark") =>
     },
     upcomingEventsText: {
       fontSize: FontSize.large,
-      color: Colors[theme].blackText,
-      marginLeft: wp(2),
+      fontFamily: FontFamily.semiBold,
     },
     upcomingCardContainer: {
       paddingVertical: hp(2),

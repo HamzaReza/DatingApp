@@ -21,12 +21,28 @@ import {
   relationshipIntentOptions,
   smokingPreferenceOptions,
 } from "@/constants/FilterOptions";
+import {
+  setDeviceLocation,
+  setLocationPermissionGranted,
+} from "@/redux/slices/userSlice";
+import { RootState } from "@/redux/store";
 import { hp } from "@/utils";
+import { requestLocationPermission } from "@/utils/Permission";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import * as Location from "expo-location";
+import { router } from "expo-router";
 import React, { useState } from "react";
-import { FlatList, TouchableOpacity, useColorScheme, View } from "react-native";
+import {
+  FlatList,
+  Platform,
+  TouchableOpacity,
+  useColorScheme,
+  View,
+} from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import MapView, { PROVIDER_DEFAULT, PROVIDER_GOOGLE } from "react-native-maps";
+import { useDispatch, useSelector } from "react-redux";
 
 type User = {
   id: string;
@@ -108,12 +124,23 @@ export default function Discover() {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
+  const dispatch = useDispatch();
 
-  const [selectedLocation, setSelectedLocation] = useState("Germany");
   const [selectedInterests, setSelectedInterests] = useState<string[]>([
     "2",
     "5",
   ]);
+
+  // Get location from Redux state
+  const { deviceLocation, locationPermissionGranted } = useSelector(
+    (state: RootState) => state.user
+  );
+
+  // Location dropdown state
+  const [locationDropdownOpen, setLocationDropdownOpen] = useState(false);
+  const [locationDropdownItems, setLocationDropdownItems] =
+    useState(locationOptions);
+  const [locationDropdownValue, setLocationDropdownValue] = useState("germany");
 
   const [filterModal, setFilterModal] = useState(false);
 
@@ -175,32 +202,49 @@ export default function Discover() {
     );
   };
 
+  // Get user's current location
+  const getCurrentLocation = async () => {
+    try {
+      const permissionGranted = await requestLocationPermission();
+      if (permissionGranted) {
+        dispatch(setLocationPermissionGranted(true));
+        const location = await Location.getCurrentPositionAsync({});
+        dispatch(setDeviceLocation(location));
+      } else {
+        console.log("Location permission denied");
+        dispatch(setLocationPermissionGranted(false));
+      }
+    } catch (error) {
+      console.error("Error getting location:", error);
+      dispatch(setLocationPermissionGranted(false));
+    }
+  };
+
   return (
     <ScrollContainer>
       <View style={styles.header}>
         <View>
-          <View style={styles.locationContainer}>
-            <Ionicons name="location" size={16} color={Colors[theme].redText} />
-            <TouchableOpacity>
-              <RnText style={styles.locationText}>{selectedLocation}</RnText>
-            </TouchableOpacity>
-            <Ionicons
-              name="chevron-down"
-              size={16}
-              color={Colors[theme].redText}
-            />
-          </View>
-
-          <RnText style={styles.title}>Discover</RnText>
+          <RnDropdown
+            open={locationDropdownOpen}
+            items={locationDropdownItems}
+            value={locationDropdownValue}
+            setOpen={setLocationDropdownOpen}
+            setItems={setLocationDropdownItems}
+            setValue={setLocationDropdownValue}
+            placeholder="Location"
+            style={styles.locationDropdown}
+            dropdownText={styles.locationDropdownText}
+          />
         </View>
+        <RnText style={styles.title}>Discover</RnText>
 
         <View style={styles.headerActions}>
           <TouchableOpacity style={styles.actionButton}>
             <RoundButton
               iconName="search"
               iconSize={24}
-              iconColor={Colors[theme].redText}
-              borderColor={Colors[theme].redText}
+              iconColor={Colors[theme].primary}
+              backgroundColour={Colors[theme].whiteText}
               onPress={() => console.log("Pressed")}
             />
           </TouchableOpacity>
@@ -208,8 +252,8 @@ export default function Discover() {
             <RoundButton
               iconName="tune"
               iconSize={24}
-              iconColor={Colors[theme].redText}
-              borderColor={Colors[theme].redText}
+              iconColor={Colors[theme].primary}
+              backgroundColour={Colors[theme].whiteText}
               onPress={() => setFilterModal(true)}
             />
           </TouchableOpacity>
@@ -230,6 +274,7 @@ export default function Discover() {
               distance={item.distance}
               image={item.image}
               isNew={item.isNew}
+              onPress={() => router.push("/profile")}
             />
           )}
           horizontal
@@ -259,47 +304,51 @@ export default function Discover() {
       </View>
 
       {/* Around Me Section */}
-      <View style={styles.section}>
-        <RnText style={styles.sectionTitle}>Around me</RnText>
+      <View style={[styles.section, { marginBottom: hp(12) }]}>
+        <View style={styles.subHeadContainer}>
+          <RnText style={styles.sectionTitle}>Around me</RnText>
+        </View>
         <RnText style={styles.sectionSubtitle}>
-          {`People with ${interests
-            .filter((item) => selectedInterests.includes(item.id))
-            .map((item) => item.title)
-            .join(", ")} interest around you`}
+          People
+          {selectedInterests.length > 0
+            ? ` with interest in ${interests
+                .filter((item) => selectedInterests.includes(item.id))
+                .map((item) => item.title)
+                .join(", ")}`
+            : ""}{" "}
+          around you
         </RnText>
 
-        <View style={styles.aroundMeContainer}>
-          <View style={styles.mapContainer}>
-            <View style={styles.mapPlaceholder}>
-              <Ionicons name="map" size={40} color={Colors[theme].redText} />
-              <RnText style={styles.mapText}>Map View</RnText>
-            </View>
-
-            <View style={styles.userPins}>
-              <View style={[styles.userPin, { top: "30%", left: "20%" }]}>
-                <View style={styles.pinImage}>
-                  <Ionicons
-                    name="person"
-                    size={16}
-                    color={Colors[theme].background}
-                  />
-                </View>
-              </View>
-              <View style={styles.connectButton}>
-                <RnText style={styles.connectText}>Connect with Clara</RnText>
-              </View>
-              <View style={[styles.userPin, { top: "60%", right: "25%" }]}>
-                <View style={styles.pinImage}>
-                  <Ionicons
-                    name="person"
-                    size={16}
-                    color={Colors[theme].background}
-                  />
-                </View>
-              </View>
-            </View>
+        {locationPermissionGranted ? (
+          <MapView
+            style={styles.map}
+            initialRegion={{
+              latitude: deviceLocation?.coords.latitude || 37.7749,
+              longitude: deviceLocation?.coords.longitude || -122.4194,
+              latitudeDelta: 0.01,
+              longitudeDelta: 0.01,
+            }}
+            provider={
+              Platform.OS === "android" ? PROVIDER_GOOGLE : PROVIDER_DEFAULT
+            }
+            showsUserLocation={locationPermissionGranted}
+            showsMyLocationButton={locationPermissionGranted}
+          />
+        ) : (
+          <View
+            style={[
+              styles.map,
+              styles.getLocationContainer,
+              { justifyContent: "center" },
+            ]}
+          >
+            <RnButton
+              title="Get Location"
+              onPress={() => getCurrentLocation()}
+              style={[styles.getLocationButton, styles.getLocationButtonText]}
+            />
           </View>
-        </View>
+        )}
       </View>
 
       <RnModal show={filterModal} backButton={() => setFilterModal(false)}>

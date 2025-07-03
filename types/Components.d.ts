@@ -28,6 +28,7 @@ export interface RnInputProps {
   placeholder: string;
   leftIcon?: IconNode;
   rightIcon?: IconNode;
+  noError?: boolean;
 }
 
 export interface RnPhoneInputProps {
@@ -174,7 +175,6 @@ export interface RnDropdownProps {
   value: any;
   items: { label: string; value: any; [key: string]: any }[];
   open: boolean;
-  multiple?: boolean;
   min?: number;
   max?: number;
   zIndex?: number;
@@ -192,6 +192,7 @@ export interface RnDropdownProps {
   >;
   setValue: React.Dispatch<React.SetStateAction<any>>;
   loading?: boolean;
+  dropdownText?: StyleProp<TextStyle>;
 }
 
 export interface RnBottomSheetProps {
@@ -203,7 +204,6 @@ export interface RnBottomSheetProps {
   backgroundStyle?: StyleProp<ViewStyle>;
   handleIndicatorStyle?: StyleProp<ViewStyle>;
   containerStyle?: StyleProp<ViewStyle>;
-  handleStyle?: StyleProp<ViewStyle>;
   handleComponent?: React.FC<BottomSheetHandleProps> | null;
   onChange?: (index: number) => void;
   onAnimate?: (fromIndex: number, toIndex: number) => void;

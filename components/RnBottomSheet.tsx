@@ -21,7 +21,6 @@ const RnBottomSheet: React.FC<RnBottomSheetProps> = ({
   backgroundStyle,
   handleIndicatorStyle,
   containerStyle,
-  handleStyle,
   handleComponent,
   onChange,
   onAnimate,
@@ -49,7 +48,7 @@ const RnBottomSheet: React.FC<RnBottomSheetProps> = ({
       borderTopRightRadius: wp(6),
     },
     handleIndicatorStyle: {
-      backgroundColor: Colors[theme].gray,
+      backgroundColor: "transparent",
       width: wp(12),
       height: hp(0.6),
     },
@@ -59,15 +58,6 @@ const RnBottomSheet: React.FC<RnBottomSheetProps> = ({
     contentContainerStyle: {
       flex: 1,
       paddingHorizontal: wp(4),
-    },
-    handleStyle: {
-      backgroundColor: Colors[theme].background,
-      borderTopLeftRadius: wp(6),
-      borderTopRightRadius: wp(6),
-    },
-    backdrop: {
-      backgroundColor: Colors[theme].blackText,
-      opacity: 0.5,
     },
   });
 
@@ -126,7 +116,6 @@ const RnBottomSheet: React.FC<RnBottomSheetProps> = ({
       backgroundStyle={[styles.backgroundStyle, backgroundStyle]}
       handleIndicatorStyle={[styles.handleIndicatorStyle, handleIndicatorStyle]}
       containerStyle={[styles.containerStyle, containerStyle]}
-      handleStyle={[styles.handleStyle, handleStyle]}
       handleComponent={handleComponent}
       onChange={handleSheetChanges}
       onAnimate={handleSheetAnimate}

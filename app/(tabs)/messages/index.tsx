@@ -1,4 +1,4 @@
-import createStyles from '@/app/tabStyles/messages.styles';
+import createStyles from "@/app/tabStyles/messages.styles";
 import { MessageItem } from "@/components/MessageItem";
 import PrimaryHeader from "@/components/PrimaryHeader";
 import RnText from "@/components/RnText";
@@ -16,7 +16,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   useColorScheme,
-  View
+  View,
 } from "react-native";
 
 type RecentMatch = {
@@ -118,20 +118,16 @@ const messages: Message[] = [
 ];
 
 export default function Messages() {
-
   const colorScheme = useColorScheme();
-    const theme = colorScheme === "dark" ? "dark" : "light";
-    const styles = createStyles(theme);
-
+  const theme = colorScheme === "dark" ? "dark" : "light";
+  const styles = createStyles(theme);
 
   const handleBackPress = () => {
     router.back();
   };
 
   const handleCreateGroup = () => {
-    router.push("/messages/connection/[id]", {
-      
-    });
+    router.push("/messages/connection/[id]", {});
   };
 
   const handleRecentMatchPress = (matchId: string) => {
@@ -164,67 +160,65 @@ export default function Messages() {
     </TouchableOpacity>
   );
 
- const renderMessage = ({ item }: { item: Message }) => (
-  <MessageItem
-    name={item.name}
-    message={item.message}
-    time={item.time}
-    image={item.image}
-    isOnline={item.isOnline}
-    unread={item.unread}
-    onPress={() => handleMessagePress(item.id)}
-  />
-);
+  const renderMessage = ({ item }: { item: Message }) => (
+    <MessageItem
+      name={item.name}
+      message={item.message}
+      time={item.time}
+      image={item.image}
+      isOnline={item.isOnline}
+      unread={item.unread}
+      onPress={() => handleMessagePress(item.id)}
+    />
+  );
 
   return (
-      <SafeAreaView style={styles.container}>
-<ImageBackground
-  source={require('@/assets/images/rings.png')} // update the path to your PNG
-  style={styles.gradientHeaderContainer}
-  resizeMode="cover"
->
-      <LinearGradient
-        colors={[Colors[theme].primary, Colors[theme].pink]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 2 }}
-         style={[StyleSheet.absoluteFill]}
+    <SafeAreaView style={styles.container}>
+      <ImageBackground
+        source={require("@/assets/images/rings.png")} // update the path to your PNG
+        style={styles.gradientHeaderContainer}
+        resizeMode="cover"
       >
-    
-        <View style={{paddingHorizontal: wp(4)}}>
-          <PrimaryHeader
-            title="Messages"
-            titleColor={Colors[theme].whiteText}
-            leftIconColor={Colors[theme].whiteText}
-            showRightIcon={false}
-            borderWidth={0.5}
-            leftIconSize={17}
-            onLeftPress={handleBackPress}
-          />
-        </View>
-
-        {/* Recent Matches Section */}
-        <View style={styles.recentSection}>
-          <View style={styles.recentHeader}>
-            <RnText style={styles.recentTitle}>Recent Matches</RnText>
-            <TouchableOpacity 
-              style={styles.createGroupButton}
-              onPress={handleCreateGroup}
-            >
-              <RnText style={styles.createGroupText}>Create a Group</RnText>
-            </TouchableOpacity>
+        <LinearGradient
+          colors={[Colors[theme].primary, Colors[theme].pink]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 2 }}
+          style={[StyleSheet.absoluteFill]}
+        >
+          <View style={{ paddingHorizontal: wp(4) }}>
+            <PrimaryHeader
+              title="Messages"
+              titleColor={Colors[theme].whiteText}
+              leftIconColor={Colors[theme].primary}
+              showRightIcon={false}
+              borderWidth={0.5}
+              leftIconSize={17}
+              onLeftPress={handleBackPress}
+            />
           </View>
-          <FlatList
-            data={recentMatches}
-            keyExtractor={(item) => item.id}
-            renderItem={renderRecentMatch}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.recentMatchesList}
-          />
-        </View>
-        
-      </LinearGradient>
-</ImageBackground>
+
+          {/* Recent Matches Section */}
+          <View style={styles.recentSection}>
+            <View style={styles.recentHeader}>
+              <RnText style={styles.recentTitle}>Recent Matches</RnText>
+              <TouchableOpacity
+                style={styles.createGroupButton}
+                onPress={handleCreateGroup}
+              >
+                <RnText style={styles.createGroupText}>Create a Group</RnText>
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={recentMatches}
+              keyExtractor={(item) => item.id}
+              renderItem={renderRecentMatch}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.recentMatchesList}
+            />
+          </View>
+        </LinearGradient>
+      </ImageBackground>
       {/* Messages List */}
       <View style={styles.messagesContainer}>
         <FlatList
@@ -238,5 +232,3 @@ export default function Messages() {
     </SafeAreaView>
   );
 }
-
-

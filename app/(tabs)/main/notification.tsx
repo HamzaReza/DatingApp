@@ -78,9 +78,8 @@ export default function NotificationScreen() {
       <View style={styles.header}>
         <RoundButton
           iconName="chevron-left"
-          iconSize={24}
-          iconColor={Colors[theme].greenText}
-          borderColor={Colors[theme].background}
+          iconSize={22}
+          iconColor={Colors[theme].primary}
           backgroundColour={Colors[theme].whiteText}
           onPress={() => router.back()}
         />

@@ -19,10 +19,10 @@ export default function TabLayout() {
     tabBarStyle: {
       borderWidth: 0,
       borderTopWidth: 0,
-      backgroundColor: Colors[theme].pink,
+      backgroundColor: Colors[theme].bottomTab,
       height: hp(8),
       marginHorizontal: wp(4),
-      marginBottom: hp(1),
+      marginBottom: hp(2),
       borderRadius: wp(12),
       position: "absolute",
     },

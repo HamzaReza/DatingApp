@@ -27,18 +27,8 @@ export const maritalStatusOptions = [
 ];
 
 export const locationOptions = [
-  { label: "Germany", value: "germany" },
-  { label: "United States", value: "usa" },
   { label: "United Kingdom", value: "uk" },
-  { label: "Canada", value: "canada" },
-  { label: "Australia", value: "australia" },
-  { label: "France", value: "france" },
-  { label: "Spain", value: "spain" },
-  { label: "Italy", value: "italy" },
-  { label: "Netherlands", value: "netherlands" },
-  { label: "Sweden", value: "sweden" },
-  { label: "Norway", value: "norway" },
-  { label: "Denmark", value: "denmark" },
+  { label: "India", value: "india" },
 ];
 
 export const interestMatchOptions = [
@@ -94,4 +84,4 @@ export const casualDatingAndMatrimonyOptions = [
   { label: "Matrimony", value: "matrimony" },
   { label: "Both", value: "both" },
   { label: "Not Sure", value: "not_sure" },
-]; 
+];

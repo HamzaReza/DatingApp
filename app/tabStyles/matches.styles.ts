@@ -1,4 +1,6 @@
+import { Borders } from '@/constants/Borders';
 import { Colors } from '@/constants/Colors';
+import { FontFamily } from '@/constants/FontFamily';
 import { FontSize } from '@/constants/FontSize';
 import { hp, wp } from '@/utils';
 import { StyleSheet } from 'react-native';
@@ -18,14 +20,14 @@ export default (theme:'dark'|'light')=>StyleSheet.create({
       statCircle: {
         width: wp(16),
         height: wp(16),
-        borderRadius: wp(8),
+        borderRadius: Borders.circle,
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: hp(1),
       },
       statNumber: {
         fontSize: FontSize.regular,
-        fontWeight: 'bold',
+        fontFamily:FontFamily.bold,
         color: Colors[theme].redText,
       
       },
@@ -38,7 +40,7 @@ export default (theme:'dark'|'light')=>StyleSheet.create({
       },
       sectionTitle: {
         fontSize: FontSize.large,
-        fontWeight: 'bold',
+       fontFamily:FontFamily.semiBold,
         color: Colors[theme].greenText,
         marginBottom: hp(2),
       },

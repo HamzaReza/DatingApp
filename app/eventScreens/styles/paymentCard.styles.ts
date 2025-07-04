@@ -1,5 +1,6 @@
 import { Borders } from "@/constants/Borders";
 import { Colors } from "@/constants/Colors";
+import { FontFamily } from "@/constants/FontFamily";
 import { FontSize } from "@/constants/FontSize";
 import { hp, wp } from "@/utils";
 import { StyleSheet } from "react-native";
@@ -12,7 +13,7 @@ export default (theme:'dark'|'light')=> StyleSheet.create({
   },
   sectionTitle: {
     fontSize: FontSize.large,
-    fontWeight: '600',
+   fontFamily:FontFamily.semiBold,
     marginTop: wp(7),
     color: Colors[theme].blackText,
     marginBottom:wp(5)
@@ -35,7 +36,7 @@ export default (theme:'dark'|'light')=> StyleSheet.create({
   cardName: {
     color: Colors[theme].background,
     fontSize: FontSize.large,
-    fontWeight: '600',
+   fontFamily:FontFamily.semiBold,
   },
   cardChip: {
     width: wp(6),
@@ -46,7 +47,7 @@ export default (theme:'dark'|'light')=> StyleSheet.create({
   cardNumber: {
     marginTop: wp(8),
     fontSize: FontSize.large,
-    fontWeight: '600',
+ fontFamily:FontFamily.semiBold,
     color: Colors[theme].blackText,
   },
   cardExp: {
@@ -64,8 +65,8 @@ export default (theme:'dark'|'light')=> StyleSheet.create({
     borderRadius: Borders.radius3,
   },
   confirmText: {
-    color: 'white',
-    fontWeight: '600',
+    color: Colors.light.whiteText,
+    fontFamily:FontFamily.semiBold,
     fontSize:FontSize.small,
   },
   decorCircle: {
@@ -89,4 +90,7 @@ export default (theme:'dark'|'light')=> StyleSheet.create({
     transform: [{ rotate: '45deg' }],
     opacity: 0.3,
   },
+  expiryText:{
+     fontFamily:FontFamily.semiBold 
+  }
 });

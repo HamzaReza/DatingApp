@@ -46,7 +46,7 @@ export default (theme: "dark" | "light") =>
     },
     eventTitle: {
       fontSize: FontSize.large,
-      fontWeight: "600",
+    fontFamily:FontFamily.semiBold,
       color: Colors[theme].blackText,
       marginBottom: hp(2),
     },
@@ -58,7 +58,7 @@ export default (theme: "dark" | "light") =>
     label: {
       fontSize: FontSize.small,
       color: Colors[theme].blackText,
-      fontWeight: "600",
+      fontFamily:FontFamily.semiBold,
     },
     value: {
       fontSize: FontSize.small,

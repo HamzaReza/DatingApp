@@ -1,5 +1,6 @@
 import { Borders } from '@/constants/Borders';
 import { Colors } from '@/constants/Colors';
+import { FontFamily } from '@/constants/FontFamily';
 import { FontSize } from '@/constants/FontSize';
 import { hp, wp } from '@/utils';
 import { StyleSheet } from 'react-native';
@@ -23,21 +24,21 @@ export default (theme:'dark'|'light') =>StyleSheet.create({
   },
   recentTitle: {
     fontSize: FontSize.small,
-    fontWeight: "700",
+   fontFamily:FontFamily.semiBold,
     color: Colors[theme].whiteText,
   },
   createGroupButton: {
     backgroundColor: Colors[theme].pink,
     paddingHorizontal: wp(3),
     paddingVertical: hp(0.3),
-    borderRadius: wp(5),
+    borderRadius: Borders.radius3,
     alignItems:'center',
     justifyContent:'center'
   },
   createGroupText: {
     color: Colors[theme].whiteText,
     fontSize: FontSize.small,
-    fontWeight: "700",
+   fontFamily:FontFamily.semiBold,
   },
   recentMatchesList: {
     paddingLeft: wp(2),
@@ -71,7 +72,7 @@ export default (theme:'dark'|'light') =>StyleSheet.create({
 likesText: {
   color: Colors[theme].whiteText,
   fontSize: FontSize.regular,
-  fontWeight: "bold",
+fontFamily:FontFamily.semiBold,
   marginLeft: wp(1),
 },
   messagesContainer: {

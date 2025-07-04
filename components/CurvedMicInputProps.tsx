@@ -1,3 +1,4 @@
+import { Borders } from '@/constants/Borders';
 import { Colors } from '@/constants/Colors';
 import { hp, wp } from '@/utils';
 import { Ionicons } from '@expo/vector-icons';
@@ -103,7 +104,6 @@ const createStyles  = (theme:'dark'|'light')=>StyleSheet.create({
   },
   svgContainer: {
     position: 'absolute',
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 12,
@@ -133,7 +133,7 @@ const createStyles  = (theme:'dark'|'light')=>StyleSheet.create({
   micButton: {
     width: wp(18),
     height: wp(18),
-    borderRadius: wp(9),
+    borderRadius: Borders.circle,
     backgroundColor: Colors[theme].pink,
     justifyContent: 'center',
     alignItems: 'center',

@@ -274,7 +274,7 @@ export default function Discover() {
               distance={item.distance}
               image={item.image}
               isNew={item.isNew}
-              onPress={() => router.push("/profile")}
+              onPress={() => router.push('/swipeProfile')}
             />
           )}
           horizontal

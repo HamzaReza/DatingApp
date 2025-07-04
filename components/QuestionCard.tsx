@@ -1,4 +1,6 @@
+import { Borders } from '@/constants/Borders';
 import { Colors } from '@/constants/Colors';
+import { FontFamily } from '@/constants/FontFamily';
 import { FontSize } from '@/constants/FontSize';
 import { hp, wp } from '@/utils';
 import AntDesign from '@expo/vector-icons/AntDesign';
@@ -85,7 +87,7 @@ const createStyles  = (theme:'dark'|'light')=>StyleSheet.create({
   card: {
     width: wp(92),
     height: hp(46),
-    borderRadius: wp(6),
+    borderRadius: Borders.radius3,
     overflow: 'hidden',
     marginBottom: hp(2),
     position: 'relative',
@@ -111,7 +113,7 @@ const createStyles  = (theme:'dark'|'light')=>StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     paddingHorizontal: wp(3),
     paddingVertical: hp(1),
-    borderRadius: wp(5),
+    borderRadius: Borders.radius4,
     alignSelf: 'flex-start',
     borderColor:Colors[theme].whiteText,
     borderWidth:0.2
@@ -119,13 +121,13 @@ const createStyles  = (theme:'dark'|'light')=>StyleSheet.create({
   categoryText: {
     color: Colors[theme].background,
     fontSize: FontSize.regular,
-    fontWeight: '600',
+  fontFamily:FontFamily.semiBold,
     marginLeft: wp(1),
   },
   questionText: {
     color: Colors[theme].background,
     fontSize: FontSize.large,
-    fontWeight: 'bold',
+fontFamily:FontFamily.semiBold,
     lineHeight: 28,
     textAlign: 'left',
     marginTop: hp(2),
@@ -139,7 +141,7 @@ const createStyles  = (theme:'dark'|'light')=>StyleSheet.create({
   avatar: {
     width: wp(12),
     height: wp(12),
-    borderRadius: wp(6),
+    borderRadius: Borders.circle,
     marginRight: wp(3),
   },
   userDetails: {
@@ -148,7 +150,7 @@ const createStyles  = (theme:'dark'|'light')=>StyleSheet.create({
   userName: {
     color: Colors[theme].background,
     fontSize: FontSize.small,
-    fontWeight: 'bold',
+   fontFamily:FontFamily.semiBold,
   },
   userLocation: {
     color: Colors[theme].background,

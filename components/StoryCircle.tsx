@@ -51,7 +51,7 @@ const createStyles  = (theme:'dark'|'light')=>StyleSheet.create({
     position: 'relative',
   },
   ownStoryBorder: {
-    borderColor: '#ccc',
+    borderColor: Colors[theme].primary,
   },
   image: {
     width: hp(7),                

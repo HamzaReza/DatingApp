@@ -1,5 +1,6 @@
 import { Borders } from "@/constants/Borders";
 import { Colors } from "@/constants/Colors";
+import { FontFamily } from "@/constants/FontFamily";
 import { FontSize } from "@/constants/FontSize";
 import { hp, wp } from "@/utils";
 import { StyleSheet } from "react-native";
@@ -39,7 +40,7 @@ export default (theme: "dark" | "light") =>
     nameText: {
       fontSize: FontSize.extraLarge,
       color: Colors[theme].whiteText,
-      fontWeight: "800",
+      fontFamily:FontFamily.bold,
       marginBottom: hp(2),
     },
     section: {
@@ -48,7 +49,7 @@ export default (theme: "dark" | "light") =>
     },
     sectionTitle: {
       color: Colors[theme].pink,
-      fontWeight: "600",
+      fontFamily:FontFamily.semiBold,
       fontSize: FontSize.large,
       marginBottom: wp(2),
     },
@@ -70,12 +71,12 @@ export default (theme: "dark" | "light") =>
     },
     creatorName: {
       fontSize: FontSize.medium,
-      fontWeight: "600",
+   fontFamily:FontFamily.semiBold,
     },
     likesText: {
       fontSize: FontSize.medium,
       color: Colors[theme].pink,
-      fontWeight: "600",
+     fontFamily:FontFamily.semiBold,
     },
     aboutText: {
       marginTop: wp(1),
@@ -103,7 +104,7 @@ export default (theme: "dark" | "light") =>
     },
     priceText: {
       color: Colors[theme].pink,
-      fontWeight: "bold",
+  fontFamily:FontFamily.semiBold,
       fontSize: FontSize.medium,
     },
     buyButton: {
@@ -113,7 +114,7 @@ export default (theme: "dark" | "light") =>
     },
     buyText: {
       color: Colors[theme].whiteText,
-      fontWeight: "bold",
+    fontFamily:FontFamily.semiBold,
       fontSize: FontSize.medium,
     },
   });

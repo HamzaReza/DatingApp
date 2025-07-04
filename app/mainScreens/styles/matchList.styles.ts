@@ -1,5 +1,6 @@
 import { Borders } from '@/constants/Borders';
 import { Colors } from '@/constants/Colors';
+import { FontFamily } from '@/constants/FontFamily';
 import { FontSize } from '@/constants/FontSize';
 import { hp, wp } from '@/utils';
 import { StyleSheet } from 'react-native';
@@ -37,7 +38,7 @@ export default (theme:'dark'|'light')=> StyleSheet.create({
   backgroundImage: {
     width: wp(40),
     height: wp(65),
-    borderRadius: wp(4),
+    borderRadius: Borders.radius2,
   },
  leftHeartBadge: {
   position: 'absolute',
@@ -74,7 +75,7 @@ rightHeartBadge: {
   },
   title: {
     fontSize: FontSize.extraLarge,
-    fontWeight: 'bold',
+   fontFamily:FontFamily.bold,
     color: Colors[theme].pink,
     textAlign: 'center',
     marginBottom: hp(1),
@@ -101,7 +102,7 @@ rightHeartBadge: {
   bookButtonText: {
     color: Colors[theme].whiteText,
     fontSize: FontSize.large,
-    fontWeight: 'bold',
+    fontFamily:FontFamily.semiBold,
   },
   messageButton: {
     backgroundColor: 'rgba(255,88,98,0.15)',
@@ -113,7 +114,7 @@ rightHeartBadge: {
   messageButtonText: {
     color: Colors[theme].pink,
     fontSize: FontSize.large,
-     fontWeight: 'bold',
+     fontFamily:FontFamily.semiBold,
   },
   closeButton: {
     position: 'absolute',
@@ -121,7 +122,7 @@ rightHeartBadge: {
     right: wp(6),
     width: wp(10),
     height: wp(10),
-    borderRadius: wp(5),
+    borderRadius: Borders.radius2,
     backgroundColor: Colors[theme].gray,
     justifyContent: 'center',
     alignItems: 'center',

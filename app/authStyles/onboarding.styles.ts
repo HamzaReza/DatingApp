@@ -17,11 +17,12 @@ export default (theme: 'light' | 'dark') => StyleSheet.create({
     marginBottom: hp(8),
     paddingHorizontal: wp(4),
   },
+  
   socialButton: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "rgba(255, 255, 255, 0.7)",
-    borderRadius: wp(3),
+    borderRadius: Borders.radius2,
     padding: hp(1),
     marginTop: hp(1),
     paddingHorizontal: wp(4),

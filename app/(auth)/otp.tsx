@@ -4,7 +4,7 @@ import RnOtp from "@/components/RnOtp";
 import RnProgressBar from "@/components/RnProgressBar";
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
-import { getUserByUid, saveUserToDatabase, verifyCode } from "@/firebase";
+import { getUserByUid, saveUserToDatabase, verifyCode } from "@/firebase/auth";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { setToken, setUser } from "@/redux/slices/userSlice";
 import { RootState } from "@/redux/store";

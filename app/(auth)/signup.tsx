@@ -4,7 +4,7 @@ import RnPhoneInput from "@/components/RnPhoneInput";
 import RnProgressBar from "@/components/RnProgressBar";
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
-import { authenticateWithPhone } from "@/firebase";
+import { authenticateWithPhone } from "@/firebase/auth";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { setConfirmation } from "@/redux/slices/userSlice";
 import { SignupValues } from "@/types";

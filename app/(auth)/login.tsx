@@ -3,7 +3,7 @@ import RnButton from "@/components/RnButton";
 import RnPhoneInput from "@/components/RnPhoneInput";
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
-import { authenticateWithPhone } from "@/firebase";
+import { authenticateWithPhone } from "@/firebase/auth";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { setConfirmation, setToken } from "@/redux/slices/userSlice";
 import { LoginValues } from "@/types";

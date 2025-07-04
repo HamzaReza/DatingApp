@@ -5,7 +5,7 @@ import RnImagePicker from "@/components/RnImagePicker";
 import RnProgressBar from "@/components/RnProgressBar";
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
-import { uploadImage } from "@/firebase";
+import { uploadImage } from "@/firebase/auth";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { PhotoValues } from "@/types";
 import { getAuth } from "@react-native-firebase/auth";

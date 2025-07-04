@@ -1,6 +1,7 @@
 import RnText from '@/components/RnText'
 import { Borders } from '@/constants/Borders'
 import { Colors } from '@/constants/Colors'
+import { FontFamily } from '@/constants/FontFamily'
 import { FontSize } from '@/constants/FontSize'
 import { hp, wp } from '@/utils'
 import React from 'react'
@@ -29,7 +30,7 @@ backgroundColor:Colors[theme].pink
 <RnText style={{
     textAlign:'center',
     color:Colors[theme].whiteText,
-    fontWeight:'600',
+   fontFamily:FontFamily.semiBold,
     fontSize:FontSize.small
 }}>{title}</RnText>
    </TouchableOpacity>

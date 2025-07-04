@@ -2,6 +2,7 @@ import createStyles from "@/app/tabStyles/chat.styles";
 import RnInput from "@/components/RnInput";
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
+import { Borders } from "@/constants/Borders";
 import { Colors } from "@/constants/Colors";
 import { FontSize } from "@/constants/FontSize";
 import { hp, wp } from "@/utils";
@@ -150,16 +151,7 @@ export default function Chat() {
           },
         ]}
       >
-        {/* Drag Handle */}
-        <RNGHPanGestureHandler
-          ref={gestureRef}
-          onGestureEvent={onGestureEvent}
-          onHandlerStateChange={onHandlerStateChange}
-        >
-          <Animated.View style={styles.dragHandleContainer}>
-            <View style={styles.dragHandle} />
-          </Animated.View>
-        </RNGHPanGestureHandler>
+      
 
         {/* Chat Content */}
         <ScrollContainer
@@ -225,7 +217,7 @@ export default function Chat() {
               inputContainerStyle={{
                 borderWidth: 1,
                 borderColor: Colors[theme].gray,
-                borderRadius: wp(6),
+                borderRadius: Borders.radius3,
                 paddingHorizontal: wp(4),
                 minHeight: hp(6),
                 backgroundColor: Colors[theme].background,

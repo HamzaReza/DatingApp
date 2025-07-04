@@ -1,4 +1,5 @@
 import { Borders } from "@/constants/Borders";
+import { FontFamily } from "@/constants/FontFamily";
 import { FontSize } from "@/constants/FontSize";
 import { hp, wp } from "@/utils";
 import { StyleSheet } from "react-native";
@@ -77,6 +78,6 @@ export default (theme:'dark'|'light')=>StyleSheet.create({
   buttonText: {
     color: Colors[theme].whiteText,
     fontSize: FontSize.medium,
-    fontWeight: '600',
+ fontFamily:FontFamily.semiBold,
   },
 });

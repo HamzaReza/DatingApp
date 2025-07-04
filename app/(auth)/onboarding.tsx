@@ -26,7 +26,7 @@ export default function Onboarding({ navigation }: any) {
         <TouchableOpacity
           style={styles.socialButton}
           onPress={() => {
-            router.push("/dashboard");
+            router.push('/(tabs)/main/home');
             dispatch(setToken(true));
             dispatch(
               setUser({
@@ -48,7 +48,7 @@ export default function Onboarding({ navigation }: any) {
         <TouchableOpacity
           style={styles.socialButton}
           onPress={() => {
-            router.push("/dashboard");
+            router.push('/mainScreens/swipeProfile');
             dispatch(setToken(true));
             dispatch(
               setUser({

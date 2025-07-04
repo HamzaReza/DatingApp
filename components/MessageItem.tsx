@@ -1,5 +1,7 @@
 import RnText from "@/components/RnText";
+import { Borders } from "@/constants/Borders";
 import { Colors } from "@/constants/Colors";
+import { FontFamily } from "@/constants/FontFamily";
 import { FontSize } from "@/constants/FontSize";
 import { hp, wp } from "@/utils";
 import React from "react";
@@ -43,7 +45,7 @@ const colorScheme = useColorScheme();
       <RnText
         style={[
           styles.messageText,
-          unread && { fontWeight: "800" },
+          unread && { fontFamily: FontFamily.bold },
         ]}
         numberOfLines={1}
       >
@@ -77,7 +79,7 @@ const createStyles  = (theme:'dark'|'light')=>StyleSheet.create({
   messageImage: {
     width: wp(14),
     height: wp(14),
-    borderRadius: wp(7),
+    borderRadius: Borders.circle,
   },
   onlineIndicator: {
     position: "absolute",
@@ -85,7 +87,7 @@ const createStyles  = (theme:'dark'|'light')=>StyleSheet.create({
     right: 0,
     width: wp(4),
     height: wp(4),
-    borderRadius: wp(2),
+    borderRadius:Borders.circle,
     backgroundColor: Colors[theme].primary,
     borderWidth: 2,
     borderColor: Colors[theme].background,
@@ -94,8 +96,8 @@ const createStyles  = (theme:'dark'|'light')=>StyleSheet.create({
     flex: 1,
   },
   messageName: {
-    fontSize: 16,
-    fontWeight: "800",
+    fontSize: FontSize.small,
+  fontFamily:FontFamily.semiBold,
     color: Colors[theme].blackText,
     marginBottom: hp(0.5),
   },
@@ -111,14 +113,14 @@ const createStyles  = (theme:'dark'|'light')=>StyleSheet.create({
     // flexDirection: "row",
   },
   messageTime: {
-    fontSize: 12,
-    fontWeight:'800',
+    fontSize: FontSize.extraSmall,
+fontFamily:FontFamily.semiBold,
     color: Colors[theme].tabIconDefault,
   },
   unreadDot: {
     width: wp(2.5),
     height: wp(2.5),
-    borderRadius: wp(1.25),
+    borderRadius: Borders.circle,
     backgroundColor: Colors[theme].primary,
     marginLeft: wp(1),
     alignSelf: "center",

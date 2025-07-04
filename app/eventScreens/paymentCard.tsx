@@ -60,7 +60,7 @@ const colorScheme = useColorScheme();
       </View>
 
       <Text style={styles.cardNumber}>{item.number}</Text>
-      <Text style={styles.cardExp}>Exp <Text style={{ fontWeight: 'bold' }}>{item.exp}</Text></Text>
+      <Text style={styles.cardExp}>Exp <Text style={styles.expiryText}>{item.exp}</Text></Text>
 
       <View style={styles.decorCircle} />
       <View style={styles.decorArrow} />

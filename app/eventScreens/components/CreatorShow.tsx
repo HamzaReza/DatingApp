@@ -1,6 +1,7 @@
 import RnText from '@/components/RnText'
 import { Borders } from '@/constants/Borders'
 import { Colors } from '@/constants/Colors'
+import { FontFamily } from '@/constants/FontFamily'
 import { FontSize } from '@/constants/FontSize'
 import { hp, wp } from '@/utils'
 import React from 'react'
@@ -58,7 +59,7 @@ const styles = (theme: 'dark' | 'light') => StyleSheet.create({
   },
   titleText:{
     color: Colors[theme].whiteText,
-    fontWeight:'bold',
+    fontFamily:FontFamily.bold,
     fontSize:FontSize.large
   },
   nameText:{

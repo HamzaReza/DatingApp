@@ -36,7 +36,7 @@ export default (theme: "dark" | "light") =>
     headerButton: {
       width: wp(12),
       height: wp(12),
-      borderRadius: wp(6),
+      borderRadius: Borders.circle,
       backgroundColor: "rgba(255,255,255,0.9)",
       justifyContent: "center",
       alignItems: "center",
@@ -74,7 +74,7 @@ export default (theme: "dark" | "light") =>
     actionButton: {
       width: wp(16),
       height: wp(16),
-      borderRadius: wp(8),
+      borderRadius: Borders.circle,
       backgroundColor: "rgba(255,255,255,0.95)",
       justifyContent: "center",
       alignItems: "center",
@@ -88,7 +88,7 @@ export default (theme: "dark" | "light") =>
       backgroundColor: Colors[theme].redText,
       width: wp(20),
       height: wp(20),
-      borderRadius: wp(10),
+      borderRadius: Borders.circle,
     },
     scrollView: {
       flex: 1,
@@ -201,14 +201,14 @@ export default (theme: "dark" | "light") =>
     largeGalleryItem: {
       flex: 1,
       height: hp(25),
-      borderRadius: wp(3),
+      borderRadius: Borders.radius2,
       overflow: "hidden",
       position: "relative",
     },
     smallGalleryItem: {
       flex: 1,
       height: hp(12),
-      borderRadius: wp(3),
+      borderRadius: Borders.radius2,
       overflow: "hidden",
     },
     galleryImage: {
@@ -221,7 +221,7 @@ export default (theme: "dark" | "light") =>
       left: wp(2),
       width: wp(8),
       height: wp(8),
-      borderRadius: wp(4),
+      borderRadius: Borders.circle,
       backgroundColor: Colors[theme].redText,
       justifyContent: "center",
       alignItems: "center",
@@ -258,10 +258,10 @@ export default (theme: "dark" | "light") =>
     modalMainImage: {
       width: wp(100),
       height: hp(100),
-      borderRadius: wp(4),
+      borderRadius: Borders.radius3,
     },
     thumbnailList: {
-      // paddingVertical: hp(2),
+   
       paddingHorizontal: wp(2),
       alignItems: "center",
       height: hp(20),
@@ -270,7 +270,7 @@ export default (theme: "dark" | "light") =>
     thumbnail: {
       width: wp(18),
       height: wp(18),
-      borderRadius: wp(2),
+      borderRadius: Borders.radius2,
       marginHorizontal: wp(1),
       borderWidth: 2,
       borderColor: "transparent",

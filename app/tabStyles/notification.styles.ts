@@ -1,4 +1,6 @@
+import { Borders } from "@/constants/Borders";
 import { Colors } from "@/constants/Colors";
+import { FontFamily } from "@/constants/FontFamily";
 import { FontSize } from "@/constants/FontSize";
 import { hp, wp } from "@/utils";
 import { StyleSheet } from "react-native";
@@ -13,7 +15,7 @@ export default (theme: "dark" | "light") =>
     },
     backBtn: {
       padding: wp(2),
-      borderRadius: wp(6),
+      borderRadius: Borders.circle,
       backgroundColor: "rgba(255,255,255,0.9)",
       justifyContent: "center",
       alignItems: "center",
@@ -25,7 +27,7 @@ export default (theme: "dark" | "light") =>
     },
     headerTitle: {
       fontSize: FontSize.extraLarge,
-      fontWeight: "bold",
+     fontFamily:FontFamily.semiBold,
       color: Colors[theme].greenText,
       textAlign: "center",
       flex: 1,
@@ -34,7 +36,7 @@ export default (theme: "dark" | "light") =>
       flexDirection: "row",
       alignItems: "center",
       backgroundColor: Colors[theme].whiteText,
-      borderRadius: wp(4),
+      borderRadius: Borders.radius3,
       padding: wp(3),
       marginBottom: hp(2),
       shadowColor: "#000",
@@ -50,7 +52,7 @@ export default (theme: "dark" | "light") =>
     avatar: {
       width: wp(14),
       height: wp(14),
-      borderRadius: wp(3),
+      borderRadius: Borders.radius3,
       marginRight: wp(3),
     },
     content: {
@@ -58,7 +60,7 @@ export default (theme: "dark" | "light") =>
     },
     title: {
       fontSize: FontSize.large,
-      fontWeight: "bold",
+      fontFamily:FontFamily.semiBold,
       color: Colors[theme].blackText,
       marginBottom: hp(0.5),
     },
@@ -78,7 +80,7 @@ export default (theme: "dark" | "light") =>
       right: wp(3),
       width: wp(2.5),
       height: wp(2.5),
-      borderRadius: wp(1.25),
+      borderRadius: Borders.circle,
       backgroundColor: Colors[theme].redText,
     },
   });

@@ -1,3 +1,4 @@
+import { Borders } from "@/constants/Borders";
 import { Colors } from "@/constants/Colors";
 import { hp, wp } from "@/utils";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -12,7 +13,7 @@ export default function TabLayout() {
     iconContainer: {
       width: wp(10),
       height: wp(10),
-      borderRadius: wp(5),
+     borderRadius: Borders.radius4,
       justifyContent: "center",
       alignItems: "center",
     },
@@ -23,7 +24,7 @@ export default function TabLayout() {
       height: hp(8),
       marginHorizontal: wp(4),
       marginBottom: hp(2),
-      borderRadius: wp(12),
+      borderRadius: Borders.radius4,
       position: "absolute",
     },
   });

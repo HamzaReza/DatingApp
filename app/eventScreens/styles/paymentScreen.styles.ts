@@ -76,12 +76,12 @@ export default (theme: "dark" | "light") =>
     },
     applyText: {
       color: Colors[theme].whiteText,
-      fontWeight: "600",
+    fontFamily:FontFamily.semiBold,
     },
     checkoutText: {
       color: Colors[theme].whiteText,
       fontSize: FontSize.medium,
-      fontWeight: "bold",
+      fontFamily:FontFamily.bold,
     },
     selectedRadio: {
       width: wp(5),
@@ -169,7 +169,7 @@ export default (theme: "dark" | "light") =>
     confirmText: {
       color: Colors[theme].whiteText,
       fontSize: FontSize.medium,
-      fontWeight: "600",
+    fontFamily:FontFamily.semiBold,
     },
     bottomSheetBackground: {
       backgroundColor: Colors[theme].pink,

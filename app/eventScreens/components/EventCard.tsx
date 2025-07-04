@@ -1,5 +1,6 @@
 import { Borders } from '@/constants/Borders';
 import { Colors } from '@/constants/Colors';
+import { FontFamily } from '@/constants/FontFamily';
 import { FontSize } from '@/constants/FontSize';
 import { wp } from '@/utils';
 import { Entypo } from '@expo/vector-icons';
@@ -89,7 +90,7 @@ const createStyles = (theme:'dark'|'light')=>StyleSheet.create({
   },
   title: {
     fontSize: FontSize.small,
-    fontWeight: '600',
+    fontFamily: FontFamily.semiBold,
     flexShrink: 1,
     flexWrap: 'wrap',
     color: Colors[theme].blackText,
@@ -114,14 +115,14 @@ const createStyles = (theme:'dark'|'light')=>StyleSheet.create({
     paddingVertical: wp(1),
   },
   price: {
-    color: 'red',
+    color: Colors[theme].redText,
     fontSize: FontSize.small,
-    fontWeight: '600',
+ fontFamily:FontFamily.semiBold,
   },
   joinNow: {
     marginTop: wp(2),
-    fontWeight: 'bold',
+    fontFamily:FontFamily.semiBold,
     fontSize: FontSize.extraSmall,
-    color: '#111',
+    color: Colors[theme].redText,
   },
 });

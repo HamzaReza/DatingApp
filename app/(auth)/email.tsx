@@ -32,10 +32,9 @@ export default function Email() {
   const handleEmailSubmit = async (values: EmailValues) => {
     setIsLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
       router.push({
         pathname: "/age",
-        params: { ...params, email: values.email },
+        params: { ...params, email: values.email.toLowerCase() },
       });
     } catch (error) {
       console.error(error);

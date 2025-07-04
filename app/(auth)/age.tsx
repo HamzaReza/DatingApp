@@ -35,7 +35,6 @@ export default function Age() {
   const handleAgeSubmit = async (values: AgeValues) => {
     setIsLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
       router.push({
         pathname: "/gender",
         params: { ...params, age: values.age },

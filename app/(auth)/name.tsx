@@ -26,7 +26,6 @@ export default function Name() {
   const handleNameSubmit = async (values: NameValues) => {
     setIsLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
       router.push({
         pathname: "/email",
         params: { ...params, name: values.name },

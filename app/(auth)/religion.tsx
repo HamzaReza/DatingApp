@@ -51,6 +51,7 @@ export default function Religion() {
       const updatedUserData = {
         ...params,
         religion: values.religion,
+        isProfileCompleted: true,
       };
 
       await updateUser(currentUser.uid, updatedUserData);

@@ -6,6 +6,7 @@ import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
 import { getUserByUid, saveUserToDatabase, verifyCode } from "@/firebase";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { setToken, setUser } from "@/redux/slices/userSlice";
 import { RootState } from "@/redux/store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getAuth } from "@react-native-firebase/auth";
@@ -13,7 +14,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { Formik } from "formik";
 import React, { useState } from "react";
 import { TouchableOpacity, View } from "react-native";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import * as Yup from "yup";
 
 const otpSchema = Yup.object().shape({
@@ -26,6 +27,7 @@ export default function OtpScreen() {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
   const { confirmation } = useSelector((state: RootState) => state.user);
+  const dispatch = useDispatch();
   const styles = createStyles(theme);
   const { phone } = useLocalSearchParams();
   const [isLoading, setIsLoading] = useState(false);
@@ -39,22 +41,20 @@ export default function OtpScreen() {
         const user = auth.currentUser;
 
         if (user) {
-          // Check if user already exists in database
           const existingUser = await getUserByUid(user.uid);
 
           if (existingUser) {
-            // User exists, check if profile is complete
             if (existingUser.isProfileComplete) {
-              // Profile is complete, navigate to main home
               AsyncStorage.clear();
-              router.replace("/main/home");
+              router.dismissAll();
+              router.push("/main/home");
+              dispatch(setToken(user.uid));
+              dispatch(setUser(existingUser));
             } else {
-              // Profile is incomplete, continue with onboarding
               AsyncStorage.clear();
               router.replace("/name");
             }
           } else {
-            // User doesn't exist, create new user and start onboarding
             await saveUserToDatabase(user.uid, {
               phoneNumber: phoneNumber as string,
             }).then(() => {

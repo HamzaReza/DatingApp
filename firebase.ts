@@ -9,8 +9,16 @@ import {
   updateDoc,
   where,
 } from "@react-native-firebase/firestore";
+import {
+  deleteObject,
+  getDownloadURL,
+  getStorage,
+  putFile,
+  ref,
+} from "@react-native-firebase/storage";
 
 const auth = getAuth();
+const storage = getStorage();
 
 // Authenticate with phone number (handles both signup and login)
 const authenticateWithPhone = async (phoneNumber: string) => {
@@ -44,10 +52,8 @@ const authenticateWithPhone = async (phoneNumber: string) => {
 const verifyCode = async (confirmation: any, code: string) => {
   try {
     await confirmation.confirm(code);
-    console.log("Phone authentication successful");
   } catch (error: any) {
-    console.log(error);
-    console.log("Invalid OTP");
+    console.error(error);
   }
 };
 
@@ -66,7 +72,6 @@ const saveUserToDatabase = async (
       updatedAt: new Date(),
     });
 
-    console.log("User data saved to Firestore successfully");
     return true;
   } catch (error: any) {
     console.error("Error saving user to database:", error);
@@ -98,7 +103,6 @@ const updateUser = async (userId: string, updateData: any) => {
       updatedAt: new Date(),
     });
 
-    console.log("User data updated successfully");
     return true;
   } catch (error: any) {
     console.error("Error updating user:", error);
@@ -129,10 +133,79 @@ const getUserByUid = async (userId: string) => {
   }
 };
 
+// Upload image to Firebase Storage and return download URL
+const uploadImage = async (
+  imageUri: string,
+  userId: string,
+  imageType: "profile" | "gallery" = "profile",
+  imageIndex?: number
+): Promise<string> => {
+  try {
+    // Create unique filename
+    const timestamp = Date.now();
+    const filename = `${userId}_${imageType}_${timestamp}.jpg`;
+    const storagePath = `users/${userId}/${imageType}/${filename}`;
+
+    const storageRef = ref(storage, storagePath);
+
+    const uploadTask = await putFile(storageRef, imageUri);
+
+    const downloadURL = await getDownloadURL(storageRef);
+
+    return downloadURL;
+  } catch (error: any) {
+    console.error("Error uploading image:", error);
+    throw new Error(`Failed to upload image: ${error.message}`);
+  }
+};
+
+// Upload multiple images and return array of download URLs
+const uploadMultipleImages = async (
+  imageUris: string[],
+  userId: string,
+  imageType: "profile" | "gallery" = "gallery"
+): Promise<string[]> => {
+  try {
+    const uploadPromises = imageUris.map((uri, index) =>
+      uploadImage(uri, userId, imageType, index)
+    );
+
+    const downloadURLs = await Promise.all(uploadPromises);
+    return downloadURLs;
+  } catch (error: any) {
+    console.error("Error uploading multiple images:", error);
+    throw new Error(`Failed to upload images: ${error.message}`);
+  }
+};
+
+// Delete image from Firebase Storage
+const deleteImage = async (imageUrl: string): Promise<void> => {
+  try {
+    // Extract the path from the URL
+    const url = new URL(imageUrl);
+    const path = decodeURIComponent(
+      url.pathname.split("/o/")[1]?.split("?")[0] || ""
+    );
+
+    if (!path) {
+      throw new Error("Invalid image URL format");
+    }
+
+    const storageRef = ref(storage, path);
+    await deleteObject(storageRef);
+  } catch (error: any) {
+    console.error("Error deleting image:", error);
+    throw new Error(`Failed to delete image: ${error.message}`);
+  }
+};
+
 export {
   authenticateWithPhone,
+  deleteImage,
   getUserByUid,
   saveUserToDatabase,
   updateUser,
+  uploadImage,
+  uploadMultipleImages,
   verifyCode,
 };

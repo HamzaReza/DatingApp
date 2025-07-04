@@ -35,7 +35,6 @@ export default function Gender() {
     if (!values.gender) return;
     setIsLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
       router.push({
         pathname: "/lookingFor",
         params: { ...params, gender: values.gender },

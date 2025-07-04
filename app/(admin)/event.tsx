@@ -103,7 +103,6 @@ export default function AdminEventTicketScreen() {
   };
 
   const handleSubmitEvent = (values: any) => {
-    console.log("Creating event with values:", values);
     handleCloseBottomSheet();
   };
 

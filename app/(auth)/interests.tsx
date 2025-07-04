@@ -45,7 +45,6 @@ export default function Interests() {
     if (!values.interests.length) return;
     setIsLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
       router.push({
         pathname: "/photo",
         params: { ...params, interests: values.interests },

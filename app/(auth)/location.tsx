@@ -36,9 +36,7 @@ export default function LocationScreen() {
     }
   };
 
-  const handleLocationAccess = async (
-    setFieldValue: (field: string, value: any) => void
-  ) => {
+  const handleLocationAccess = async () => {
     setIsLoading(true);
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -76,7 +74,7 @@ export default function LocationScreen() {
         onSubmit={handleLocationSubmit}
         innerRef={formikRef}
       >
-        {({ values, setFieldValue, handleSubmit, errors }) => (
+        {({ errors }) => (
           <View style={styles.innerContainer}>
             <LocationIcon style={styles.locationIcon} />
             <RnText style={styles.title}>Enable Your Location</RnText>

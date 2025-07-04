@@ -1,5 +1,6 @@
 import { Borders } from "@/constants/Borders";
 import { Colors } from "@/constants/Colors";
+import { FontFamily } from "@/constants/FontFamily";
 import { FontSize } from "@/constants/FontSize";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { RnDateTimePickerProps } from "@/types";
@@ -45,7 +46,7 @@ const RnDateTimePicker: React.FC<RnDateTimePickerProps> = ({
       fontSize: FontSize.small,
       color: Colors[theme].blackText,
       marginBottom: hp(1),
-      fontWeight: "500",
+      fontFamily:FontFamily.regular,
     },
     inputContainer: {
       borderWidth: 1,

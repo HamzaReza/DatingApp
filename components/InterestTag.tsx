@@ -1,4 +1,6 @@
+import { Borders } from "@/constants/Borders";
 import { Colors } from "@/constants/Colors";
+import { FontFamily } from "@/constants/FontFamily";
 import { FontSize } from "@/constants/FontSize";
 import { hp, wp } from "@/utils";
 import { Ionicons } from "@expo/vector-icons";
@@ -51,7 +53,7 @@ const createStyles  = (theme:'dark'|'light')=>StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: wp(3),
     paddingVertical: hp(1),
-    borderRadius: wp(5),
+    borderRadius: Borders.radius4,
     borderWidth: 1,
     borderColor: Colors[theme].greenText,
     marginRight: wp(2),
@@ -66,7 +68,7 @@ const createStyles  = (theme:'dark'|'light')=>StyleSheet.create({
   text: {
     fontSize: FontSize.regular,
     color: Colors[theme].redText,
-    fontWeight: "600",
+    fontFamily:FontFamily.semiBold,
   },
   selectedText: {
     color: Colors[theme].background,

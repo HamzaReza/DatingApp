@@ -1,4 +1,6 @@
+import { Borders } from "@/constants/Borders";
 import { Colors } from "@/constants/Colors";
+import { FontFamily } from "@/constants/FontFamily";
 import { FontSize } from "@/constants/FontSize";
 import { hp, wp } from "@/utils";
 import { StyleSheet } from "react-native";
@@ -24,7 +26,7 @@ export default (theme:'dark'|'light')=>StyleSheet.create({
       },
       connectionText: {
         fontSize: FontSize.extraLarge,
-        fontWeight: "bold",
+      fontFamily:FontFamily.bold,
         color: Colors[theme].whiteText,
         textAlign: "center",
         marginBottom: hp(1),
@@ -32,7 +34,7 @@ export default (theme:'dark'|'light')=>StyleSheet.create({
       },
       nameText: {
         color: Colors[theme].pink,
-        fontWeight: "bold",
+       fontFamily:FontFamily.semiBold,
         fontSize: FontSize.extraLarge,
       },
       timeText: {
@@ -51,7 +53,7 @@ export default (theme:'dark'|'light')=>StyleSheet.create({
       profileImage: {
         width: wp(28),
         height: wp(28),
-        borderRadius: wp(16),
+        borderRadius: Borders.circle,
       },
       profileBorder: {
         position: "absolute",
@@ -59,7 +61,7 @@ export default (theme:'dark'|'light')=>StyleSheet.create({
         left: -wp(2),
         right: -wp(2),
         bottom: -wp(2),
-        borderRadius: wp(18),
+        borderRadius: Borders.circle,
         borderWidth: 3,
         borderColor: Colors[theme].pink,
       },
@@ -76,13 +78,13 @@ export default (theme:'dark'|'light')=>StyleSheet.create({
         backgroundColor: Colors[theme].pink,
         paddingHorizontal: wp(6),
         paddingVertical: hp(0.7),
-        borderRadius: wp(6),
+        borderRadius: Borders.radius3,
         marginBottom: hp(4),
       },
       readReceiptButtonText: {
         color: Colors[theme].whiteText,
         fontSize: FontSize.small,
-        fontWeight: "bold",
+      fontFamily:FontFamily.semiBold,
         marginLeft: wp(2),
       },
       decorativeCircles: {

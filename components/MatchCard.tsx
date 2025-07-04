@@ -5,6 +5,7 @@ import { hp, wp } from "@/utils";
 import React from "react";
 import { Image, StyleSheet, TouchableOpacity, useColorScheme, View } from "react-native";
 import RnText from "./RnText";
+import { FontFamily } from "@/constants/FontFamily";
 
 interface MatchCardProps {
   id: string;
@@ -89,8 +90,8 @@ const createStyles  = (theme:'dark'|'light')=>StyleSheet.create({
   },
   matchText: {
     color: Colors[theme].background,
-    fontSize: 10,
-    fontWeight: "bold",
+    fontSize: FontSize.extraSmall,
+   fontFamily:FontFamily.bold,
   },
   content: {
     position: "absolute",
@@ -101,7 +102,7 @@ const createStyles  = (theme:'dark'|'light')=>StyleSheet.create({
   name: {
     color: Colors[theme].whiteText,
     fontSize: FontSize.regular,
-    fontWeight: "bold",
+fontFamily:FontFamily.bold,
     marginBottom: hp(0.5),
     textAlign: "center",
   },
@@ -122,7 +123,7 @@ const createStyles  = (theme:'dark'|'light')=>StyleSheet.create({
     fontSize: FontSize.extraSmall,
     opacity: 0.8,
     textAlign: "center",
-    fontWeight: "700",
+fontFamily:FontFamily.semiBold,
   },
   nameCon: {
     paddingVertical: wp(1),

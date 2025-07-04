@@ -39,7 +39,7 @@ export default (theme: "light" | "dark") =>
     avatar: {
       width: wp(16),
       height: wp(16),
-      borderRadius: wp(8),
+      borderRadius: Borders.circle,
       marginBottom: hp(1),
     },
     userName: {
@@ -127,7 +127,7 @@ export default (theme: "light" | "dark") =>
     paginationButton: {
       width: wp(10),
       height: wp(10),
-      borderRadius: wp(5),
+      borderRadius: Borders.circle,
       alignItems: "center",
       justifyContent: "center",
       backgroundColor: Colors[theme].whiteText,
@@ -156,7 +156,7 @@ export default (theme: "light" | "dark") =>
     iconContainer: {
       width: wp(8),
       height: wp(8),
-      borderRadius: wp(2),
+      borderRadius: Borders.radius2,
       backgroundColor: "#FFF0F1",
       alignItems: "center",
       justifyContent: "center",
@@ -178,7 +178,7 @@ export default (theme: "light" | "dark") =>
     radioOuter: {
       width: wp(5),
       height: wp(5),
-      borderRadius: wp(2.5),
+      borderRadius: Borders.circle,
       borderWidth: 2,
       alignItems: "center",
       justifyContent: "center",
@@ -199,7 +199,7 @@ export default (theme: "light" | "dark") =>
     radioInner: {
       width: wp(2.5),
       height: wp(2.5),
-      borderRadius: wp(1.25),
+      borderRadius: Borders.circle,
       backgroundColor: Colors[theme].background,
     },
     radioLabel: {
@@ -217,7 +217,7 @@ export default (theme: "light" | "dark") =>
       position: "absolute",
       top: hp(1),
       right: wp(1),
-      borderRadius: wp(2),
+      borderRadius: Borders.radius2,
       paddingHorizontal: wp(2),
       paddingVertical: 2,
       zIndex: 2,

@@ -1,5 +1,6 @@
 import { Borders } from "@/constants/Borders"
 import { Colors } from "@/constants/Colors"
+import { FontFamily } from "@/constants/FontFamily"
 import { FontSize } from "@/constants/FontSize"
 import { hp, wp } from "@/utils"
 import { StyleSheet } from "react-native"
@@ -28,12 +29,7 @@ import { StyleSheet } from "react-native"
        alignItems: "center",
        paddingVertical: hp(1.5),
      },
-     dragHandle: {
-       width: wp(12),
-       height: hp(0.6),
-       backgroundColor: "#E0E0E0",
-       borderRadius: wp(1),
-     },
+    
      userInfo: {
        flexDirection: "row",
        alignItems: "center",
@@ -48,7 +44,7 @@ import { StyleSheet } from "react-native"
      userAvatar: {
        width: wp(12),
        height: wp(12),
-       borderRadius: wp(6),
+       borderRadius: Borders.radius4,
      },
      avatarBorder: {
        position: "absolute",
@@ -56,7 +52,7 @@ import { StyleSheet } from "react-native"
        left: -2,
        right: -2,
        bottom: -2,
-       borderRadius: wp(7),
+       borderRadius: Borders.radius4,
        borderWidth: 2,
        borderColor: Colors[theme].redText,
      },
@@ -65,7 +61,7 @@ import { StyleSheet } from "react-native"
      },
      userName: {
        fontSize: FontSize.small,
-       fontWeight: "600",
+     fontFamily:FontFamily.semiBold,
        color: Colors[theme].blackText,
        marginBottom: hp(0.3),
      },
@@ -83,7 +79,7 @@ import { StyleSheet } from "react-native"
        fontSize: FontSize.regular,
        paddingHorizontal: wp(4),
        paddingVertical: hp(1),
-       borderRadius: wp(4),
+     
      },
      messagesList: {
        flex: 1,
@@ -105,7 +101,7 @@ import { StyleSheet } from "react-native"
        maxWidth: "75%",
        paddingHorizontal: wp(4),
        paddingVertical: hp(1.5),
-       borderRadius: wp(5),
+       borderRadius: Borders.radius2,
        marginBottom: hp(0.5),
      },
      ownBubble: {

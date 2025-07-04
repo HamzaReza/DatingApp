@@ -176,7 +176,7 @@ const createStyles = (theme: "light" | "dark") =>
     radioOuter: {
       width: wp(5),
       height: wp(5),
-      borderRadius: wp(2.5),
+      borderRadius:Borders.circle,
       borderWidth: 2,
       alignItems: "center",
       justifyContent: "center",
@@ -197,7 +197,7 @@ const createStyles = (theme: "light" | "dark") =>
     radioInner: {
       width: wp(2.5),
       height: wp(2.5),
-      borderRadius: wp(1.25),
+      borderRadius: Borders.circle,
       backgroundColor: Colors[theme].background,
     },
     radioLabel: {

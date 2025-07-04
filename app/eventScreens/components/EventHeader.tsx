@@ -1,5 +1,6 @@
 import { Borders } from '@/constants/Borders';
 import { Colors } from '@/constants/Colors';
+import { FontFamily } from '@/constants/FontFamily';
 import { FontSize } from '@/constants/FontSize';
 import { hp, wp } from '@/utils';
 import { Ionicons } from '@expo/vector-icons';
@@ -78,6 +79,6 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: FontSize.large,
-    fontWeight: '700',
+    fontFamily:FontFamily.semiBold,
   },
 });

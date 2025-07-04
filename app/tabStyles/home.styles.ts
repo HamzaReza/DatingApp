@@ -1,3 +1,4 @@
+import { Borders } from "@/constants/Borders";
 import { Colors } from "@/constants/Colors";
 import { FontFamily } from "@/constants/FontFamily";
 import { FontSize } from "@/constants/FontSize";
@@ -31,7 +32,7 @@ export default (theme: "dark" | "light") =>
       flexDirection: "row",
       justifyContent: "space-between",
       backgroundColor: Colors[theme].primaryOpaque,
-      borderRadius: wp(5),
+      borderRadius: Borders.radius3,
       marginBottom: hp(1),
       padding: wp(1.5),
     },
@@ -40,7 +41,7 @@ export default (theme: "dark" | "light") =>
       paddingVertical: hp(1),
       alignItems: "center",
       justifyContent: "center",
-      borderRadius: wp(4),
+      borderRadius: Borders.radius3,
     },
     activeTab: {
       backgroundColor: Colors[theme].background,
@@ -52,7 +53,7 @@ export default (theme: "dark" | "light") =>
     tabText: {
       textAlign: "center",
       color: Colors[theme].greenText,
-      fontWeight: "700",
+  fontFamily:FontFamily.semiBold,
     },
     activeTabText: {
       color: Colors[theme].redText,

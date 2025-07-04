@@ -12,6 +12,7 @@ import {
   useColorScheme,
 } from "react-native";
 import RnText from "./RnText";
+import { FontFamily } from "@/constants/FontFamily";
 
 type MaterialIconsName = React.ComponentProps<typeof MaterialIcons>["name"];
 
@@ -130,7 +131,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: FontSize.extraLarge,
-    fontWeight: "bold",
+  fontFamily:FontFamily.semiBold,
   },
   round: {
     // Your round style properties here

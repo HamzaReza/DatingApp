@@ -17,23 +17,23 @@ import RnText from "./RnText";
 const RnOtp = ({
   verifyCode,
   isError,
-  cell,
+  cell = 6,
   style,
   value,
   error,
 }: RnOtpProps) => {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
-  const ref = useBlurOnFulfill({ value, cellCount: cell ?? 4 });
+  const ref = useBlurOnFulfill({ value, cellCount: cell });
 
   const styles = StyleSheet.create({
     root: {
       justifyContent: "center",
     },
     cell: {
-      width: hp(7),
-      height: hp(7),
-      lineHeight: Platform.OS === "ios" ? hp(7) : undefined,
+      width: hp(6),
+      height: hp(6),
+      lineHeight: Platform.OS === "ios" ? hp(6) : undefined,
       fontSize: FontSize.large,
       fontFamily: FontFamily.semiBold,
       color: Colors[theme].blackText,
@@ -41,7 +41,7 @@ const RnOtp = ({
       borderColor: isError ? Colors[theme].redText : Colors[theme].blackText,
       textAlign: "center",
       textAlignVertical: "center",
-      borderRadius: Borders.circle,
+      borderRadius: Borders.radius2,
     },
     focusCell: {
       borderColor: isError ? Colors[theme].redText : Colors[theme].primary,
@@ -65,7 +65,7 @@ const RnOtp = ({
         }}
         keyboardType="number-pad"
         submitBehavior="blurAndSubmit"
-        cellCount={cell ?? 4}
+        cellCount={cell}
         textContentType="oneTimeCode"
         renderCell={({ index, symbol, isFocused }) => (
           <Fragment key={index}>

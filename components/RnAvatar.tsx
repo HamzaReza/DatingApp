@@ -44,9 +44,9 @@ const RnAvatar: React.FC<RnAvatarProps> = ({
       containerStyle={style}
       rounded
       source={{
-        uri: source?.uri,
+        uri: source,
       }}
-    ></Avatar>
+    />
   );
 };
 

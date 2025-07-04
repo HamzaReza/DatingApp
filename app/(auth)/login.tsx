@@ -3,8 +3,9 @@ import RnButton from "@/components/RnButton";
 import RnPhoneInput from "@/components/RnPhoneInput";
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
+import { authenticateWithPhone } from "@/firebase";
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { setToken } from "@/redux/slices/userSlice";
+import { setConfirmation, setToken } from "@/redux/slices/userSlice";
 import { LoginValues } from "@/types";
 import { SocialIcon } from "@rneui/base";
 import { router } from "expo-router";
@@ -25,14 +26,25 @@ export default function Login() {
   const styles = createStyles(theme);
   const [isLoading, setIsLoading] = useState(false);
   const dispatch = useDispatch();
+
   const handleLogin = async (values: LoginValues) => {
     setIsLoading(true);
+
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      router.dismissAll();
-      router.push("/main/home");
-      dispatch(setToken(true));
-    } catch (error) {
+      const callingCode = `+${phoneInput.current?.state?.code}`;
+      const cleanPhone = phoneInput?.current?.state?.number;
+
+      const formattedPhone = `${callingCode}${cleanPhone}`;
+
+      const confirmation = await authenticateWithPhone(formattedPhone);
+
+      dispatch(setConfirmation(confirmation));
+
+      router.push({
+        pathname: "/otp",
+        params: { phone: formattedPhone },
+      });
+    } catch (error: any) {
       console.error(error);
     } finally {
       setIsLoading(false);
@@ -44,7 +56,7 @@ export default function Login() {
   return (
     <ScrollContainer>
       <Formik
-        initialValues={{ phone: "" }}
+        initialValues={{ phone: "3360102900" }}
         validationSchema={loginSchema}
         onSubmit={handleLogin}
         validateOnChange

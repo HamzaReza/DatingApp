@@ -9,7 +9,7 @@ import RnText from "@/components/RnText";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { GenderValues } from "@/types";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { Formik } from "formik";
 import { useState } from "react";
 import { Pressable, View } from "react-native";
@@ -27,6 +27,7 @@ export default function Gender() {
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
   const [isLoading, setIsLoading] = useState(false);
+  const params = useLocalSearchParams();
 
   const handleGenderSubmit = async (values: {
     gender: GenderValues["gender"] | "";
@@ -34,8 +35,10 @@ export default function Gender() {
     if (!values.gender) return;
     setIsLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      router.push("/lookingFor");
+      router.push({
+        pathname: "/lookingFor",
+        params: { ...params, gender: values.gender },
+      });
     } catch (error) {
       console.error(error);
     } finally {

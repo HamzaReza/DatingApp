@@ -5,7 +5,7 @@ import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { ProfessionValues } from "@/types";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { Formik } from "formik";
 import { useState } from "react";
 import { Pressable, View } from "react-native";
@@ -34,13 +34,17 @@ export default function Profession() {
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
   const [isLoading, setIsLoading] = useState(false);
+  const params = useLocalSearchParams();
 
   const handleProfessionSubmit = async (values: ProfessionValues) => {
     if (!values.profession) return;
     setIsLoading(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
-      router.push("/religion");
+      router.push({
+        pathname: "/religion",
+        params: { ...params, profession: values.profession },
+      });
     } catch (error) {
       console.error(error);
     } finally {

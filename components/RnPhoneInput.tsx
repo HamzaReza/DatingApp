@@ -45,7 +45,7 @@ const RnPhoneInput = forwardRef<any, RnPhoneInputProps>(
         <PhoneInput
           ref={ref}
           defaultValue={value}
-          defaultCode="GB"
+          defaultCode={__DEV__ ? "PK" : "GB"}
           layout="second"
           onChangeText={onChangeText}
           onChangeFormattedText={onChangeText}
@@ -54,6 +54,9 @@ const RnPhoneInput = forwardRef<any, RnPhoneInputProps>(
           flagButtonStyle={styles.flagButtonStyle}
           textInputStyle={styles.textInputStyle}
           codeTextStyle={styles.textInputStyle}
+          textInputProps={{
+            placeholderTextColor: Colors[theme].placeholderText,
+          }}
         />
         <RnText style={[styles.errorText, errorStyle]}>{error}</RnText>
       </>

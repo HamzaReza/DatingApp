@@ -20,36 +20,38 @@ export interface AgeValues {
 
 export type GenderValues = {
   gender: "male" | "female" | "other";
-}
+};
 
 export type LookingForValues = {
   lookingFor: "relationship" | "casual" | "notSure" | "marriage";
-}
+};
 
 export type InterestsValues = {
   interests: string[];
-}
+};
 
 export type PhotoValues = {
-  photo: {
-    uri: string;
-    path: string;
-    type: string;
-    name: string;
-  } | null;
-}
+  photo: string | null;
+};
 
 export type LocationValues = {
   location: {
     latitude: number;
     longitude: number;
   } | null;
-}
+};
 
 export type ProfessionValues = {
-  profession: "it" | "healthcare" | "engineer" | "business" | "teacher" | "artist" | "";
-}
+  profession:
+    | "it"
+    | "healthcare"
+    | "engineer"
+    | "business"
+    | "teacher"
+    | "artist"
+    | "";
+};
 
 export type ReligionValues = {
   religion: "hinduism" | "islam" | "christianity" | "judaism" | "";
-}
+};

@@ -5,7 +5,7 @@ import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { LookingForValues } from "@/types";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { Formik } from "formik";
 import { useState } from "react";
 import { Pressable, View } from "react-native";
@@ -25,6 +25,7 @@ export default function LookingFor() {
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
   const [isLoading, setIsLoading] = useState(false);
+  const params = useLocalSearchParams();
 
   const handleLookingForSubmit = async (values: {
     lookingFor: LookingForValues["lookingFor"] | "";
@@ -32,8 +33,10 @@ export default function LookingFor() {
     if (!values.lookingFor) return;
     setIsLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      router.push("/interests");
+      router.push({
+        pathname: "/interests",
+        params: { ...params, lookingFor: values.lookingFor },
+      });
     } catch (error) {
       console.error(error);
     } finally {

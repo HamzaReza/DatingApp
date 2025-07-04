@@ -2,6 +2,7 @@ import { BottomSheetHandleProps } from "@gorhom/bottom-sheet";
 import { IconNode, TextProps, ViewProps } from "@rneui/base";
 import { ReactElement, ReactNode } from "react";
 import {
+  ImageSourcePropType,
   KeyboardTypeOptions,
   StatusBarProps,
   StatusBarStyle,
@@ -151,7 +152,7 @@ export interface ListItemType {
 export interface RnAvatarProps {
   avatarHeight?: number;
   showAvatarIcon?: boolean;
-  source?: { uri: string } | null;
+  source?: ImageSourcePropType | null;
   style?: StyleProp<ViewStyle>;
 }
 

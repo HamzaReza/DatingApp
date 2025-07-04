@@ -10,7 +10,7 @@
     "web": "expo start --web",
     "test": "jest --watchAll",
     "lint": "expo lint",
-    "build": "expo prebuild",
+    "build": "expo prebuild --clean",
     "archive": "eas build --platform ios && eas submit -p ios --latest",
     "bundle": "eas build -p android --profile production",
     "release": "eas build -p android --profile preview",

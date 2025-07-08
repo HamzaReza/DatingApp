@@ -46,7 +46,7 @@ export default function Email() {
   return (
     <ScrollContainer topBar={<RnProgressBar progress={4 / 11} />}>
       <Formik
-        initialValues={{ email: "" }}
+        initialValues={{ email: (params.email as string) || "" }}
         validationSchema={emailSchema}
         onSubmit={handleEmailSubmit}
         validateOnChange

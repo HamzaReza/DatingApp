@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "dating",
+    "name": "Social Dating",
     "slug": "dating",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -30,7 +30,11 @@
         "googleMaps": {
           "apiKey": "AIzaSyC9XMUda21DasfB8fNpxZcmb3pWOo9r96Q"
         }
-      }
+      },
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -57,6 +61,9 @@
             "useFrameworks": "static",
             "deploymentTarget": "15.1",
             "modular_headers": true
+          },
+          "android": {
+            "enableProguardInReleaseBuilds": false
           }
         }
       ],
@@ -65,10 +72,23 @@
         {
           "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location."
         }
+      ],
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.949979854608-om4b8gp9g3npi8fhk6rjjgga2117pjno"
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "acdef219-24d2-4e32-a9c1-c79cd8227223"
+      }
+    },
+    "owner": "hamzareza"
   }
 }

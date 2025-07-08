@@ -7,7 +7,7 @@
     <key>CFBundleDevelopmentRegion</key>
     <string>$(DEVELOPMENT_LANGUAGE)</string>
     <key>CFBundleDisplayName</key>
-    <string>dating</string>
+    <string>Social Dating</string>
     <key>CFBundleExecutable</key>
     <string>$(EXECUTABLE_NAME)</string>
     <key>CFBundleIdentifier</key>
@@ -35,6 +35,12 @@
         <key>CFBundleURLSchemes</key>
         <array>
           <string>com.googleusercontent.apps.949979854608-om4b8gp9g3npi8fhk6rjjgga2117pjno</string>
+        </array>
+      </dict>
+      <dict>
+        <key>CFBundleURLSchemes</key>
+        <array>
+          <string>exp+dating</string>
         </array>
       </dict>
     </array>

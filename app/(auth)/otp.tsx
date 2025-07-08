@@ -4,9 +4,14 @@ import RnOtp from "@/components/RnOtp";
 import RnProgressBar from "@/components/RnProgressBar";
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
-import { getUserByUid, saveUserToDatabase, verifyCode } from "@/firebase/auth";
+import {
+  authenticateWithPhone,
+  getUserByUid,
+  saveUserToDatabase,
+  verifyCode,
+} from "@/firebase/auth";
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { setToken, setUser } from "@/redux/slices/userSlice";
+import { setConfirmation, setToken, setUser } from "@/redux/slices/userSlice";
 import { RootState } from "@/redux/store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getAuth } from "@react-native-firebase/auth";
@@ -48,7 +53,7 @@ export default function OtpScreen() {
               AsyncStorage.clear();
               router.dismissAll();
               router.push("/main/home");
-              dispatch(setToken(user.uid));
+              dispatch(setToken(true));
               dispatch(setUser(existingUser));
             } else {
               AsyncStorage.clear();
@@ -71,7 +76,10 @@ export default function OtpScreen() {
     }
   };
 
-  const handleResend = () => {};
+  const handleResend = async () => {
+    const confirmation = await authenticateWithPhone(phoneNumber as string);
+    dispatch(setConfirmation(confirmation));
+  };
 
   return (
     <ScrollContainer topBar={<RnProgressBar progress={2 / 11} />}>

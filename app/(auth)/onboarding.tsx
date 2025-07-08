@@ -1,11 +1,14 @@
 import createStyles from "@/app/authStyles/onboarding.styles";
+import RnButton from "@/components/RnButton";
 import Container from "@/components/RnContainer";
 import RnText from "@/components/RnText";
 import { Colors } from "@/constants/Colors";
+import { signInWithGoogleFirebase } from "@/firebase/auth";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { setToken, setUser } from "@/redux/slices/userSlice";
-import { FontAwesome } from "@expo/vector-icons";
+import { wp } from "@/utils";
 import { router } from "expo-router";
+import { useState } from "react";
 import { ImageBackground, TouchableOpacity, View } from "react-native";
 import { useDispatch } from "react-redux";
 
@@ -14,6 +17,34 @@ export default function Onboarding({ navigation }: any) {
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
   const dispatch = useDispatch();
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  const _handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    const result = await signInWithGoogleFirebase();
+    if (result.success) {
+      if (result.isNewUser) {
+        router.push({
+          pathname: "/signup",
+          params: {
+            email: result.user.email || "",
+          },
+        });
+      } else {
+        router.push("/main/home");
+        dispatch(
+          setUser({
+            ...result.user,
+            role: "user",
+          })
+        );
+        dispatch(setToken(true));
+      }
+    } else {
+      console.log("Google sign-in failed:", result.error);
+    }
+    setGoogleLoading(false);
+  };
 
   return (
     <Container>
@@ -23,29 +54,22 @@ export default function Onboarding({ navigation }: any) {
         resizeMode="cover"
       />
       <View style={styles.content}>
-        <TouchableOpacity
-          style={styles.socialButton}
-          onPress={() => {
-            dispatch(setToken(true));
-            dispatch(
-              setUser({
-                role: "admin",
-              })
-            );
-          }}
-        >
-          <View style={styles.iconContainer}>
-            <FontAwesome
-              name="google"
-              size={24}
-              color={Colors[theme].redText}
-            />
-          </View>
-          <RnText style={styles.socialwhiteText}>Login with Google</RnText>
-        </TouchableOpacity>
+        <RnButton
+          title="Login with Google"
+          icon="google"
+          style={[styles.socialButton, styles.socialwhiteText]}
+          onPress={_handleGoogleSignIn}
+          noRightIcon
+          leftIconColor={Colors[theme].redText}
+          loading={googleLoading}
+          loaderColor={Colors[theme].redText}
+          leftIconSize={wp(6)}
+        />
 
-        <TouchableOpacity
-          style={styles.socialButton}
+        <RnButton
+          title="Login with Apple"
+          icon="apple"
+          style={[styles.socialButton, styles.socialwhiteText]}
           onPress={() => {
             dispatch(setToken(true));
             dispatch(
@@ -56,16 +80,11 @@ export default function Onboarding({ navigation }: any) {
          
          router.push('/(admin)/dashboard')
           }}
-        >
-          <View style={styles.iconContainer}>
-            <FontAwesome
-              name="apple"
-              size={24}
-              color={Colors[theme].blackText}
-            />
-          </View>
-          <RnText style={styles.socialwhiteText}>Login with Apple</RnText>
-        </TouchableOpacity>
+          noRightIcon
+          leftIconColor={Colors[theme].blackText}
+          leftIconSize={wp(6)}
+          disabled={googleLoading}
+        />
 
         <TouchableOpacity
           style={styles.emailButton}

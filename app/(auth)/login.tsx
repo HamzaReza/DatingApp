@@ -3,9 +3,12 @@ import RnButton from "@/components/RnButton";
 import RnPhoneInput from "@/components/RnPhoneInput";
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
-import { authenticateWithPhone } from "@/firebase/auth";
+import {
+  authenticateWithPhone,
+  signInWithGoogleFirebase,
+} from "@/firebase/auth";
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { setConfirmation, setToken } from "@/redux/slices/userSlice";
+import { setConfirmation, setToken, setUser } from "@/redux/slices/userSlice";
 import { LoginValues } from "@/types";
 import { SocialIcon } from "@rneui/base";
 import { router } from "expo-router";
@@ -26,6 +29,9 @@ export default function Login() {
   const styles = createStyles(theme);
   const [isLoading, setIsLoading] = useState(false);
   const dispatch = useDispatch();
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  const phoneInput = useRef<PhoneInput>(null);
 
   const handleLogin = async (values: LoginValues) => {
     setIsLoading(true);
@@ -51,7 +57,32 @@ export default function Login() {
     }
   };
 
-  const phoneInput = useRef<PhoneInput>(null);
+  const _handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    const result = await signInWithGoogleFirebase();
+    if (result.success) {
+      if (result.isNewUser) {
+        router.push({
+          pathname: "/signup",
+          params: {
+            email: result.user.email || "",
+          },
+        });
+      } else {
+        router.push("/main/home");
+        dispatch(
+          setUser({
+            ...result.user,
+            role: "user",
+          })
+        );
+        dispatch(setToken(true));
+      }
+    } else {
+      console.log("Google sign-in failed:", result.error);
+    }
+    setGoogleLoading(false);
+  };
 
   return (
     <ScrollContainer>
@@ -91,11 +122,8 @@ export default function Login() {
               <View style={styles.socialContainer}>
                 <SocialIcon
                   type="google"
-                  onPress={() => {
-                    router.dismissAll();
-                    router.push("/main/home");
-                    dispatch(setToken(true));
-                  }}
+                  onPress={_handleGoogleSignIn}
+                  loading={googleLoading}
                 />
                 <SocialIcon
                   type="apple"
@@ -105,6 +133,7 @@ export default function Login() {
                     router.push("/main/home");
                     dispatch(setToken(true));
                   }}
+                  disabled={googleLoading}
                 />
               </View>
             </View>

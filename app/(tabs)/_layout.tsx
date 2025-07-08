@@ -200,38 +200,6 @@ export default function TabLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="tickets"
-        options={{
-          title: "Tickets",
-          tabBarButton: (props) => {
-            const { ref, ...rest } = props;
-            return (
-              <Pressable {...rest} android_ripple={null} style={props.style}>
-                {props.children}
-              </Pressable>
-            );
-          },
-          tabBarIcon: ({ focused, size }) => (
-            <View
-              style={[
-                styles.iconContainer,
-                {
-                  backgroundColor: focused
-                    ? Colors[theme].primary
-                    : "transparent",
-                },
-              ]}
-            >
-              <MaterialIcons
-                name="local-activity"
-                size={focused ? 24 : 22}
-                color={Colors[theme].whiteText}
-              />
-            </View>
-          ),
-        }}
-      />
     </Tabs>
   );
 }

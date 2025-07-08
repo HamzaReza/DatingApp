@@ -15,7 +15,7 @@ import React, { useEffect, useState } from "react";
 import { FlatList, View } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import * as Yup from "yup";
-import { createEvent, fetchEvents } from "./adminFunctions";
+import { createEvent, fetchEvents } from "../../firebase/adminFunctions";
 
 // Validation schema
 const EventSchema = Yup.object().shape({

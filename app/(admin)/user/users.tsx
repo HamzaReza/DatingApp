@@ -58,10 +58,14 @@ console.log(users)
       const db = getFirestore();
 
       const snapshot = await getDocs(collection(db, "users"));
-      const usersData = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+      const usersData = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          status: data.status || "pending",
+        };
+      });
       setUsers(usersData);
       setUserStatuses(
         Object.fromEntries(usersData.map((user) => [user.id, user.status]))

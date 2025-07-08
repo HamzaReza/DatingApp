@@ -11,9 +11,10 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 import { AdminPricingPlan } from "@/types/Admin";
 import { wp } from "@/utils";
 import { FieldArray, Formik } from "formik";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FlatList, View } from "react-native";
 import * as Yup from "yup";
+import { createPricingPlan, fetchPricingPlans } from "../../firebase/adminFunctions";
 
 // Validation schema
 const PricingPlanSchema = Yup.object().shape({
@@ -34,33 +35,29 @@ const durationOptions = [
   { label: "Lifetime", value: "lifetime" },
 ];
 
-const initialPlans: AdminPricingPlan[] = [
-  {
-    id: "1",
-    name: "Basic",
-    description: "Basic access to features",
-    price: 0,
-    duration: "monthly",
-    features: ["Browse profiles", "Send 5 messages/day"],
-  },
-  {
-    id: "2",
-    name: "Premium",
-    description: "Unlock all features",
-    price: 499,
-    duration: "monthly",
-    features: ["Unlimited messages", "See who liked you", "Priority support"],
-  },
-];
+
 
 export default function AdminPricingPlanScreen() {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
   const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
-  const [plans, setPlans] = useState<AdminPricingPlan[]>(initialPlans);
+  const [plans, setPlans] = useState<AdminPricingPlan[]>();
   const [durationOpen, setDurationOpen] = useState(false);
   const [durationItems, setDurationItems] = useState(durationOptions);
+
+useEffect(()=>{
+loadPlans()
+},[])
+
+const loadPlans = async () => {
+    try {
+      const fetched = await fetchPricingPlans();
+      setPlans(fetched as AdminPricingPlan[]);
+    } catch (error) {
+      console.error("Failed to load pricing plans:", error);
+    }
+  };
 
   const renderPlanCard = ({ item: plan }: { item: AdminPricingPlan }) => (
     <View style={styles.planCardWrapper}>
@@ -92,17 +89,25 @@ export default function AdminPricingPlanScreen() {
     setIsBottomSheetVisible(false);
   };
 
-  const handleSubmitPlan = (values: any, { resetForm }: any) => {
-    setPlans([
-      ...plans,
-      {
-        ...values,
-        id: (plans.length + 1).toString(),
-      },
-    ]);
+ const handleSubmitPlan = async (values: any, { resetForm }: any) => {
+  try {
+    await createPricingPlan({
+      name: values.name,
+      description: values.description,
+      price: parseFloat(values.price),
+      duration: values.duration,
+      features: values.features,
+    });
+
+    const updatedPlans = await fetchPricingPlans();
+    setPlans(updatedPlans as AdminPricingPlan[]);
     resetForm();
     handleCloseBottomSheet();
-  };
+  } catch (error) {
+    console.error("Failed to create plan:", error);
+  }
+};
+
 
   return (
     <RnContainer>

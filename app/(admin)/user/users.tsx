@@ -1,33 +1,40 @@
 import createStyles from "@/app/adminStyles/user.styles";
 import RnContainer from "@/components/RnContainer";
 import RnText from "@/components/RnText";
-import { adminUsers } from "@/constants/adminUsers";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { UserStatus } from "@/types/Admin";
 import { wp } from "@/utils";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import {
+  collection,
+  getDocs,
+  getFirestore,
+} from "@react-native-firebase/firestore";
 import { router } from "expo-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Image, TouchableOpacity, View } from "react-native";
 
 const USERS_PER_PAGE = 9;
-const PAGES = Math.ceil(adminUsers.length / USERS_PER_PAGE);
 
 export default function AdminUsers() {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
 
-  const [userStatuses, setUserStatuses] = useState<Record<string, UserStatus>>(
-    () => Object.fromEntries(adminUsers.map((user) => [user.id, user.status]))
-  );
-
   const [page, setPage] = useState(1);
+  const [users, setUsers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const PAGES = Math.ceil(users.length / USERS_PER_PAGE);
   const pagedUsers = useMemo(() => {
     const start = (page - 1) * USERS_PER_PAGE;
-    return adminUsers.slice(start, start + USERS_PER_PAGE);
-  }, [page]);
+    return users.slice(start, start + USERS_PER_PAGE);
+  }, [page, users]);
+
+  const [userStatuses, setUserStatuses] = useState<Record<string, UserStatus>>(
+    () => Object.fromEntries(users.map((user) => [user.id, user.status]))
+  );
 
   const handleStatusChange = (id: string, status: UserStatus) => {
     setUserStatuses((prev) => ({ ...prev, [id]: status }));
@@ -36,15 +43,44 @@ export default function AdminUsers() {
   const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
+
+console.log(users)
+
     if (flatListRef.current) {
       flatListRef.current.scrollToOffset({ offset: 0, animated: true });
     }
+
+    fetchUsers();
   }, [page]);
 
-  const renderUserItem = ({ item: user }: { item: (typeof adminUsers)[0] }) => (
+  const fetchUsers = async () => {
+    try {
+      const db = getFirestore();
+
+      const snapshot = await getDocs(collection(db, "users"));
+      const usersData = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          status: data.status || "pending",
+        };
+      });
+      setUsers(usersData);
+      setUserStatuses(
+        Object.fromEntries(usersData.map((user) => [user.id, user.status]))
+      );
+    } catch (error) {
+      console.error("Failed to fetch users:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderUserItem = ({ item: user }: { item: any }) => (
     <TouchableOpacity
       style={styles.userCard}
-      onPress={() => router.push(`/user/${user.id}`)}
+      onPress={() => router.push(`/user/${user.uid}`)}
     >
       <View
         style={[
@@ -55,11 +91,11 @@ export default function AdminUsers() {
         ]}
       >
         <RnText style={styles.statusTagText}>
-          {userStatuses[user.id].charAt(0).toUpperCase() +
-            userStatuses[user.id].slice(1)}
+          {(userStatuses[user.id] || "pending").charAt(0).toUpperCase() +
+            (userStatuses[user.id] || "pending").slice(1)}
         </RnText>
       </View>
-      <Image source={{ uri: user.avatar }} style={styles.avatar} />
+      <Image source={{ uri: user.photo }} style={styles.avatar} />
       <RnText style={styles.userName}>{user.name}</RnText>
       <RnText style={styles.userBio}>{user.bio}</RnText>
       <View style={styles.userInfoRow}>
@@ -83,7 +119,7 @@ export default function AdminUsers() {
             style={[styles.contactText, { maxWidth: wp(30) }]}
             numberOfLines={1}
           >
-            {user.phone}
+            {user.phoneNumber}
           </RnText>
         </View>
         <View style={styles.contactRow}>
@@ -187,6 +223,14 @@ export default function AdminUsers() {
       </TouchableOpacity>
     </View>
   );
+
+  if (loading) {
+    return (
+      <RnContainer>
+        <RnText>Loading users...</RnText>
+      </RnContainer>
+    );
+  }
 
   return (
     <RnContainer>

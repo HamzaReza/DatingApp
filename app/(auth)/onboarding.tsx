@@ -77,6 +77,8 @@ export default function Onboarding({ navigation }: any) {
                 role: "admin",
               })
             );
+         
+         router.push('/(admin)/dashboard')
           }}
           noRightIcon
           leftIconColor={Colors[theme].blackText}

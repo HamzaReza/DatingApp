@@ -7,15 +7,15 @@ import RnDropdown from "@/components/RnDropdown";
 import RnInput from "@/components/RnInput";
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
-import { adminEvents } from "@/constants/adminEvents";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { AdminEvent } from "@/types/Admin";
 import { hp, wp } from "@/utils";
 import { Formik } from "formik";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FlatList, View } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import * as Yup from "yup";
+import { createEvent, fetchEvents } from "../../firebase/adminFunctions";
 
 // Validation schema
 const EventSchema = Yup.object().shape({
@@ -48,6 +48,20 @@ export default function AdminEventTicketScreen() {
   const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
   const [genreOpen, setGenreOpen] = useState(false);
   const [genreItems, setGenreItems] = useState(genreOptions);
+  const [events, setEvents] = useState<AdminEvent[]>([]);
+
+  useEffect(()=>{
+loadEvents()
+  },[])
+
+   const loadEvents = async () => {
+    try {
+      const fetchedEvents = await fetchEvents();
+      setEvents(fetchedEvents);
+    } catch (err) {
+      console.error("Failed to load events:", err);
+    }
+  };
 
   const renderTicketCard = ({ item: event }: { item: AdminEvent }) => {
     return (
@@ -102,8 +116,21 @@ export default function AdminEventTicketScreen() {
     setIsBottomSheetVisible(false);
   };
 
-  const handleSubmitEvent = (values: any) => {
+  const handleSubmitEvent = async(values: any) => {
+    try {
+    await createEvent({
+      name: values.eventName,
+      venue: values.eventLocation,
+      price: parseFloat(values.eventPrice),
+      genre: values.eventGenre,
+      date: values.eventDate,
+      time: values.eventTime,
+    });
     handleCloseBottomSheet();
+    console.log("✅ Event created");
+  } catch (error) {
+    console.error("❌ Failed to create event:", error);
+  }
   };
 
   return (
@@ -111,7 +138,7 @@ export default function AdminEventTicketScreen() {
       <RnText style={styles.headerTitle}>Event</RnText>
       <View>
         <FlatList
-          data={adminEvents}
+          data={events}
           renderItem={renderTicketCard}
           keyExtractor={(item) => item.id}
           horizontal

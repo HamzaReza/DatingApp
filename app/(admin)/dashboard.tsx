@@ -17,8 +17,9 @@ import {
   Ionicons,
   MaterialCommunityIcons,
 } from "@expo/vector-icons";
+import { collection, getDocs, getFirestore, query, Timestamp, where } from "@react-native-firebase/firestore";
 import { router } from "expo-router";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { FlatList, View } from "react-native";
 import { BarChart, LineChart } from "react-native-gifted-charts";
 import { useDispatch } from "react-redux";
@@ -35,6 +36,57 @@ export default function Dashboard() {
     { label: "Monthly", value: "monthly" },
     { label: "Yearly", value: "yearly" },
   ]);
+
+    const [stats, setStats] = useState({
+    totalUsers: 0,
+    todayUsers: 0,
+    yesterdayUsers: 0,
+    growthPercentage: 0,
+  });
+
+useEffect(() => {
+ getAllUsers()
+}, [])
+
+
+const getAllUsers = async()=> {
+  const db = getFirestore()
+const usersRef = collection(db,'users')
+
+const now = new Date()
+
+const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+
+  const qToday = query(usersRef, where('createdAt', '>=', Timestamp.fromDate(startOfToday)));
+  const qYesterday = query(usersRef, where('createdAt', '>=', Timestamp.fromDate(startOfYesterday)), where('createdAt', '<', Timestamp.fromDate(startOfToday)));
+
+ const allUsersSnap = await getDocs(usersRef);
+  const todayUsersSnap = await getDocs(qToday);
+  const yesterdayUsersSnap = await getDocs(qYesterday);
+
+  const totalUsers = allUsersSnap.size;
+  const todayUsers = todayUsersSnap.size;
+  const yesterdayUsers = yesterdayUsersSnap.size;
+
+   let growthPercentage = 0;
+  if (yesterdayUsers > 0) {
+    growthPercentage = ((todayUsers - yesterdayUsers) / yesterdayUsers) * 100;
+  } else if (todayUsers > 0) {
+    growthPercentage = 100; // Pure growth since there were none yesterday
+  }
+
+setStats({
+        totalUsers,
+        todayUsers,
+        yesterdayUsers,
+        growthPercentage: Number(growthPercentage.toFixed(2)),
+      });
+    
+
+
+}
+
 
   const progressData = useMemo(() => {
     if (selectedPeriod === "monthly") {
@@ -103,7 +155,7 @@ export default function Dashboard() {
           <View key={item.label} style={styles.statCard}>
             <View style={styles.topStat}>
               {statIcons[index]}
-              <RnText style={styles.statValue}>{item.value}</RnText>
+              <RnText style={styles.statValue}>{stats.totalUsers}</RnText>
               <RnText style={styles.statLabel}>{item.label}</RnText>
             </View>
             <RnText
@@ -117,9 +169,9 @@ export default function Dashboard() {
                 },
               ]}
             >
-              {item.change > 0
-                ? `▲ ${item.change}% Up`
-                : `▼ ${Math.abs(item.change)}% Down`}{" "}
+              {stats.growthPercentage > 0
+                ? `▲ ${stats.growthPercentage}% Up`
+                : `▼ ${stats.growthPercentage}% Down`}{" "}
               {item.period}
             </RnText>
           </View>

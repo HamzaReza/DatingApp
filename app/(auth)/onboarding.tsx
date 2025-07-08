@@ -23,13 +23,6 @@ export default function Onboarding({ navigation }: any) {
     setGoogleLoading(true);
     const result = await signInWithGoogleFirebase();
     if (result.success) {
-      dispatch(
-        setUser({
-          ...result.user,
-          role: "user",
-        })
-      );
-
       if (result.isNewUser) {
         router.push({
           pathname: "/signup",
@@ -39,6 +32,13 @@ export default function Onboarding({ navigation }: any) {
         });
       } else {
         router.push("/main/home");
+        dispatch(
+          setUser({
+            ...result.user,
+            role: "user",
+          })
+        );
+        dispatch(setToken(true));
       }
     } else {
       console.log("Google sign-in failed:", result.error);
@@ -67,7 +67,7 @@ export default function Onboarding({ navigation }: any) {
         />
 
         <RnButton
-          title="Login with Google"
+          title="Login with Apple"
           icon="apple"
           style={[styles.socialButton, styles.socialwhiteText]}
           onPress={() => {

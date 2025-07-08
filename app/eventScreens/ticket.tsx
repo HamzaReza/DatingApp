@@ -1,4 +1,4 @@
-import createStyles from "@/app/eventScreens/styles/ticket.styles";
+import createStyles from "@/app/eventScreens/styles/tickets.styles";
 import RnButton from "@/components/RnButton";
 import Container from "@/components/RnContainer";
 import RnText from "@/components/RnText";

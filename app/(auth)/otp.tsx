@@ -53,7 +53,7 @@ export default function OtpScreen() {
               AsyncStorage.clear();
               router.dismissAll();
               router.push("/main/home");
-              dispatch(setToken(user.uid));
+              dispatch(setToken(true));
               dispatch(setUser(existingUser));
             } else {
               AsyncStorage.clear();

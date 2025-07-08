@@ -61,13 +61,6 @@ export default function Login() {
     setGoogleLoading(true);
     const result = await signInWithGoogleFirebase();
     if (result.success) {
-      dispatch(
-        setUser({
-          ...result.user,
-          role: "user",
-        })
-      );
-
       if (result.isNewUser) {
         router.push({
           pathname: "/signup",
@@ -77,6 +70,13 @@ export default function Login() {
         });
       } else {
         router.push("/main/home");
+        dispatch(
+          setUser({
+            ...result.user,
+            role: "user",
+          })
+        );
+        dispatch(setToken(true));
       }
     } else {
       console.log("Google sign-in failed:", result.error);

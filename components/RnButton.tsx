@@ -27,6 +27,7 @@ const RnButton: React.FC<RnButtonProps> = ({
   icon,
   noRightIcon,
   rightIconColor,
+  leftIconColor,
 }) => {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
@@ -106,7 +107,7 @@ const RnButton: React.FC<RnButtonProps> = ({
                   <View style={styles.leftIconContainer}>
                     <FontAwesome6
                       name={icon}
-                      color={styles.icon.color}
+                      color={leftIconColor ?? styles.icon.color}
                       size={styles.icon.fontSize}
                     />
                   </View>
@@ -151,7 +152,7 @@ const RnButton: React.FC<RnButtonProps> = ({
                   <View style={styles.leftIconContainer}>
                     <FontAwesome6
                       name={icon}
-                      color={styles.icon.color}
+                      color={leftIconColor ?? styles.icon.color}
                       size={styles.icon.fontSize}
                     />
                   </View>

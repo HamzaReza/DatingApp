@@ -1,4 +1,9 @@
-import { getAuth, signInWithPhoneNumber } from "@react-native-firebase/auth";
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithCredential,
+  signInWithPhoneNumber,
+} from "@react-native-firebase/auth";
 import {
   addDoc,
   collection,
@@ -16,6 +21,11 @@ import {
   putFile,
   ref,
 } from "@react-native-firebase/storage";
+import {
+  GoogleSignin,
+  isErrorWithCode,
+  isSuccessResponse,
+} from "@react-native-google-signin/google-signin";
 
 const auth = getAuth();
 const storage = getStorage();
@@ -48,6 +58,75 @@ const authenticateWithPhone = async (phoneNumber: string) => {
   }
 };
 
+// Sign in with Google and Firebase (using social.ts approach + Firebase integration)
+const signInWithGoogleFirebase = async () => {
+  try {
+    // Use the clean Google Sign-In approach from social.ts
+    GoogleSignin.configure({
+      webClientId:
+        "949979854608-nvfh2ig0kp6mc4t7742mo813pkosjfbg.apps.googleusercontent.com",
+    });
+    await GoogleSignin.hasPlayServices();
+    const response = await GoogleSignin.signIn();
+
+    if (isSuccessResponse(response)) {
+      // Get the ID token from Google (from social.ts approach)
+      const { idToken } = response.data;
+
+      // Now integrate with Firebase
+      const googleCredential = GoogleAuthProvider.credential(idToken);
+      const userCredential = await signInWithCredential(auth, googleCredential);
+      const user = userCredential.user;
+
+      // Check if user exists in Firestore
+      const existingUser = await getUserByEmail(user.email || "");
+
+      if (!existingUser) {
+        // Save new user to Firestore
+        await saveUserToDatabase(user.uid, {
+          uid: user.uid,
+          email: user.email || "",
+          displayName: user.displayName || "",
+          photoURL: user.photoURL || "",
+          provider: "google",
+        });
+      } else {
+        await updateUser(existingUser.uid, {
+          provider: "google",
+        });
+      }
+
+      return {
+        success: true,
+        user: existingUser || {
+          email: user.email || "",
+          displayName: user.displayName || "",
+          photoURL: user.photoURL || "",
+          provider: "google",
+        },
+        isNewUser: !existingUser,
+      };
+    } else {
+      return {
+        success: false,
+        error: "Sign in was cancelled by user",
+      };
+    }
+  } catch (error) {
+    if (isErrorWithCode(error)) {
+      return {
+        success: false,
+        error: error.message || "Google sign in failed",
+      };
+    } else {
+      return {
+        success: false,
+        error: "An unexpected error occurred",
+      };
+    }
+  }
+};
+
 // Verify OTP
 const verifyCode = async (confirmation: any, code: string) => {
   try {
@@ -58,10 +137,7 @@ const verifyCode = async (confirmation: any, code: string) => {
 };
 
 // Save user data to Firestore
-const saveUserToDatabase = async (
-  userId: string,
-  userData: { phoneNumber: string }
-) => {
+const saveUserToDatabase = async (userId: string, userData: any) => {
   try {
     const db = getFirestore();
     await addDoc(collection(db, "users"), {
@@ -110,7 +186,30 @@ const updateUser = async (userId: string, updateData: any) => {
   }
 };
 
-// Get user data by UID
+// Get user data by email
+const getUserByEmail = async (email: string) => {
+  try {
+    const db = getFirestore();
+
+    // Find the user document by email
+    const usersRef = collection(db, "users");
+    const q = query(usersRef, where("email", "==", email));
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      return null; // User doesn't exist
+    }
+
+    // Return the user data
+    const userData = querySnapshot.docs[0].data();
+    return userData;
+  } catch (error: any) {
+    console.error("Error getting user data:", error);
+    throw new Error(`Failed to get user data: ${error.message}`);
+  }
+};
+
+// Get user data by UID (for phone authentication)
 const getUserByUid = async (userId: string) => {
   try {
     const db = getFirestore();
@@ -207,8 +306,10 @@ export {
   authenticateWithPhone,
   deleteImage,
   getCurrentAuth,
+  getUserByEmail,
   getUserByUid,
   saveUserToDatabase,
+  signInWithGoogleFirebase,
   updateUser,
   uploadImage,
   uploadMultipleImages,

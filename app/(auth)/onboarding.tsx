@@ -53,6 +53,8 @@ export default function Onboarding({ navigation }: any) {
                 role: "admin",
               })
             );
+         
+         router.push('/(admin)/dashboard')
           }}
         >
           <View style={styles.iconContainer}>

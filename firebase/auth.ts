@@ -17,6 +17,7 @@ import {
   ref,
 } from "@react-native-firebase/storage";
 
+
 const auth = getAuth();
 const storage = getStorage();
 
@@ -115,6 +116,8 @@ const getUserByUid = async (userId: string) => {
   try {
     const db = getFirestore();
 
+    console.log('test',userId)
+
     // Find the user document by uid
     const usersRef = collection(db, "users");
     const q = query(usersRef, where("uid", "==", userId));
@@ -212,5 +215,6 @@ export {
   updateUser,
   uploadImage,
   uploadMultipleImages,
-  verifyCode,
+  verifyCode
 };
+

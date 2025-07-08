@@ -29,7 +29,7 @@ export default function Login() {
   const styles = createStyles(theme);
   const [isLoading, setIsLoading] = useState(false);
   const dispatch = useDispatch();
-  const [googleLoading, setGoogleLoading] = useState(true);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const phoneInput = useRef<PhoneInput>(null);
 

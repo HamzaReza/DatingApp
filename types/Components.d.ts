@@ -57,6 +57,7 @@ export interface RnButtonProps {
   noRightIcon?: boolean;
   rightIconColor?: string;
   leftIconColor?: string;
+  leftIconSize?: number;
 }
 
 export interface RnTextProps extends TextProps {

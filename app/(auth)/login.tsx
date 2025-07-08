@@ -29,6 +29,7 @@ export default function Login() {
   const styles = createStyles(theme);
   const [isLoading, setIsLoading] = useState(false);
   const dispatch = useDispatch();
+  const [googleLoading, setGoogleLoading] = useState(true);
 
   const phoneInput = useRef<PhoneInput>(null);
 
@@ -57,6 +58,7 @@ export default function Login() {
   };
 
   const _handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
     const result = await signInWithGoogleFirebase();
     if (result.success) {
       dispatch(
@@ -79,6 +81,7 @@ export default function Login() {
     } else {
       console.log("Google sign-in failed:", result.error);
     }
+    setGoogleLoading(false);
   };
 
   return (
@@ -117,7 +120,11 @@ export default function Login() {
                 <View style={styles.orLine} />
               </View>
               <View style={styles.socialContainer}>
-                <SocialIcon type="google" onPress={_handleGoogleSignIn} />
+                <SocialIcon
+                  type="google"
+                  onPress={_handleGoogleSignIn}
+                  loading={googleLoading}
+                />
                 <SocialIcon
                   type="apple"
                   light
@@ -126,6 +133,7 @@ export default function Login() {
                     router.push("/main/home");
                     dispatch(setToken(true));
                   }}
+                  disabled={googleLoading}
                 />
               </View>
             </View>

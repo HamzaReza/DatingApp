@@ -6,6 +6,7 @@ import { Colors } from "@/constants/Colors";
 import { signInWithGoogleFirebase } from "@/firebase/auth";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { setToken, setUser } from "@/redux/slices/userSlice";
+import { wp } from "@/utils";
 import { router } from "expo-router";
 import { useState } from "react";
 import { ImageBackground, TouchableOpacity, View } from "react-native";
@@ -20,7 +21,6 @@ export default function Onboarding({ navigation }: any) {
 
   const _handleGoogleSignIn = async () => {
     setGoogleLoading(true);
-
     const result = await signInWithGoogleFirebase();
     if (result.success) {
       dispatch(
@@ -54,20 +54,6 @@ export default function Onboarding({ navigation }: any) {
         resizeMode="cover"
       />
       <View style={styles.content}>
-        {/* <TouchableOpacity
-          style={styles.socialButton}
-          onPress={_handleGoogleSignIn}
-        >
-          <View style={styles.iconContainer}>
-            <FontAwesome
-              name="google"
-              size={24}
-              color={Colors[theme].redText}
-            />
-          </View>
-          <RnText style={styles.socialwhiteText}>Login with Google</RnText>
-        </TouchableOpacity> */}
-
         <RnButton
           title="Login with Google"
           icon="google"
@@ -77,6 +63,7 @@ export default function Onboarding({ navigation }: any) {
           leftIconColor={Colors[theme].redText}
           loading={googleLoading}
           loaderColor={Colors[theme].redText}
+          leftIconSize={wp(6)}
         />
 
         <RnButton
@@ -93,6 +80,7 @@ export default function Onboarding({ navigation }: any) {
           }}
           noRightIcon
           leftIconColor={Colors[theme].blackText}
+          leftIconSize={wp(6)}
           disabled={googleLoading}
         />
 

@@ -1,4 +1,4 @@
-import createStyles from "@/app/eventScreens/styles/tickets.styles";
+import createStyles from "@/app/eventScreens/styles/ticket.styles";
 import RnButton from "@/components/RnButton";
 import Container from "@/components/RnContainer";
 import RnText from "@/components/RnText";
@@ -22,7 +22,6 @@ const TicketScreen = () => {
           iconName="chevron-left"
           iconSize={22}
           iconColor={Colors[theme].primary}
-          borderColor={Colors[theme].background}
           backgroundColour={Colors[theme].whiteText}
           onPress={() => router.back()}
         />

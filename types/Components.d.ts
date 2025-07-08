@@ -56,6 +56,7 @@ export interface RnButtonProps {
   children?: ReactNode;
   noRightIcon?: boolean;
   rightIconColor?: string;
+  leftIconColor?: string;
 }
 
 export interface RnTextProps extends TextProps {

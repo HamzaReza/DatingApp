@@ -7,6 +7,8 @@ export const createEvent = async (event: {
   genre: string;
   date: Date;
   time: Date;
+  creatorName:String;
+  image:String
 }) => {
   try {
     const db = getFirestore();
@@ -14,11 +16,12 @@ export const createEvent = async (event: {
       name: event.name,
       venue: event.venue,
       price: event.price,
+      creatorName:event.creatorName,
       genre: event.genre,
       date: Timestamp.fromDate(event.date),
       time: Timestamp.fromDate(event.time),
-      seat: Math.floor(Math.random() * 100 + 1), // optional: random seat
       createdAt: Timestamp.now(),
+      image:event.image
     });
 
     console.log("✅ Event created with ID:", docRef.id);
@@ -93,5 +96,29 @@ export const fetchPricingPlans = async () => {
     throw error;
   }
 };
+
+export const addCreator = async (creator: {
+  name: string;
+  image: string;
+}) => {
+  const db = getFirestore();
+  const docRef = await addDoc(collection(db, "creatorsData"), {
+    ...creator,
+    createdAt: new Date(),
+  });
+
+  return docRef.id; // Return the newly created creator's docId
+};
+
+export const fetchCreators = async () => {
+  const db = getFirestore();
+  const snapshot = await getDocs(collection(db, "creatorsData"));
+
+  return snapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+};
+
 
 

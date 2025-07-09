@@ -119,4 +119,10 @@ export default (theme: "light" | "dark") =>
     formSeparator: {
       width: wp(1),
     },
+    smallBtn:{
+
+    },
+    secondaryButton:{
+      
+    }
   });

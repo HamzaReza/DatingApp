@@ -47,24 +47,17 @@ const Events = () => {
           iconName="chevron-left"
           iconSize={22}
           iconColor={Colors[theme].primary}
-          borderColor={Colors[theme].background}
           backgroundColour={Colors[theme].whiteText}
           onPress={() => router.back()}
         />
         <RnText style={styles.headerText}>Events</RnText>
-        <RoundButton
-          iconName="more-vert"
-          iconSize={22}
-          iconColor={Colors[theme].primary}
-          borderColor={Colors[theme].background}
-          backgroundColour={Colors[theme].whiteText}
-        />
+        <RoundButton noShadow />
       </View>
 
       <View style={styles.detailsContainer}>
         <FlatList
           data={dummyEvents}
-          keyExtractor={(item) => item.id}
+          keyExtractor={item => item.id}
           renderItem={({ item }) => (
             <EventCard
               title={item.title}

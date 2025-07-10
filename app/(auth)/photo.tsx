@@ -59,7 +59,7 @@ export default function Photo() {
               visible={showPicker}
               showPicker={() => setShowPicker(true)}
               hidePicker={() => setShowPicker(false)}
-              setUri={async (image) => {
+              setUri={async image => {
                 try {
                   const auth = getAuth();
                   const currentUser = auth.currentUser;
@@ -73,6 +73,7 @@ export default function Photo() {
                   setIsLoading(true);
                   const imageUrl = await uploadImage(
                     image.uri,
+                    "user",
                     currentUser.uid,
                     "profile"
                   ).finally(() => setIsLoading(false));

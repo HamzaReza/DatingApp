@@ -36,6 +36,7 @@ const RnBottomSheet: React.FC<RnBottomSheetProps> = ({
   detached = false,
   style,
   scroll,
+  snapPoints,
 }) => {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
@@ -131,6 +132,7 @@ const RnBottomSheet: React.FC<RnBottomSheetProps> = ({
       detached={detached}
       style={[styles.containerStyle, style]}
       onDismiss={onClose}
+      snapPoints={snapPoints}
     >
       {scroll ? (
         <BottomSheetScrollView

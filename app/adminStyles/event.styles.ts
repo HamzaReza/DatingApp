@@ -13,6 +13,18 @@ export default (theme: "light" | "dark") =>
       color: Colors[theme].redText,
       textAlign: "center",
     },
+    headerContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: wp(4),
+      paddingBottom: hp(1),
+    },
+    headerButton: {
+      backgroundColor: Colors[theme].pink,
+      width: wp(40),
+      height: hp(4),
+    },
     ticketCardWrapper: {
       marginTop: hp(4),
       alignItems: "center",
@@ -90,7 +102,6 @@ export default (theme: "light" | "dark") =>
     },
     formRowContainer: {
       flexDirection: "row",
-      marginBottom: hp(3),
     },
     formGenreInput: {
       marginVertical: hp(1),
@@ -111,7 +122,7 @@ export default (theme: "light" | "dark") =>
       marginBottom: hp(2),
     },
     modalCreateBtn: {
-      marginBottom: hp(5),
+      marginBottom: hp(2),
       backgroundColor: Colors[theme].pink,
       width: wp(70),
       height: hp(5),
@@ -119,10 +130,31 @@ export default (theme: "light" | "dark") =>
     formSeparator: {
       width: wp(1),
     },
-    smallBtn:{
-
+    smallBtn: {
+      backgroundColor: Colors[theme].pink,
+      width: wp(50),
+      height: hp(5),
+      marginBottom: hp(1),
     },
-    secondaryButton:{
-      
-    }
+    emptyContainer: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    emptyText: {
+      textAlign: "center",
+      fontSize: FontSize.regular,
+      fontFamily: FontFamily.regular,
+    },
+    errorText: {
+      color: Colors[theme].redText,
+      fontSize: FontSize.extraSmall,
+      marginBottom: hp(2),
+      marginLeft: wp(1),
+    },
+    modalImage: {
+      width: wp(40),
+      height: wp(40),
+      marginVertical: hp(1),
+    },
   });

@@ -7,6 +7,12 @@ import RnDropdown from "@/components/RnDropdown";
 import RnInput from "@/components/RnInput";
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
+import {
+  addCreator,
+  createEvent,
+  fetchCreators,
+  fetchEvents,
+} from "@/firebase/admin";
 import { uploadImage } from "@/firebase/auth";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { AdminEvent } from "@/types/Admin";
@@ -17,23 +23,24 @@ import React, { useEffect, useState } from "react";
 import { FlatList, Image, View } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import * as Yup from "yup";
-import {
-  addCreator,
-  createEvent,
-  fetchCreators,
-  fetchEvents,
-} from "../../firebase/adminFunctions";
 
 // Validation schema
-const EventSchema = Yup.object().shape({
+const eventValidationSchema = Yup.object().shape({
   eventName: Yup.string().required("Event name is required"),
   eventLocation: Yup.string().required("Event location is required"),
-  eventPrice: Yup.number()
-    .positive("Price must be positive")
-    .required("Event price is required"),
+  eventPrice: Yup.number().required("Event price is required"),
+  normalTicket: Yup.number().required("Normal ticket is required"),
+  vipTicket: Yup.number().required("VIP ticket is required"),
   eventGenre: Yup.string().required("Event genre is required"),
   eventDate: Yup.date().required("Event date is required"),
   eventTime: Yup.date().required("Event time is required"),
+  eventCreator: Yup.string().required("Event creator is required"),
+  eventImage: Yup.string().required("Event image is required"),
+});
+
+const creatorValidationSchema = Yup.object().shape({
+  creatorName: Yup.string().required("Creator name is required"),
+  creatorImage: Yup.string().required("Creator image is required"),
 });
 
 // Genre options
@@ -52,20 +59,17 @@ export default function AdminEventTicketScreen() {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
-  const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
+  const [isEventSheetVisible, setIsEventSheetVisible] = useState(false);
+  const [isCreatorSheetVisible, setIsCreatorSheetVisible] = useState(false);
   const [events, setEvents] = useState<AdminEvent[]>([]);
-  const [creators, setCreators] = useState<any[]>([]);
-  const [creatorDropdownItems, setCreatorDropdownItems] = useState<any[]>([]);
+  const [creatorItems, setCreatorItems] = useState<any[]>([]);
   const [creatorOpen, setCreatorOpen] = useState(false);
-  const [selectedCreatorId, setSelectedCreatorId] = useState("");
-  const [isNewCreator, setIsNewCreator] = useState(false);
-  const [newCreatorName, setNewCreatorName] = useState("");
-  const [newCreatorImage, setNewCreatorImage] = useState("");
-  const [eventImage, setEventImage] = useState("");
   const [genreOpen, setGenreOpen] = useState(false);
   const [genreItems, setGenreItems] = useState(genreOptions);
+  const [creatorLoader, setCreatorLoader] = useState(false);
+  const [eventLoader, setEventLoader] = useState(false);
 
-   useEffect(() => {
+  useEffect(() => {
     loadEvents();
     loadCreators();
   }, []);
@@ -77,28 +81,81 @@ export default function AdminEventTicketScreen() {
 
   const loadCreators = async () => {
     const fetched = await fetchCreators();
-    setCreators(fetched);
-    setCreatorDropdownItems(
-      fetched.map((c: any) => ({ label: c.name, value: c.id, key: c.id }))
+    setCreatorItems(
+      fetched.map((creator: any) => ({
+        id: creator.id,
+        label: creator.name,
+        value: creator.id,
+        image: creator.image,
+      }))
     );
   };
 
- const handleSaveNewCreator = async () => {
-    let imageUrl = "";
-    if (newCreatorImage) imageUrl = await uploadImage(newCreatorImage, "creator", "profile");
-
-    const id = await addCreator({ name: newCreatorName, image: imageUrl });
-    const updated = [...creators, { id, name: newCreatorName, image: imageUrl }];
-
-    setCreators(updated);
-    setCreatorDropdownItems(updated.map((c) => ({ label: c.name, value: c.id, key: c.id })));
-    setSelectedCreatorId(id);
-    setIsNewCreator(false);
-    setNewCreatorName("");
-    setNewCreatorImage("");
+  const handleCreateEvent = () => {
+    setIsEventSheetVisible(true);
   };
 
-  
+  const handleCreateCreator = () => {
+    setIsCreatorSheetVisible(true);
+  };
+
+  const handleCloseEventSheet = () => {
+    setIsEventSheetVisible(false);
+  };
+
+  const handleCloseCreatorSheet = () => {
+    setIsCreatorSheetVisible(false);
+  };
+
+  const handleSaveNewCreator = async (values?: any) => {
+    setCreatorLoader(true);
+    let imageUrl = "";
+    const creatorName = values?.creatorName;
+    const creatorImage = values?.creatorImage;
+
+    if (creatorImage) imageUrl = await uploadImage(creatorImage, "creator");
+
+    const id = await addCreator({ name: creatorName, image: imageUrl });
+    const updated = [
+      ...creatorItems,
+      { id, name: creatorName, image: imageUrl },
+    ];
+    setCreatorItems(
+      updated.map(creator => ({
+        id: creator.id,
+        label: creator.name,
+        value: creator.id,
+        image: creator.image,
+      }))
+    );
+    setCreatorLoader(false);
+    handleCloseCreatorSheet();
+  };
+
+  const handleSubmitEvent = async (values: any) => {
+    setEventLoader(true);
+    const imageUrl = await uploadImage(values.eventImage, "event");
+    const creator = creatorItems.find(
+      creator => creator.id === values.eventCreator
+    );
+
+    await createEvent({
+      name: values.eventName,
+      venue: values.eventLocation,
+      price: parseFloat(values.eventPrice),
+      normalTicket: parseInt(values.normalTicket),
+      vipTicket: parseInt(values.vipTicket),
+      creator,
+      genre: values.eventGenre,
+      date: values.eventDate,
+      time: values.eventTime,
+      image: imageUrl,
+    });
+    loadEvents();
+    handleCloseEventSheet();
+    setEventLoader(false);
+  };
+
   const renderTicketCard = ({ item: event }: { item: AdminEvent }) => {
     return (
       <View style={styles.ticketCardWrapper}>
@@ -123,7 +180,9 @@ export default function AdminEventTicketScreen() {
             </View>
             <View style={{ alignItems: "flex-end" }}>
               <RnText style={styles.label}>Seat</RnText>
-              <RnText style={styles.value}>{event.seat}</RnText>
+              <RnText style={styles.value}>
+                {event.normalTicket + event.vipTicket}
+              </RnText>
             </View>
           </View>
           <View>
@@ -137,244 +196,306 @@ export default function AdminEventTicketScreen() {
           <QRCode
             value={event.id + "-" + event.name}
             size={hp(20)}
-            logo={require("@/assets/images/react-logo.png")}
+            logo={{ uri: event.image }}
+            logoSize={hp(6)}
           />
         </View>
       </View>
     );
   };
 
-  const handleCreateEvent = () => {
-    setIsBottomSheetVisible(true);
-    setIsNewCreator(false);
-    setSelectedCreatorId("");
-  };
-
-  const handleCloseBottomSheet = () => {
-    setIsBottomSheetVisible(false);
-  };
-
- const handleSubmitEvent = async (values: any) => {
-    const imageUrl = eventImage ? await uploadImage(eventImage, "event", "gallery") : "";
-    const creator = creators.find((c) => c.id === selectedCreatorId);
-
-    await createEvent({
-      name: values.eventName,
-      venue: values.eventLocation,
-      price: parseFloat(values.eventPrice),
-      creatorName: creator?.name || "Unknown",
-      genre: values.eventGenre,
-      date: values.eventDate,
-      time: values.eventTime,
-      image: imageUrl,
-    });
-
-    loadEvents();
-    handleCloseBottomSheet();
-  };
-
-
-
-  const pickImage = async (setter: (uri: string) => void) => {
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.7 });
-    if (!result.canceled) setter(result.assets[0].uri);
-  };
-
   return (
     <RnContainer>
-      <RnText style={styles.headerTitle}>Event</RnText>
-      <View>
-        <FlatList
-          data={events}
-          renderItem={renderTicketCard}
-          keyExtractor={(item) => item.id}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          ItemSeparatorComponent={() => <View style={styles.formSeparator} />}
-          snapToInterval={wp(90) + wp(1)}
-          decelerationRate="fast"
-          snapToAlignment="start"
+      <View style={styles.headerContainer}>
+        <RnText style={styles.headerTitle}>Event</RnText>
+        <RnButton
+          title="Add creator"
+          style={[styles.headerButton]}
+          onPress={handleCreateCreator}
         />
       </View>
+
+      <FlatList
+        data={events}
+        contentContainerStyle={{ flexGrow: 1 }}
+        style={{ maxHeight: hp(65) }}
+        renderItem={renderTicketCard}
+        keyExtractor={item => item.id}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        ItemSeparatorComponent={() => <View style={styles.formSeparator} />}
+        snapToInterval={wp(90) + wp(1)}
+        decelerationRate="fast"
+        snapToAlignment="start"
+        ListEmptyComponent={() => (
+          <View style={styles.emptyContainer}>
+            <RnText style={styles.emptyText}>No events found</RnText>
+          </View>
+        )}
+      />
       <RnButton
         title="Create an Event"
-        style={styles.createBtn}
+        style={[styles.createBtn]}
         onPress={handleCreateEvent}
       />
 
       <RnBottomSheet
-        isVisible={isBottomSheetVisible}
-        onClose={handleCloseBottomSheet}
+        isVisible={isEventSheetVisible}
+        onClose={handleCloseEventSheet}
+        // enableDynamicSizing={true}
+        scroll={true}
+        enablePanDownToClose={false}
+        enableContentPanningGesture={false}
+        snapPoints={["75%"]}
+      >
+        <ScrollContainer customStyle={styles.formContainer}>
+          <Formik
+            initialValues={{
+              eventName: "",
+              eventLocation: "",
+              eventPrice: "",
+              eventGenre: "",
+              eventCreator: "",
+              eventDate: new Date(),
+              eventTime: new Date(),
+              eventImage: "",
+              normalTicket: "",
+              vipTicket: "",
+            }}
+            validationSchema={eventValidationSchema}
+            onSubmit={handleSubmitEvent}
+          >
+            {({
+              handleChange,
+              handleBlur,
+              handleSubmit,
+              values,
+              errors,
+              setFieldValue,
+            }) => (
+              <View>
+                <RnInput
+                  placeholder="Event Name"
+                  value={values.eventName}
+                  onChangeText={handleChange("eventName")}
+                  onBlur={handleBlur("eventName")}
+                  error={errors.eventName}
+                />
+                <RnInput
+                  placeholder="Location"
+                  value={values.eventLocation}
+                  onChangeText={handleChange("eventLocation")}
+                  onBlur={handleBlur("eventLocation")}
+                  error={errors.eventLocation}
+                />
+                <RnInput
+                  placeholder="Price"
+                  value={values.eventPrice}
+                  onChangeText={handleChange("eventPrice")}
+                  onBlur={handleBlur("eventPrice")}
+                  keyboardType="numeric"
+                  error={errors.eventPrice}
+                />
+                <View style={styles.formRowContainer}>
+                  <RnInput
+                    placeholder="Normal Ticket"
+                    value={values.normalTicket}
+                    onChangeText={handleChange("normalTicket")}
+                    onBlur={handleBlur("normalTicket")}
+                    keyboardType="numeric"
+                    error={errors.normalTicket}
+                    containerStyle={[
+                      styles.formHalfField,
+                      styles.formHalfFieldLeft,
+                    ]}
+                  />
+                  <RnInput
+                    placeholder="VIP Ticket"
+                    value={values.vipTicket}
+                    onChangeText={handleChange("vipTicket")}
+                    onBlur={handleBlur("vipTicket")}
+                    keyboardType="numeric"
+                    error={errors.vipTicket}
+                    containerStyle={[
+                      styles.formHalfField,
+                      styles.formHalfFieldRight,
+                    ]}
+                  />
+                </View>
+
+                <RnDropdown
+                  open={creatorOpen}
+                  value={values.eventCreator}
+                  items={creatorItems}
+                  setOpen={setCreatorOpen}
+                  setValue={value => setFieldValue("eventCreator", value())}
+                  setItems={setCreatorItems}
+                  placeholder="Select Creator"
+                  zIndex={2000}
+                  zIndexInverse={1000}
+                  emptyText="No creators found"
+                />
+                <RnText style={styles.errorText}>{errors.eventCreator}</RnText>
+
+                <RnDropdown
+                  open={genreOpen}
+                  items={genreItems}
+                  value={values.eventGenre}
+                  setOpen={setGenreOpen}
+                  setItems={setGenreItems}
+                  setValue={value => setFieldValue("eventGenre", value())}
+                  placeholder="Select Genre"
+                  zIndex={1000}
+                  zIndexInverse={2000}
+                />
+                <RnText style={styles.errorText}>{errors.eventGenre}</RnText>
+
+                <View style={styles.formRowContainer}>
+                  <View
+                    style={[styles.formHalfField, styles.formHalfFieldLeft]}
+                  >
+                    <RnDateTimePicker
+                      value={values.eventDate}
+                      onChange={(e, date) =>
+                        date && setFieldValue("eventDate", date)
+                      }
+                      mode="date"
+                      placeholder="Select Date"
+                      error={errors.eventDate as string}
+                    />
+                  </View>
+                  <View
+                    style={[styles.formHalfField, styles.formHalfFieldRight]}
+                  >
+                    <RnDateTimePicker
+                      value={values.eventTime}
+                      onChange={(e, time) =>
+                        time && setFieldValue("eventTime", time)
+                      }
+                      mode="time"
+                      placeholder="Select Time"
+                      error={errors.eventTime as string}
+                    />
+                  </View>
+                </View>
+
+                <View style={{ alignItems: "center" }}>
+                  <RnButton
+                    title={
+                      values.eventImage
+                        ? "Change Event Image"
+                        : "Pick Event Image"
+                    }
+                    onPress={async () => {
+                      const result = await ImagePicker.launchImageLibraryAsync({
+                        mediaTypes: "images",
+                        quality: 0.7,
+                      });
+
+                      if (!result.canceled) {
+                        setFieldValue("eventImage", result.assets[0].uri);
+                      }
+                    }}
+                    style={[styles.smallBtn]}
+                  />
+
+                  {values.eventImage ? (
+                    <Image
+                      source={{ uri: values.eventImage }}
+                      style={styles.modalImage}
+                    />
+                  ) : null}
+
+                  <RnText style={styles.errorText}>{errors.eventImage}</RnText>
+                </View>
+
+                <RnButton
+                  title="Create Event"
+                  style={[styles.modalCreateBtn]}
+                  onPress={handleSubmit}
+                  loading={eventLoader}
+                />
+              </View>
+            )}
+          </Formik>
+        </ScrollContainer>
+      </RnBottomSheet>
+
+      <RnBottomSheet
+        isVisible={isCreatorSheetVisible}
+        onClose={handleCloseCreatorSheet}
         enableDynamicSizing
       >
-        <ScrollContainer customStyle={styles.formScrollView}>
+        <RnContainer customStyle={styles.formScrollView}>
           <View style={styles.formContainer}>
-            <RnText style={styles.formTitle}>Create New Event</RnText>
-            <RnButton
-  title={eventImage ? "Change Event Image" : "Pick Event Image"}
-  onPress={async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.7,
-    });
-
-    if (!result.canceled) {
-      setEventImage(result.assets[0].uri);
-    }
-  }}
-  style={styles.smallBtn}
-/>
-
-{eventImage ? (
-  <Image source={{ uri: eventImage }} style={{ width: 100, height: 100, marginVertical: 10 }} />
-) : null}
-
             <Formik
               initialValues={{
-                eventName: "",
-                eventLocation: "",
-                eventPrice: "",
-                eventGenre: "",
-                eventDate: new Date(),
-                eventTime: new Date(),
+                creatorName: "",
+                creatorImage: "",
               }}
-              validationSchema={EventSchema}
-              onSubmit={handleSubmitEvent}
+              validationSchema={creatorValidationSchema}
+              onSubmit={async values => {
+                await handleSaveNewCreator(values);
+              }}
             >
               {({
                 handleChange,
                 handleBlur,
                 handleSubmit,
+                setFieldValue,
                 values,
                 errors,
-                setFieldValue,
+                touched,
               }) => (
                 <View>
                   <RnInput
-                    placeholder="Event Name"
-                    value={values.eventName}
-                    onChangeText={handleChange("eventName")}
-                    onBlur={handleBlur("eventName")}
-                    error={errors.eventName}
-                  />
-                  <RnInput
-                    placeholder="Location"
-                    value={values.eventLocation}
-                    onChangeText={handleChange("eventLocation")}
-                    onBlur={handleBlur("eventLocation")}
-                    error={errors.eventLocation}
-                  />
-                  <RnInput
-                    placeholder="Price"
-                    value={values.eventPrice}
-                    onChangeText={handleChange("eventPrice")}
-                    onBlur={handleBlur("eventPrice")}
-                    keyboardType="numeric"
-                    error={errors.eventPrice}
+                    placeholder="Creator Name"
+                    value={values.creatorName}
+                    onChangeText={handleChange("creatorName")}
+                    onBlur={handleBlur("creatorName")}
+                    error={touched.creatorName ? errors.creatorName : undefined}
                   />
 
-                  {!isNewCreator ? (
-                    <>
-                      <RnDropdown
-                        open={creatorOpen}
-                        value={selectedCreatorId}
-                        items={creatorDropdownItems}
-                        setOpen={setCreatorOpen}
-                        setValue={setSelectedCreatorId}
-                        setItems={setCreatorDropdownItems}
-                        placeholder="Select Creator"
-                      />
-                      <RnButton
-                        title="Add New Creator"
-                        onPress={() => setIsNewCreator(true)}
-                        style={styles.smallBtn}
-                      />
-                    </>
-                  ) : (
-                    <>
-                      <RnInput
-                        placeholder="Creator Name"
-                        value={newCreatorName}
-                        onChangeText={setNewCreatorName}
-                      />
-                      <RnButton
-                        title={newCreatorImage ? "Change Image" : "Pick Image"}
-                        onPress={pickImage}
-                        style={styles.smallBtn}
-                      />
-                      {newCreatorImage ? (
-                        <Image
-                          source={{ uri: newCreatorImage }}
-                          style={{
-                            width: 100,
-                            height: 100,
-                            marginVertical: 10,
-                          }}
-                        />
-                      ) : null}
-
-                      <RnButton
-                        title="Save Creator"
-                        onPress={handleSaveNewCreator}
-                        style={styles.smallBtn}
-                      />
-                      <RnButton
-                        title="Cancel"
-                        onPress={() => setIsNewCreator(false)}
-                        style={styles.secondaryButton}
-                      />
-                    </>
-                  )}
-
-                  <RnDropdown
-                    open={genreOpen}
-                    items={genreItems}
-                    value={values.eventGenre}
-                    setOpen={setGenreOpen}
-                    setItems={setGenreItems}
-                    setValue={(value) => setFieldValue("eventGenre", value())}
-                    placeholder="Select Genre"
-                  />
-
-                  <View style={styles.formRowContainer}>
-                    <View
-                      style={[styles.formHalfField, styles.formHalfFieldLeft]}
-                    >
-                      <RnDateTimePicker
-                        value={values.eventDate}
-                        onChange={(e, date) =>
-                          date && setFieldValue("eventDate", date)
+                  <View style={{ alignItems: "center" }}>
+                    <RnButton
+                      title={
+                        values.creatorImage ? "Change Image" : "Pick Image"
+                      }
+                      onPress={async () => {
+                        const result =
+                          await ImagePicker.launchImageLibraryAsync({
+                            mediaTypes: "images",
+                            quality: 0.7,
+                          });
+                        if (!result.canceled) {
+                          setFieldValue("creatorImage", result.assets[0].uri);
                         }
-                        mode="date"
-                        placeholder="Select Date"
-                        error={errors.eventDate as string}
+                      }}
+                      style={[styles.smallBtn]}
+                    />
+                    {values.creatorImage ? (
+                      <Image
+                        source={{ uri: values.creatorImage }}
+                        style={styles.modalImage}
                       />
-                    </View>
-                    <View
-                      style={[styles.formHalfField, styles.formHalfFieldRight]}
-                    >
-                      <RnDateTimePicker
-                        value={values.eventTime}
-                        onChange={(e, time) =>
-                          time && setFieldValue("eventTime", time)
-                        }
-                        mode="time"
-                        placeholder="Select Time"
-                        error={errors.eventTime as string}
-                      />
-                    </View>
+                    ) : null}
+
+                    <RnText style={styles.errorText}>
+                      {errors.creatorImage}
+                    </RnText>
+
+                    <RnButton
+                      title="Save Creator"
+                      onPress={handleSubmit}
+                      style={[styles.modalCreateBtn]}
+                      loading={creatorLoader}
+                    />
                   </View>
-
-                  <RnButton
-                    title="Create Event"
-                    style={styles.modalCreateBtn}
-                    onPress={handleSubmit}
-                  />
                 </View>
               )}
             </Formik>
           </View>
-        </ScrollContainer>
+        </RnContainer>
       </RnBottomSheet>
     </RnContainer>
   );

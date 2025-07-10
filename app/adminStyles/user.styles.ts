@@ -240,4 +240,14 @@ export default (theme: "light" | "dark") =>
       textAlign: "center",
       textTransform: "capitalize",
     },
+    emptyContainer: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    emptyText: {
+      textAlign: "center",
+      fontSize: FontSize.regular,
+      fontFamily: FontFamily.regular,
+    },
   });

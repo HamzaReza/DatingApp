@@ -124,6 +124,16 @@ const createStyles = (theme: "light" | "dark") =>
       marginLeft: wp(2),
       marginTop: hp(1),
     },
+    emptyContainer: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    emptyText: {
+      textAlign: "center",
+      fontSize: FontSize.regular,
+      fontFamily: FontFamily.regular,
+    },
   });
 
 export default createStyles;

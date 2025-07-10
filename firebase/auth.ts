@@ -27,7 +27,6 @@ import {
   isSuccessResponse,
 } from "@react-native-google-signin/google-signin";
 
-
 const auth = getAuth();
 const storage = getStorage();
 
@@ -215,8 +214,6 @@ const getUserByUid = async (userId: string) => {
   try {
     const db = getFirestore();
 
-    console.log('test',userId)
-
     // Find the user document by uid
     const usersRef = collection(db, "users");
     const q = query(usersRef, where("uid", "==", userId));
@@ -238,19 +235,23 @@ const getUserByUid = async (userId: string) => {
 // Upload image to Firebase Storage and return download URL
 const uploadImage = async (
   imageUri: string,
-  userId: string,
-  imageType: "profile" | "gallery" = "profile",
-  imageIndex?: number
+  type: "user" | "event" | "creator",
+  userId?: string,
+  imageType?: "profile" | "gallery"
 ): Promise<string> => {
   try {
     // Create unique filename
     const timestamp = Date.now();
-    const filename = `${userId}_${imageType}_${timestamp}.jpg`;
-    const storagePath = `users/${userId}/${imageType}/${filename}`;
+    const filename = `${timestamp}.jpg`;
+
+    const storagePath =
+      type === "user"
+        ? `users/${userId}/${imageType}/${filename}`
+        : `${type}/${filename}`;
 
     const storageRef = ref(storage, storagePath);
 
-    const uploadTask = await putFile(storageRef, imageUri);
+    await putFile(storageRef, imageUri);
 
     const downloadURL = await getDownloadURL(storageRef);
 
@@ -264,12 +265,13 @@ const uploadImage = async (
 // Upload multiple images and return array of download URLs
 const uploadMultipleImages = async (
   imageUris: string[],
+  type: "user" | "event" | "creator",
   userId: string,
   imageType: "profile" | "gallery" = "gallery"
 ): Promise<string[]> => {
   try {
-    const uploadPromises = imageUris.map((uri, index) =>
-      uploadImage(uri, userId, imageType, index)
+    const uploadPromises = imageUris.map(uri =>
+      uploadImage(uri, type, userId, imageType)
     );
 
     const downloadURLs = await Promise.all(uploadPromises);
@@ -316,6 +318,5 @@ export {
   updateUser,
   uploadImage,
   uploadMultipleImages,
-  verifyCode
+  verifyCode,
 };
-

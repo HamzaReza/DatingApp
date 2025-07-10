@@ -45,7 +45,10 @@ export type AdminEvent = {
   time: string;
   venue: string;
   genre: AdminEventGenre;
-  seat: string;
+  creator: { id: string; label: string; image: string };
+  image: string;
+  normalTicket: number;
+  vipTicket: number;
   price: number;
 };
 

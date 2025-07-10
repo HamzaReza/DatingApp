@@ -7,14 +7,14 @@ import RnInput from "@/components/RnInput";
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
 import { Colors } from "@/constants/Colors";
+import { createPricingPlan, fetchPricingPlans } from "@/firebase/admin";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { AdminPricingPlan } from "@/types/Admin";
-import { wp } from "@/utils";
+import { hp, wp } from "@/utils";
 import { FieldArray, Formik } from "formik";
 import React, { useEffect, useState } from "react";
 import { FlatList, View } from "react-native";
 import * as Yup from "yup";
-import { createPricingPlan, fetchPricingPlans } from "../../firebase/adminFunctions";
 
 // Validation schema
 const PricingPlanSchema = Yup.object().shape({
@@ -35,8 +35,6 @@ const durationOptions = [
   { label: "Lifetime", value: "lifetime" },
 ];
 
-
-
 export default function AdminPricingPlanScreen() {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
@@ -46,11 +44,11 @@ export default function AdminPricingPlanScreen() {
   const [durationOpen, setDurationOpen] = useState(false);
   const [durationItems, setDurationItems] = useState(durationOptions);
 
-useEffect(()=>{
-loadPlans()
-},[])
+  useEffect(() => {
+    loadPlans();
+  }, []);
 
-const loadPlans = async () => {
+  const loadPlans = async () => {
     try {
       const fetched = await fetchPricingPlans();
       setPlans(fetched as AdminPricingPlan[]);
@@ -74,7 +72,7 @@ const loadPlans = async () => {
         <View style={styles.priceContainer}>
           <RnText style={styles.priceText}>₹{plan.price}</RnText>
           <RnText style={styles.durationText}>
-            {durationOptions.find((d) => d.value === plan.duration)?.label}
+            {durationOptions.find(d => d.value === plan.duration)?.label}
           </RnText>
         </View>
       </View>
@@ -89,42 +87,46 @@ const loadPlans = async () => {
     setIsBottomSheetVisible(false);
   };
 
- const handleSubmitPlan = async (values: any, { resetForm }: any) => {
-  try {
-    await createPricingPlan({
-      name: values.name,
-      description: values.description,
-      price: parseFloat(values.price),
-      duration: values.duration,
-      features: values.features,
-    });
+  const handleSubmitPlan = async (values: any, { resetForm }: any) => {
+    try {
+      await createPricingPlan({
+        name: values.name,
+        description: values.description,
+        price: parseFloat(values.price),
+        duration: values.duration,
+        features: values.features,
+      });
 
-    const updatedPlans = await fetchPricingPlans();
-    setPlans(updatedPlans as AdminPricingPlan[]);
-    resetForm();
-    handleCloseBottomSheet();
-  } catch (error) {
-    console.error("Failed to create plan:", error);
-  }
-};
-
+      const updatedPlans = await fetchPricingPlans();
+      setPlans(updatedPlans as AdminPricingPlan[]);
+      resetForm();
+      handleCloseBottomSheet();
+    } catch (error) {
+      console.error("Failed to create plan:", error);
+    }
+  };
 
   return (
     <RnContainer>
       <RnText style={styles.headerTitle}>Pricing Plan</RnText>
-      <View>
-        <FlatList
-          data={plans}
-          renderItem={renderPlanCard}
-          keyExtractor={(item) => item.id}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          ItemSeparatorComponent={() => <View style={styles.formSeparator} />}
-          snapToInterval={wp(90) + wp(1)}
-          decelerationRate="fast"
-          snapToAlignment="start"
-        />
-      </View>
+      <FlatList
+        data={plans}
+        contentContainerStyle={{ flexGrow: 1 }}
+        style={{ maxHeight: hp(65) }}
+        renderItem={renderPlanCard}
+        keyExtractor={item => item.id}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        ItemSeparatorComponent={() => <View style={styles.formSeparator} />}
+        snapToInterval={wp(90) + wp(1)}
+        decelerationRate="fast"
+        snapToAlignment="start"
+        ListEmptyComponent={() => (
+          <View style={styles.emptyContainer}>
+            <RnText style={styles.emptyText}>No pricing plans found</RnText>
+          </View>
+        )}
+      />
       <RnButton
         title="Create a pricing plan"
         style={[styles.createBtn]}
@@ -194,7 +196,7 @@ const loadPlans = async () => {
                     value={values.duration}
                     setOpen={setDurationOpen}
                     setItems={setDurationItems}
-                    setValue={(value) => {
+                    setValue={value => {
                       setFieldValue("duration", value());
                     }}
                     placeholder="Select duration"

@@ -65,7 +65,6 @@ const Explore = () => {
           iconName="chevron-left"
           iconSize={22}
           iconColor={Colors[theme].primary}
-          borderColor={Colors[theme].background}
           backgroundColour={Colors[theme].whiteText}
           onPress={() => router.back()}
         />
@@ -74,7 +73,6 @@ const Explore = () => {
             iconName="location-off"
             iconSize={22}
             iconColor={Colors[theme].primary}
-            borderColor={Colors[theme].background}
             backgroundColour={Colors[theme].whiteText}
           />
           <RnText style={styles.locationText}>RajKat, Kujaraj</RnText>

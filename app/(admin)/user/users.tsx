@@ -4,7 +4,7 @@ import RnText from "@/components/RnText";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { UserStatus } from "@/types/Admin";
-import { wp } from "@/utils";
+import { encodeImagePath, wp } from "@/utils";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import {
   collection,
@@ -33,19 +33,16 @@ export default function AdminUsers() {
   }, [page, users]);
 
   const [userStatuses, setUserStatuses] = useState<Record<string, UserStatus>>(
-    () => Object.fromEntries(users.map((user) => [user.id, user.status]))
+    () => Object.fromEntries(users.map(user => [user.id, user.status]))
   );
 
   const handleStatusChange = (id: string, status: UserStatus) => {
-    setUserStatuses((prev) => ({ ...prev, [id]: status }));
+    setUserStatuses(prev => ({ ...prev, [id]: status }));
   };
 
   const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
-
-console.log(users)
-
     if (flatListRef.current) {
       flatListRef.current.scrollToOffset({ offset: 0, animated: true });
     }
@@ -58,7 +55,7 @@ console.log(users)
       const db = getFirestore();
 
       const snapshot = await getDocs(collection(db, "users"));
-      const usersData = snapshot.docs.map((doc) => {
+      const usersData = snapshot.docs.map(doc => {
         const data = doc.data();
         return {
           id: doc.id,
@@ -68,7 +65,7 @@ console.log(users)
       });
       setUsers(usersData);
       setUserStatuses(
-        Object.fromEntries(usersData.map((user) => [user.id, user.status]))
+        Object.fromEntries(usersData.map(user => [user.id, user.status]))
       );
     } catch (error) {
       console.error("Failed to fetch users:", error);
@@ -95,7 +92,10 @@ console.log(users)
             (userStatuses[user.id] || "pending").slice(1)}
         </RnText>
       </View>
-      <Image source={{ uri: user.photo }} style={styles.avatar} />
+      <Image
+        source={{ uri: encodeImagePath(user.photo) }}
+        style={styles.avatar}
+      />
       <RnText style={styles.userName}>{user.name}</RnText>
       <RnText style={styles.userBio}>{user.bio}</RnText>
       <View style={styles.userInfoRow}>
@@ -140,7 +140,7 @@ console.log(users)
       </View>
       {userStatuses[user.id] === "pending" && (
         <View style={styles.radioGroup}>
-          {["approved", "rejected"].map((status) => (
+          {["approved", "rejected"].map(status => (
             <TouchableOpacity
               key={status}
               style={styles.radioButton}
@@ -191,7 +191,7 @@ console.log(users)
           color={theme === "light" ? Colors[theme].pink : Colors[theme].pink}
         />
       </TouchableOpacity>
-      {Array.from({ length: PAGES }, (_, i) => i + 1).map((p) => (
+      {Array.from({ length: PAGES }, (_, i) => i + 1).map(p => (
         <TouchableOpacity
           key={p}
           style={[
@@ -226,8 +226,8 @@ console.log(users)
 
   if (loading) {
     return (
-      <RnContainer>
-        <RnText>Loading users...</RnText>
+      <RnContainer customStyle={styles.emptyContainer}>
+        <RnText style={styles.emptyText}>Loading users...</RnText>
       </RnContainer>
     );
   }
@@ -245,7 +245,12 @@ console.log(users)
         style={styles.flatlist}
         contentContainerStyle={styles.flatlistContainer}
         renderItem={renderUserItem}
-        ListFooterComponent={renderFooter}
+        ListFooterComponent={PAGES > 1 ? renderFooter : null}
+        ListEmptyComponent={() => (
+          <View style={styles.emptyContainer}>
+            <RnText style={styles.emptyText}>No users found</RnText>
+          </View>
+        )}
       />
     </RnContainer>
   );

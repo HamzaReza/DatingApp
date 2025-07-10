@@ -224,6 +224,7 @@ export interface RnBottomSheetProps {
   detached?: boolean;
   style?: StyleProp<ViewStyle>;
   scroll?: boolean;
+  snapPoints?: string[];
 }
 
 export interface RnDateTimePickerProps {

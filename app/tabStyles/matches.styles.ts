@@ -17,8 +17,7 @@ export default (theme: "dark" | "light") =>
     headerTitle: {
       fontSize: FontSize.extraLarge,
       fontFamily: FontFamily.bold,
-      color: Colors[theme].redText,
-      textAlign: "center",
+      color: Colors[theme].greenText,
     },
     statsContainer: {
       flexDirection: "row",

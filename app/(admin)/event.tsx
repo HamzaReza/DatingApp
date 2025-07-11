@@ -364,6 +364,7 @@ export default function AdminEventTicketScreen() {
                       }
                       mode="time"
                       placeholder="Select Time"
+                      minuteInterval={15}
                       error={errors.eventTime as string}
                     />
                   </View>

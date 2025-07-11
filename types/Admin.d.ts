@@ -39,8 +39,8 @@ export type AdminEventGenre =
 export type AdminEvent = {
   id: string;
   name: string;
-  date: string;
-  time: string;
+  date: Timestamp;
+  time: Timestamp;
   venue: string;
   genre: AdminEventGenre;
   creator: { id: string; label: string; image: string };

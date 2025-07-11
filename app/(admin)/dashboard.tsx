@@ -173,7 +173,7 @@ export default function Dashboard() {
   const calculateGrowthPercentage = (today: number, yesterday: number) => {
     if (yesterday > 0) {
       return Number((((today - yesterday) / yesterday) * 100).toFixed(2));
-    } else if (today > 0) {
+    } else if (yesterday === 0 && today >= 0) {
       return 100;
     }
     return 0;

@@ -1,18 +1,21 @@
 import createStyles from "@/app/tabStyles/messages.styles";
 import { MessageItem } from "@/components/MessageItem";
-import PrimaryHeader from "@/components/PrimaryHeader";
+import Container from "@/components/RnContainer";
 import RnText from "@/components/RnText";
+import RoundButton from "@/components/RoundButton";
 import { Colors } from "@/constants/Colors";
-import { wp } from "@/utils";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import {
+  Accuracy,
+  getCurrentPositionAsync,
+  getForegroundPermissionsAsync,
+} from "expo-location";
 import { router } from "expo-router";
 import React from "react";
 import {
   FlatList,
   Image,
-  ImageBackground,
-  SafeAreaView,
   StyleSheet,
   TouchableOpacity,
   useColorScheme,
@@ -173,27 +176,37 @@ export default function Messages() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ImageBackground
-        source={require("@/assets/images/rings.png")} // update the path to your PNG
-        style={styles.gradientHeaderContainer}
-        resizeMode="cover"
-      >
+    <Container customStyle={styles.container}>
+      <View style={styles.gradientHeaderContainer}>
         <LinearGradient
           colors={[Colors[theme].primary, Colors[theme].pink]}
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 2 }}
           style={[StyleSheet.absoluteFill]}
         >
-          <View style={{ paddingHorizontal: wp(4) }}>
-            <PrimaryHeader
-              title="Messages"
-              titleColor={Colors[theme].whiteText}
-              leftIconColor={Colors[theme].primary}
-              showRightIcon={false}
-              borderWidth={0.5}
-              leftIconSize={17}
-              onLeftPress={handleBackPress}
+          <View style={styles.headerContainer}>
+            <RoundButton noShadow />
+            <RnText style={styles.headerTitle}>Messages</RnText>
+            <RoundButton
+              iconName="tv"
+              iconSize={22}
+              iconColor={Colors[theme].primary}
+              backgroundColour={Colors[theme].whiteText}
+              onPress={async () => {
+                let { status } = await getForegroundPermissionsAsync();
+                if (status === "granted") {
+                  const location = await getCurrentPositionAsync({
+                    accuracy: Accuracy.Highest,
+                  });
+                  router.push({
+                    pathname: "/eventScreens/explore",
+                    params: {
+                      latitude: location.coords.latitude,
+                      longitude: location.coords.longitude,
+                    },
+                  });
+                }
+              }}
             />
           </View>
 
@@ -210,7 +223,7 @@ export default function Messages() {
             </View>
             <FlatList
               data={recentMatches}
-              keyExtractor={(item) => item.id}
+              keyExtractor={item => item.id}
               renderItem={renderRecentMatch}
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -218,17 +231,17 @@ export default function Messages() {
             />
           </View>
         </LinearGradient>
-      </ImageBackground>
+      </View>
       {/* Messages List */}
       <View style={styles.messagesContainer}>
         <FlatList
           data={messages}
-          keyExtractor={(item) => item.id}
+          keyExtractor={item => item.id}
           renderItem={renderMessage}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.messagesList}
         />
       </View>
-    </SafeAreaView>
+    </Container>
   );
 }

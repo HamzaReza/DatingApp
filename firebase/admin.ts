@@ -20,6 +20,7 @@ const createEvent = async (event: {
 }) => {
   try {
     const db = getFirestore();
+    console.log("🚀 ~ admin.ts:24 ~ createEvent ~ event:", event);
     const docRef = await addDoc(collection(db, "events"), {
       name: event.name,
       venue: event.venue,

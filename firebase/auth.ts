@@ -11,8 +11,9 @@ import {
   getDocs,
   getFirestore,
   query,
+  Timestamp,
   updateDoc,
-  where,
+  where
 } from "@react-native-firebase/firestore";
 import {
   deleteObject,
@@ -303,14 +304,51 @@ const deleteImage = async (imageUrl: string): Promise<void> => {
   }
 };
 
-const getCurrentAuth = () => {
+const getCurrentAuth = async() => {
   return getAuth();
 };
 
+ const fetchAllUsers = async () => {
+  try {
+    const db = getFirestore();
+    const usersRef = collection(db, "users");
+    const snapshot = await getDocs(usersRef);
+
+    const now = new Date();
+    const threeDaysAgo = new Date();
+    threeDaysAgo.setDate(now.getDate() - 3);
+
+    const users = snapshot.docs.map((doc) => {
+      const data = doc.data();
+
+      let createdAt: Date = new Date(0); // default very old date
+
+      if (data.createdAt instanceof Timestamp) {
+        createdAt = data.createdAt.toDate();
+      } else if (typeof data.createdAt === "string" || typeof data.createdAt === "number") {
+        createdAt = new Date(data.createdAt);
+      }
+
+      return {
+        id: doc.id,
+        ...data,
+        isNew: createdAt > threeDaysAgo,
+      };
+    });
+
+    return users;
+  } catch (error) {
+    console.error("❌ Error fetching users:", error);
+    throw error;
+  }
+};
+
+
+
+
 export {
   authenticateWithPhone,
-  deleteImage,
-  getCurrentAuth,
+  deleteImage, fetchAllUsers, getCurrentAuth,
   getUserByEmail,
   getUserByUid,
   saveUserToDatabase,
@@ -318,5 +356,6 @@ export {
   updateUser,
   uploadImage,
   uploadMultipleImages,
-  verifyCode,
+  verifyCode
 };
+

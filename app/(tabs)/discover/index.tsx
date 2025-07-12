@@ -21,103 +21,57 @@ import {
   relationshipIntentOptions,
   smokingPreferenceOptions,
 } from "@/constants/FilterOptions";
+import { fetchAllUsers } from "@/firebase/auth";
 import {
   setDeviceLocation,
   setLocationPermissionGranted,
 } from "@/redux/slices/userSlice";
 import { RootState } from "@/redux/store";
-import { hp } from "@/utils";
+import { encodeImagePath, hp } from "@/utils";
 import { requestLocationPermission } from "@/utils/Permission";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Location from "expo-location";
 import { router } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   FlatList,
+  Image,
   Platform,
   TouchableOpacity,
   useColorScheme,
-  View,
+  View
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import MapView, { PROVIDER_DEFAULT, PROVIDER_GOOGLE } from "react-native-maps";
+import MapView, { Marker, PROVIDER_DEFAULT, PROVIDER_GOOGLE } from "react-native-maps";
 import { useDispatch, useSelector } from "react-redux";
 
-type User = {
+type UsersList = {
   id: string;
   name: string;
   age: number;
   location: string;
   distance: string;
-  image: string;
+  photo: string;
   isNew: boolean;
+  uid: String;
+  interests: String;
+
 };
 
-const newUsers: User[] = [
-  {
-    id: "1",
-    name: "Halime",
-    age: 18,
-    location: "BERLIN",
-    distance: "18 km away",
-    image:
-      "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=300",
-    isNew: true,
-  },
-  {
-    id: "2",
-    name: "Vanessa",
-    age: 18,
-    location: "MUNICH",
-    distance: "14 km away",
-    image:
-      "https://images.pexels.com/photos/1130626/pexels-photo-1130626.jpeg?auto=compress&cs=tinysrgb&w=300",
-    isNew: true,
-  },
-  {
-    id: "3",
-    name: "James",
-    age: 20,
-    location: "HANOVER",
-    distance: "32 km away",
-    image:
-      "https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=300",
-    isNew: true,
-  },
-];
-
 const interests = [
-  {
-    id: "1",
-    title: "Football",
-    icon: "football-outline" as keyof typeof Ionicons.glyphMap,
-  },
-  {
-    id: "2",
-    title: "Nature",
-    icon: "leaf-outline" as keyof typeof Ionicons.glyphMap,
-  },
-  {
-    id: "3",
-    title: "Language",
-    icon: "chatbubble-outline" as keyof typeof Ionicons.glyphMap,
-  },
-  {
-    id: "4",
-    title: "Photography",
-    icon: "camera-outline" as keyof typeof Ionicons.glyphMap,
-  },
-  {
-    id: "5",
-    title: "Music",
-    icon: "musical-notes-outline" as keyof typeof Ionicons.glyphMap,
-  },
-  {
-    id: "6",
-    title: "Writing",
-    icon: "pencil-outline" as keyof typeof Ionicons.glyphMap,
-  },
+  { id: "reading", label: "Reading", icon: "📚" },
+  { id: "photography", label: "Photography", icon: "📸" },
+  { id: "gaming", label: "Gaming", icon: "🎮" },
+  { id: "music", label: "Music", icon: "🎵" },
+  { id: "travel", label: "Travel", icon: "✈️" },
+  { id: "painting", label: "Painting", icon: "🎨" },
+  { id: "politics", label: "Politics", icon: "👥" },
+  { id: "charity", label: "Charity", icon: "❤️" },
+  { id: "cooking", label: "Cooking", icon: "🍳" },
+  { id: "pets", label: "Pets", icon: "🐾" },
+  { id: "sports", label: "Sports", icon: "⚽" },
+  { id: "fashion", label: "Fashion", icon: "👔" },
 ];
 
 export default function Discover() {
@@ -125,11 +79,39 @@ export default function Discover() {
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
   const dispatch = useDispatch();
+  const [usersList, setUsersList] = useState(Array<UsersList>);
+  const [filteredUsers, setFilteredUsers] = useState([]);
+const [selectedInterests, setSelectedInterests] = useState<string[]>([ ]);
+const [showAllInterests, setShowAllInterests] = useState(false);
+const displayedInterests = showAllInterests ? interests : interests.slice(0, 6);
 
-  const [selectedInterests, setSelectedInterests] = useState<string[]>([
-    "2",
-    "5",
-  ]);
+
+useEffect(() => {
+console.log('hi',filteredUsers)
+console.log('selectedInterests', selectedInterests)
+  getUsers();
+}, [selectedInterests]);
+
+
+  const getUsers = async () => {
+    try {
+      const users = await fetchAllUsers();
+
+      setUsersList(users);
+
+      const filtered = users.filter(user =>
+        user.interests
+          ?.split(",")
+          .some(interest => selectedInterests.includes(interest))
+      );
+
+      setFilteredUsers(filtered);
+    } catch (err) {
+      console.error("Failed to fetch users:", err);
+    }
+  };
+
+  
 
   // Get location from Redux state
   const { deviceLocation, locationPermissionGranted } = useSelector(
@@ -195,9 +177,9 @@ export default function Discover() {
     useState("");
 
   const handleInterestPress = (interestId: string) => {
-    setSelectedInterests((prev) =>
+    setSelectedInterests(prev =>
       prev.includes(interestId)
-        ? prev.filter((id) => id !== interestId)
+        ? prev.filter(id => id !== interestId)
         : [...prev, interestId]
     );
   };
@@ -263,8 +245,8 @@ export default function Discover() {
       {/* New Users Section */}
       <View style={styles.section}>
         <FlatList
-          data={newUsers}
-          keyExtractor={(item) => item.id}
+          data={usersList}
+          keyExtractor={item => item.id}
           renderItem={({ item }) => (
             <UserCard
               id={item.id}
@@ -272,9 +254,9 @@ export default function Discover() {
               age={item.age}
               location={item.location}
               distance={item.distance}
-              image={item.image}
+              image={encodeImagePath(item.photo)}
               isNew={item.isNew}
-              onPress={() => router.push('/swipeProfile')}
+              onPress={() => router.push(`/discover/${item.uid}`)}
             />
           )}
           horizontal
@@ -287,20 +269,22 @@ export default function Discover() {
       <View style={styles.section}>
         <View style={styles.subHeadContainer}>
           <RnText style={styles.sectionTitle}>Interests</RnText>
-          <RnText style={styles.viewAllText}>View All</RnText>
+          
+           <RnText style={styles.viewAllText} onPress={() => setShowAllInterests(!showAllInterests)}>
+        {showAllInterests ? "Show Less" : "View All"}
+      </RnText>
         </View>
-
-        <View style={styles.interestsContainer}>
-          {interests.map((interest) => (
-            <InterestTag
-              key={interest.id}
-              title={interest.title}
-              icon={interest.icon}
-              isSelected={selectedInterests.includes(interest.id)}
-              onPress={() => handleInterestPress(interest.id)}
-            />
-          ))}
-        </View>
+ <View style={styles.interestsContainer}>
+    {displayedInterests.map((interest) => (
+      <InterestTag
+        key={interest.id}
+        title={interest.label}
+        icon={interest.icon}
+        isSelected={selectedInterests.includes(interest.id)}
+        onPress={() => handleInterestPress(interest.id)}
+      />
+    ))}
+  </View>
       </View>
 
       {/* Around Me Section */}
@@ -312,43 +296,73 @@ export default function Discover() {
           People
           {selectedInterests.length > 0
             ? ` with interest in ${interests
-                .filter((item) => selectedInterests.includes(item.id))
-                .map((item) => item.title)
+                .filter(item => selectedInterests.includes(item.id))
+                .map(item => item.label)
                 .join(", ")}`
             : ""}{" "}
           around you
         </RnText>
 
-        {locationPermissionGranted ? (
-          <MapView
-            style={styles.map}
-            initialRegion={{
-              latitude: deviceLocation?.coords.latitude || 37.7749,
-              longitude: deviceLocation?.coords.longitude || -122.4194,
-              latitudeDelta: 0.01,
-              longitudeDelta: 0.01,
-            }}
-            provider={
-              Platform.OS === "android" ? PROVIDER_GOOGLE : PROVIDER_DEFAULT
-            }
-            showsUserLocation={locationPermissionGranted}
-            showsMyLocationButton={locationPermissionGranted}
+   {locationPermissionGranted ? (
+  <MapView
+    style={styles.map}
+    initialRegion={{
+      latitude: deviceLocation?.coords.latitude || 37.7749,
+      longitude: deviceLocation?.coords.longitude || -122.4194,
+      latitudeDelta: 0.01,
+      longitudeDelta: 0.01,
+    }}
+    provider={
+      Platform.OS === "android" ? PROVIDER_GOOGLE : PROVIDER_DEFAULT
+    }
+    showsUserLocation={locationPermissionGranted}
+    showsMyLocationButton={locationPermissionGranted}
+  >
+    {/* 🔽 Show user markers */}
+    {usersList.map((user, index) => {
+      const lat = user.location?._latitude;
+      const lng = user.location?._longitude;
+
+
+
+      if (!lat || !lng) return null;
+
+      return (
+        <>
+        <Marker
+          key={user.id || index}
+          coordinate={{ latitude: lat, longitude: lng }}
+          title={user.name}
+        >
+          {/* Show profile photo in marker */}
+          
+          <Image
+            source={{ uri: encodeImagePath(user.photo) }}
+            style={{ width: 40, height: 40, borderRadius: 20 }}
+            resizeMode="cover"
           />
-        ) : (
-          <View
-            style={[
-              styles.map,
-              styles.getLocationContainer,
-              { justifyContent: "center" },
-            ]}
-          >
-            <RnButton
-              title="Get Location"
-              onPress={() => getCurrentLocation()}
-              style={[styles.getLocationButton, styles.getLocationButtonText]}
-            />
-          </View>
-        )}
+         
+        </Marker>
+         </>
+      );
+    })}
+  </MapView>
+) : (
+  <View
+    style={[
+      styles.map,
+      styles.getLocationContainer,
+      { justifyContent: "center" },
+    ]}
+  >
+    <RnButton
+      title="Get Location"
+      onPress={() => getCurrentLocation()}
+      style={[styles.getLocationButton, styles.getLocationButtonText]}
+    />
+  </View>
+)}
+
       </View>
 
       <RnModal show={filterModal} backButton={() => setFilterModal(false)}>

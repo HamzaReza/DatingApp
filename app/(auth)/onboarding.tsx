@@ -12,6 +12,7 @@ import { useState } from "react";
 import { ImageBackground, TouchableOpacity, View } from "react-native";
 import { useDispatch } from "react-redux";
 
+
 export default function Onboarding({ navigation }: any) {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
@@ -78,7 +79,7 @@ export default function Onboarding({ navigation }: any) {
               })
             );
          
-         router.push('/(admin)/dashboard')
+         router.push('/(tabs)/main/home')
           }}
           noRightIcon
           leftIconColor={Colors[theme].blackText}

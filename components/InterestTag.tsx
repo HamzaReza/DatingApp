@@ -3,14 +3,13 @@ import { Colors } from "@/constants/Colors";
 import { FontFamily } from "@/constants/FontFamily";
 import { FontSize } from "@/constants/FontSize";
 import { hp, wp } from "@/utils";
-import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { StyleSheet, TouchableOpacity, useColorScheme } from "react-native";
 import RnText from "./RnText";
 
 interface InterestTagProps {
   title: string;
-  icon?: keyof typeof Ionicons.glyphMap;
+  icon?: String;
   isSelected?: boolean;
   onPress?: () => void;
 }
@@ -32,16 +31,9 @@ const colorScheme = useColorScheme();
       style={[styles.tag, isSelected && styles.selectedTag]}
       onPress={onPress}
     >
-      {icon && (
-        <Ionicons
-          name={icon}
-          size={16}
-          color={isSelected ? Colors[theme].background : Colors[theme].redText}
-          style={styles.icon}
-        />
-      )}
+      
       <RnText style={[styles.text, isSelected && styles.selectedText]}>
-        {title}
+       {icon} {title}
       </RnText>
     </TouchableOpacity>
   );

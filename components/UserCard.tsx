@@ -33,7 +33,7 @@ const UserCard: React.FC<UserCardProps> = ({
   isNew = false,
   onPress,
 }) => {
-  const colorScheme = useColorScheme();
+  const colorScheme = useColorScheme(); 
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
 
@@ -57,7 +57,7 @@ const UserCard: React.FC<UserCardProps> = ({
           {name}, {age}
         </RnText>
         <View style={styles.locationContainer}>
-          <RnText style={styles.location}>{location}</RnText>
+          {/* <RnText style={styles.location}>{location}</RnText> */}
         </View>
       </View>
     </TouchableOpacity>

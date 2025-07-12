@@ -18,7 +18,6 @@ import { useColorScheme } from "@/hooks/useColorScheme";
 import { AdminEvent } from "@/types/Admin";
 import { hp, wp } from "@/utils";
 import * as ImagePicker from "expo-image-picker";
-import { router } from "expo-router";
 import { Formik } from "formik";
 import React, { useEffect, useState } from "react";
 import { FlatList, Image, View } from "react-native";
@@ -212,8 +211,7 @@ export default function AdminEventTicketScreen() {
         <RnButton
           title="Add creator"
           style={[styles.headerButton]}
-          // onPress={handleCreateCreator}
-          onPress={()=>router.push('/(tabs)/discover')}
+          onPress={handleCreateCreator}
         />
       </View>
 

@@ -9,7 +9,8 @@ import {
 const createEvent = async (event: {
   name: string;
   venue: string;
-  price: number;
+  normalPrice: number;
+  vipPrice: number;
   normalTicket: number;
   vipTicket: number;
   genre: string;
@@ -20,11 +21,11 @@ const createEvent = async (event: {
 }) => {
   try {
     const db = getFirestore();
-    console.log("🚀 ~ admin.ts:24 ~ createEvent ~ event:", event);
     const docRef = await addDoc(collection(db, "events"), {
       name: event.name,
       venue: event.venue,
-      price: event.price,
+      normalPrice: event.normalPrice,
+      vipPrice: event.vipPrice,
       normalTicket: event.normalTicket,
       vipTicket: event.vipTicket,
       creator: event.creator,
@@ -54,7 +55,8 @@ const fetchEvents = (callback: (events: any[]) => void) => {
             id: doc.id,
             name: data.name,
             venue: data.venue,
-            price: data.price,
+            normalPrice: data.normalPrice,
+            vipPrice: data.vipPrice,
             genre: data.genre,
             normalTicket: data.normalTicket,
             vipTicket: data.vipTicket,

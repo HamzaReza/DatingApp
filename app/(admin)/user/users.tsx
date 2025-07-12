@@ -167,17 +167,19 @@ export default function AdminUsers() {
 
   const renderFooter = () => (
     <View style={styles.paginationContainer}>
-      <TouchableOpacity
-        style={styles.paginationButton}
-        onPress={() => setPage(Math.max(1, page - 1))}
-        disabled={page === 1}
-      >
-        <MaterialIcons
-          name="chevron-left"
-          size={wp(7)}
-          color={theme === "light" ? Colors[theme].pink : Colors[theme].pink}
-        />
-      </TouchableOpacity>
+      {PAGES > 1 && (
+        <TouchableOpacity
+          style={styles.paginationButton}
+          onPress={() => setPage(Math.max(1, page - 1))}
+          disabled={page === 1}
+        >
+          <MaterialIcons
+            name="chevron-left"
+            size={wp(7)}
+            color={theme === "light" ? Colors[theme].pink : Colors[theme].pink}
+          />
+        </TouchableOpacity>
+      )}
       {Array.from({ length: PAGES }, (_, i) => i + 1).map(p => (
         <TouchableOpacity
           key={p}
@@ -197,17 +199,19 @@ export default function AdminUsers() {
           </RnText>
         </TouchableOpacity>
       ))}
-      <TouchableOpacity
-        style={styles.paginationButton}
-        onPress={() => setPage(Math.min(PAGES, page + 1))}
-        disabled={page === PAGES}
-      >
-        <MaterialIcons
-          name="chevron-right"
-          size={wp(7)}
-          color={theme === "light" ? Colors[theme].pink : Colors[theme].pink}
-        />
-      </TouchableOpacity>
+      {PAGES > 1 && (
+        <TouchableOpacity
+          style={styles.paginationButton}
+          onPress={() => setPage(Math.min(PAGES, page + 1))}
+          disabled={page === PAGES}
+        >
+          <MaterialIcons
+            name="chevron-right"
+            size={wp(7)}
+            color={theme === "light" ? Colors[theme].pink : Colors[theme].pink}
+          />
+        </TouchableOpacity>
+      )}
     </View>
   );
 
@@ -232,7 +236,7 @@ export default function AdminUsers() {
         style={styles.flatlist}
         contentContainerStyle={styles.flatlistContainer}
         renderItem={renderUserItem}
-        ListFooterComponent={PAGES > 1 ? renderFooter : null}
+        ListFooterComponent={renderFooter}
         ListEmptyComponent={() => (
           <View style={styles.emptyContainer}>
             <RnText style={styles.emptyText}>No users found</RnText>

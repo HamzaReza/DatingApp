@@ -47,7 +47,8 @@ export type AdminEvent = {
   image: string;
   normalTicket: number;
   vipTicket: number;
-  price: number;
+  normalPrice: number;
+  vipPrice: number;
 };
 
 export type AdminPricingPlan = {

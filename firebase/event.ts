@@ -1,15 +1,15 @@
 import {
   collection,
+  doc,
   getFirestore,
   onSnapshot,
   orderBy,
   query,
   Timestamp,
+  updateDoc,
 } from "@react-native-firebase/firestore";
 
 const formatDate = (timestamp: any) => {
-  if (!timestamp) return null;
-
   let date;
   if (timestamp.seconds) {
     date = new Date(timestamp.seconds * 1000);
@@ -19,7 +19,6 @@ const formatDate = (timestamp: any) => {
     date = new Date(timestamp);
   }
 
-  if (isNaN(date.getTime())) return null;
   return date;
 };
 
@@ -326,9 +325,56 @@ const fetchEventsByCreatorId = (
   }
 };
 
+const fetchEventById = (
+  eventId: string,
+  callback: (event: any | null) => void
+) => {
+  try {
+    const db = getFirestore();
+    const eventsRef = collection(db, "events");
+
+    const unsubscribe = onSnapshot(
+      eventsRef,
+      snapshot => {
+        const event = snapshot.docs
+          .map(doc => ({
+            id: doc.id,
+            ...doc.data(),
+          }))
+          .find(doc => doc.id === eventId) as any;
+
+        callback(event || null);
+      },
+      error => {
+        console.error("Error in event by ID listener:", error);
+        callback(null);
+      }
+    );
+
+    return unsubscribe;
+  } catch (error) {
+    console.error("Error setting up event by ID listener:", error);
+    throw error;
+  }
+};
+
+const updateEvent = async (eventId: string, updateData: any) => {
+  try {
+    const db = getFirestore();
+    const eventRef = doc(db, "events", eventId);
+    await updateDoc(eventRef, updateData);
+  } catch (error) {
+    console.error("Error updating event:", error);
+    throw error;
+  }
+};
+
 export {
   fetchAllFutureEvents,
   fetchCreatorsEvent,
+  fetchEventById,
   fetchEventsByCreatorId,
   fetchNextUpcomingEvent,
+  formatDate,
+  updateEvent,
 };

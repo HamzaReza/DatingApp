@@ -1,12 +1,14 @@
 import RnText from "@/components/RnText";
 import { Borders } from "@/constants/Borders";
 import { Colors } from "@/constants/Colors";
-import { FontSize } from "@/constants/FontSize";
+import { FontFamily } from "@/constants/FontFamily";
 import { hp, wp } from "@/utils";
+import { router } from "expo-router";
 import React from "react";
 import {
   ImageBackground,
   StyleSheet,
+  TouchableOpacity,
   View,
   useColorScheme,
 } from "react-native";
@@ -16,6 +18,7 @@ type UpcomingEventCardProps = {
   title: string;
   date: string;
   location: string;
+  eventId: string;
 };
 
 const UpcomingEventCard: React.FC<UpcomingEventCardProps> = ({
@@ -23,13 +26,18 @@ const UpcomingEventCard: React.FC<UpcomingEventCardProps> = ({
   title,
   date,
   location,
+  eventId,
 }) => {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
   const themedStyles = styles(theme);
 
   return (
-    <View style={themedStyles.imageBackgroundContainer}>
+    <TouchableOpacity
+      style={themedStyles.imageBackgroundContainer}
+      activeOpacity={1}
+      onPress={() => router.push(`/eventScreens/${eventId}`)}
+    >
       <ImageBackground
         source={{ uri: backgroundImage }}
         style={themedStyles.imageBackground}
@@ -44,7 +52,7 @@ const UpcomingEventCard: React.FC<UpcomingEventCardProps> = ({
           </View>
         </View>
       </ImageBackground>
-    </View>
+    </TouchableOpacity>
   );
 };
 
@@ -67,23 +75,24 @@ const styles = (theme: "dark" | "light") =>
     },
     bottomContainer: {
       position: "absolute",
-      bottom: hp(2),
+      bottom: 0,
       left: 0,
       right: 0,
       flexDirection: "row",
       justifyContent: "space-between",
       paddingHorizontal: wp(3),
+      paddingVertical: hp(1),
+      backgroundColor: "rgba(0,0,0,0.5)",
     },
     titleDateContainer: {
       width: wp(40),
     },
     titleText: {
-      fontSize: FontSize.medium,
-      marginBottom: wp(2),
+      fontFamily: FontFamily.bold,
       color: Colors[theme].whiteText,
     },
     dateTimeText: {
-      fontSize: FontSize.small,
+      fontFamily: FontFamily.regular,
       color: Colors[theme].whiteText,
     },
     locationContainer: {
@@ -92,7 +101,7 @@ const styles = (theme: "dark" | "light") =>
       width: wp(40),
     },
     locationText: {
-      fontSize: FontSize.small,
+      fontFamily: FontFamily.medium,
       color: Colors[theme].whiteText,
     },
   });

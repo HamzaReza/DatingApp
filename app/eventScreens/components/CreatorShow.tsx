@@ -7,6 +7,7 @@ import React from "react";
 import {
   ImageBackground,
   StyleSheet,
+  TouchableOpacity,
   View,
   useColorScheme,
 } from "react-native";
@@ -14,15 +15,23 @@ import {
 type CreatorShowProps = {
   showName: string;
   backgroundImage: string;
+  onPress: () => void;
 };
 
-const CreatorShow = ({ showName, backgroundImage }: CreatorShowProps) => {
+const CreatorShow = ({
+  showName,
+  backgroundImage,
+  onPress,
+}: CreatorShowProps) => {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
   const themedStyles = styles(theme);
 
   return (
-    <View style={themedStyles.imageBackgroundContainer}>
+    <TouchableOpacity
+      style={themedStyles.imageBackgroundContainer}
+      onPress={onPress}
+    >
       <ImageBackground
         style={themedStyles.imageBackground}
         imageStyle={themedStyles.imageBackground}
@@ -32,7 +41,7 @@ const CreatorShow = ({ showName, backgroundImage }: CreatorShowProps) => {
           <RnText style={themedStyles.titleText}>{showName}</RnText>
         </View>
       </ImageBackground>
-    </View>
+    </TouchableOpacity>
   );
 };
 
@@ -59,9 +68,10 @@ const styles = (theme: "dark" | "light") =>
       left: 0,
       right: 0,
       alignItems: "center",
-      backgroundColor: Colors[theme].bottomTab,
+      backgroundColor: "rgba(0,0,0,0.5)",
     },
     titleText: {
       fontFamily: FontFamily.bold,
+      color: Colors[theme].whiteText,
     },
   });

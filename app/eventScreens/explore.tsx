@@ -159,6 +159,7 @@ const Explore = () => {
               title={nextEvent.name}
               date={formatEventDate(nextEvent.date)}
               location={nextEvent.venue}
+              eventId={nextEvent.id}
             />
           )}
         </View>
@@ -183,24 +184,17 @@ const Explore = () => {
             showsHorizontalScrollIndicator={false}
             keyExtractor={item => item.id}
             renderItem={({ item }) => (
-              <CreatorShow showName={item.name} backgroundImage={item.image} />
+              <CreatorShow
+                showName={item.name}
+                backgroundImage={item.image}
+                onPress={() => router.push(`/eventScreens/${item.id}`)}
+              />
             )}
           />
         </View>
       </View>
       <View style={styles.upcomingEventsContainer}>
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <RnText style={styles.upcomingEventsText}>{`Creator's Shows`}</RnText>
-          <TouchableOpacity onPress={() => router.push("/eventScreens/events")}>
-            <RnText style={styles.btnTxt}>View All</RnText>
-          </TouchableOpacity>
-        </View>
+        <RnText style={styles.upcomingEventsText}>{`Creator's Shows`}</RnText>
         <View style={styles.creatorShowCardContainer}>
           <FlatList
             data={creators}
@@ -208,7 +202,16 @@ const Explore = () => {
             showsHorizontalScrollIndicator={false}
             keyExtractor={item => item.id}
             renderItem={({ item }) => (
-              <CreatorShow showName={item.name} backgroundImage={item.image} />
+              <CreatorShow
+                showName={item.name}
+                backgroundImage={item.image}
+                onPress={() =>
+                  router.push({
+                    pathname: "/eventScreens/events",
+                    params: { creatorId: item.id },
+                  })
+                }
+              />
             )}
           />
         </View>

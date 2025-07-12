@@ -91,6 +91,8 @@ export default function Discover() {
     : interests.slice(0, 6);
 
   useEffect(() => {
+    console.log("hi", filteredUsers);
+    console.log("selectedInterests", selectedInterests);
     getUsers();
   }, [selectedInterests]);
 
@@ -268,7 +270,6 @@ export default function Discover() {
       <View style={styles.section}>
         <View style={styles.subHeadContainer}>
           <RnText style={styles.sectionTitle}>Interests</RnText>
-
           <RnText
             style={styles.viewAllText}
             onPress={() => setShowAllInterests(!showAllInterests)}

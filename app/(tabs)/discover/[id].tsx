@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import createStyles from "@/app/tabStyles/profile.styles";
 import InterestTag from "@/components/InterestTag";
 import Container from "@/components/RnContainer";
@@ -7,23 +8,20 @@ import { Colors } from "@/constants/Colors";
 import { getUserByUid } from "@/firebase/auth";
 import { encodeImagePath, hp, wp } from "@/utils";
 import { Ionicons } from "@expo/vector-icons";
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
-  Dimensions,
   FlatList,
   Image,
   Modal,
   Pressable,
   TouchableOpacity,
   useColorScheme,
-  View
+  View,
 } from "react-native";
 
-const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 const IMAGE_HEIGHT = hp(60);
-const HEADER_HEIGHT = hp(8);
 
 // const profileData = {
 //   name: "Jessica Parker",
@@ -52,31 +50,26 @@ const HEADER_HEIGHT = hp(8);
 // };
 
 export default function Profile() {
-  const colorScheme = useColorScheme() || 'light';
+  const colorScheme = useColorScheme() || "light";
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
 
-    const { id } = useLocalSearchParams();
+  const { id } = useLocalSearchParams();
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [showFullAbout, setShowFullAbout] = useState(false);
-  const [profileData,setProfileData] = useState(Object)
+  const [profileData, setProfileData] = useState(Object);
   const scrollY = useRef(new Animated.Value(0)).current;
 
-console.log(profileData?.interests)
+  console.log(profileData?.interests);
 
-  useEffect(()=>{
-getUserDetails()
-  },[])
+  useEffect(() => {
+    getUserDetails();
+  }, []);
 
-  const getUserDetails = async()=> {
-    const data = await getUserByUid(id)
-    setProfileData(data)
-
-  }
-
-  const handleBackPress = () => {
-    console.log("Navigate back");
+  const getUserDetails = async () => {
+    const data = await getUserByUid(id as string);
+    setProfileData(data);
   };
 
   const handleEditPress = () => {
@@ -133,32 +126,13 @@ getUserDetails()
 
   return (
     <Container>
-      {/* Fixed Header */}
-      {/* <View style={styles.header}>
-        <TouchableOpacity onPress={handleBackPress} style={styles.headerButton}>
-          <Ionicons
-            name="chevron-back"
-            size={24}
-            color={Colors[theme].redText}
-          />
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={handleEditPress} style={styles.headerButton}>
-          <Ionicons
-            name="create-outline"
-            size={24}
-            color={Colors[theme].redText}
-          />
-        </TouchableOpacity>
-      </View> */}
-
       <View style={styles.header}>
         <RoundButton
           iconName="chevron-left"
           iconSize={22}
           iconColor={Colors[theme].primary}
           backgroundColour={Colors[theme].whiteText}
-          onPress={handleBackPress}
+          onPress={() => router.back()}
         />
         <View />
         <RoundButton
@@ -249,8 +223,9 @@ getUserDetails()
             >
               <RoundButton
                 iconName="send"
-                iconSize={26}
+                iconSize={24}
                 iconColor={Colors[theme].primary}
+                backgroundColour={Colors[theme].background}
               />
             </TouchableOpacity>
           </View>
@@ -292,19 +267,20 @@ getUserDetails()
           </View>
 
           {/* Interests Section */}
-       <View style={styles.section}>
-  <RnText style={styles.sectionTitle}>Interests</RnText>
-  <View style={styles.interestsContainer}>
-    {(profileData?.interests?.split(",") || []).map((interest, index) => (
-      <InterestTag
-        key={index}
-        title={interest.trim()} // trims any space
-        isSelected={true} // or use any logic you want
-      />
-    ))}
-  </View>
-</View>
-
+          <View style={styles.section}>
+            <RnText style={styles.sectionTitle}>Interests</RnText>
+            <View style={styles.interestsContainer}>
+              {(profileData?.interests?.split(",") || []).map(
+                (interest: string, index: number) => (
+                  <InterestTag
+                    key={index}
+                    title={interest.trim()} // trims any space
+                    isSelected={true} // or use any logic you want
+                  />
+                )
+              )}
+            </View>
+          </View>
 
           {/* Gallery Section */}
           <View style={styles.section}>
@@ -336,18 +312,26 @@ getUserDetails()
               </View>
 
               <View style={styles.galleryRow}>
-                {profileData?.gallery?.slice(1).map((item, index) => (
-                  <TouchableOpacity key={index} style={styles.smallGalleryItem}>
-                    <Image source={{ uri: item }} style={styles.galleryImage} />
-                  </TouchableOpacity>
-                ))}
+                {profileData?.gallery
+                  ?.slice(1)
+                  .map((item: string, index: number) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={styles.smallGalleryItem}
+                    >
+                      <Image
+                        source={{ uri: item }}
+                        style={styles.galleryImage}
+                      />
+                    </TouchableOpacity>
+                  ))}
               </View>
             </View>
           </View>
         </View>
       </Animated.ScrollView>
 
-       <Modal
+      <Modal
         visible={modalVisible}
         transparent
         animationType="fade"

@@ -99,7 +99,7 @@ export default function OtpScreen() {
             </RnText>
             <RnOtp
               value={values.otp}
-              verifyCode={(code) => setFieldValue("otp", code)}
+              verifyCode={code => setFieldValue("otp", code)}
               isError={!!errors.otp}
               style={styles.otp}
               error={errors.otp}

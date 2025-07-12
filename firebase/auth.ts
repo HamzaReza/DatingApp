@@ -5,15 +5,16 @@ import {
   signInWithPhoneNumber,
 } from "@react-native-firebase/auth";
 import {
-  addDoc,
   collection,
   doc,
+  getDoc,
   getDocs,
   getFirestore,
   query,
+  setDoc,
   Timestamp,
   updateDoc,
-  where
+  where,
 } from "@react-native-firebase/firestore";
 import {
   deleteObject,
@@ -31,7 +32,6 @@ import {
 const auth = getAuth();
 const storage = getStorage();
 
-// Authenticate with phone number (handles both signup and login)
 const authenticateWithPhone = async (phoneNumber: string) => {
   if (!phoneNumber || !phoneNumber.startsWith("+")) {
     throw new Error("Phone number must be in E.164 format (e.g., +1234567890)");
@@ -59,10 +59,8 @@ const authenticateWithPhone = async (phoneNumber: string) => {
   }
 };
 
-// Sign in with Google and Firebase (using social.ts approach + Firebase integration)
 const signInWithGoogleFirebase = async () => {
   try {
-    // Use the clean Google Sign-In approach from social.ts
     GoogleSignin.configure({
       webClientId:
         "949979854608-nvfh2ig0kp6mc4t7742mo813pkosjfbg.apps.googleusercontent.com",
@@ -71,19 +69,15 @@ const signInWithGoogleFirebase = async () => {
     const response = await GoogleSignin.signIn();
 
     if (isSuccessResponse(response)) {
-      // Get the ID token from Google (from social.ts approach)
       const { idToken } = response.data;
 
-      // Now integrate with Firebase
       const googleCredential = GoogleAuthProvider.credential(idToken);
       const userCredential = await signInWithCredential(auth, googleCredential);
       const user = userCredential.user;
 
-      // Check if user exists in Firestore
       const existingUser = await getUserByEmail(user.email || "");
 
       if (!existingUser) {
-        // Save new user to Firestore
         await saveUserToDatabase(user.uid, {
           uid: user.uid,
           email: user.email || "",
@@ -128,20 +122,19 @@ const signInWithGoogleFirebase = async () => {
   }
 };
 
-// Verify OTP
 const verifyCode = async (confirmation: any, code: string) => {
   try {
     await confirmation.confirm(code);
   } catch (error: any) {
-    console.error(error);
+    throw new Error(error.message);
   }
 };
 
-// Save user data to Firestore
 const saveUserToDatabase = async (userId: string, userData: any) => {
   try {
     const db = getFirestore();
-    await addDoc(collection(db, "users"), {
+    const userRef = doc(db, "users", userId);
+    await setDoc(userRef, {
       ...userData,
       uid: userId,
       createdAt: new Date(),
@@ -156,25 +149,11 @@ const saveUserToDatabase = async (userId: string, userData: any) => {
   }
 };
 
-// Update user data in Firestore
 const updateUser = async (userId: string, updateData: any) => {
   try {
     const db = getFirestore();
 
-    // First, find the user document by uid
-    const usersRef = collection(db, "users");
-    const q = query(usersRef, where("uid", "==", userId));
-    const querySnapshot = await getDocs(q);
-
-    if (querySnapshot.empty) {
-      throw new Error("User not found");
-    }
-
-    // Get the first (and should be only) document
-    const userDoc = querySnapshot.docs[0];
-    const userRef = doc(db, "users", userDoc.id);
-
-    // Update the document with new data and updated timestamp
+    const userRef = doc(db, "users", userId);
     await updateDoc(userRef, {
       ...updateData,
       updatedAt: new Date(),
@@ -187,21 +166,18 @@ const updateUser = async (userId: string, updateData: any) => {
   }
 };
 
-// Get user data by email
 const getUserByEmail = async (email: string) => {
   try {
     const db = getFirestore();
 
-    // Find the user document by email
     const usersRef = collection(db, "users");
     const q = query(usersRef, where("email", "==", email));
     const querySnapshot = await getDocs(q);
 
     if (querySnapshot.empty) {
-      return null; // User doesn't exist
+      return null;
     }
 
-    // Return the user data
     const userData = querySnapshot.docs[0].data();
     return userData;
   } catch (error: any) {
@@ -210,22 +186,18 @@ const getUserByEmail = async (email: string) => {
   }
 };
 
-// Get user data by UID (for phone authentication)
 const getUserByUid = async (userId: string) => {
   try {
     const db = getFirestore();
 
-    // Find the user document by uid
-    const usersRef = collection(db, "users");
-    const q = query(usersRef, where("uid", "==", userId));
-    const querySnapshot = await getDocs(q);
+    const userRef = doc(db, "users", userId);
+    const userDoc = await getDoc(userRef);
 
-    if (querySnapshot.empty) {
-      return null; // User doesn't exist
+    if (!userDoc.exists()) {
+      return null;
     }
 
-    // Return the user data
-    const userData = querySnapshot.docs[0].data();
+    const userData = userDoc.data();
     return userData;
   } catch (error: any) {
     console.error("Error getting user data:", error);
@@ -233,7 +205,6 @@ const getUserByUid = async (userId: string) => {
   }
 };
 
-// Upload image to Firebase Storage and return download URL
 const uploadImage = async (
   imageUri: string,
   type: "user" | "event" | "creator",
@@ -241,7 +212,6 @@ const uploadImage = async (
   imageType?: "profile" | "gallery"
 ): Promise<string> => {
   try {
-    // Create unique filename
     const timestamp = Date.now();
     const filename = `${timestamp}.jpg`;
 
@@ -263,7 +233,6 @@ const uploadImage = async (
   }
 };
 
-// Upload multiple images and return array of download URLs
 const uploadMultipleImages = async (
   imageUris: string[],
   type: "user" | "event" | "creator",
@@ -283,10 +252,8 @@ const uploadMultipleImages = async (
   }
 };
 
-// Delete image from Firebase Storage
 const deleteImage = async (imageUrl: string): Promise<void> => {
   try {
-    // Extract the path from the URL
     const url = new URL(imageUrl);
     const path = decodeURIComponent(
       url.pathname.split("/o/")[1]?.split("?")[0] || ""
@@ -304,11 +271,11 @@ const deleteImage = async (imageUrl: string): Promise<void> => {
   }
 };
 
-const getCurrentAuth = async() => {
+const getCurrentAuth = async () => {
   return getAuth();
 };
 
- const fetchAllUsers = async () => {
+const fetchAllUsers = async () => {
   try {
     const db = getFirestore();
     const usersRef = collection(db, "users");
@@ -318,14 +285,17 @@ const getCurrentAuth = async() => {
     const threeDaysAgo = new Date();
     threeDaysAgo.setDate(now.getDate() - 3);
 
-    const users = snapshot.docs.map((doc) => {
+    const users = snapshot.docs.map(doc => {
       const data = doc.data();
 
       let createdAt: Date = new Date(0); // default very old date
 
       if (data.createdAt instanceof Timestamp) {
         createdAt = data.createdAt.toDate();
-      } else if (typeof data.createdAt === "string" || typeof data.createdAt === "number") {
+      } else if (
+        typeof data.createdAt === "string" ||
+        typeof data.createdAt === "number"
+      ) {
         createdAt = new Date(data.createdAt);
       }
 
@@ -343,12 +313,11 @@ const getCurrentAuth = async() => {
   }
 };
 
-
-
-
 export {
   authenticateWithPhone,
-  deleteImage, fetchAllUsers, getCurrentAuth,
+  deleteImage,
+  fetchAllUsers,
+  getCurrentAuth,
   getUserByEmail,
   getUserByUid,
   saveUserToDatabase,
@@ -356,6 +325,5 @@ export {
   updateUser,
   uploadImage,
   uploadMultipleImages,
-  verifyCode
+  verifyCode,
 };
-

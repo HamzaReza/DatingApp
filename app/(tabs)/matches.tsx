@@ -1,10 +1,10 @@
 import createStyles from "@/app/tabStyles/matches.styles";
 import MatchCard from "@/components/MatchCard";
-import PrimaryHeader from "@/components/PrimaryHeader";
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
+import RoundButton from "@/components/RoundButton";
 import { Colors } from "@/constants/Colors";
-import { hp, wp } from "@/utils";
+import { wp } from "@/utils";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import { FlatList, useColorScheme, View } from "react-native";
@@ -75,24 +75,19 @@ export default function Matches() {
     console.log(`Open match profile: ${matchId}`);
   };
 
-  const handleBackPress = () => {
-    console.log("Navigate back");
-  };
-
-  const handleFilterPress = () => {
-    console.log("Open filters");
-  };
-
   return (
-    <ScrollContainer customStyle={{ marginTop: hp(3) }}>
+    <ScrollContainer>
       {/* Header */}
-      <PrimaryHeader
-        title="Matches"
-        onLeftPress={() => console.log("")}
-        onRightPress={() => console.log()}
-        titleColor={Colors[theme].greenText}
-        leftIconSize={18}
-      />
+      <View style={styles.headerContainer}>
+        <RoundButton noShadow />
+        <RnText style={styles.headerTitle}>Matches</RnText>
+        <RoundButton
+          iconName="more-vert"
+          iconSize={22}
+          iconColor={Colors[theme].primary}
+          backgroundColour={Colors[theme].whiteText}
+        />
+      </View>
 
       {/* Stats Section */}
       <View style={styles.statsContainer}>
@@ -145,7 +140,7 @@ export default function Matches() {
         <View style={styles.section}>
           <FlatList
             data={matches}
-            keyExtractor={(item) => item.id}
+            keyExtractor={item => item.id}
             renderItem={({ item }) => (
               <MatchCard
                 id={item.id}
@@ -169,5 +164,3 @@ export default function Matches() {
     </ScrollContainer>
   );
 }
-
-

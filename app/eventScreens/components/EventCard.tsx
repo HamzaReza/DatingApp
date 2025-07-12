@@ -21,9 +21,50 @@ type Props = {
   location: string;
   price: string;
   imageUrl: string;
+  id: string;
 };
 
-const EventCard = ({ title, date, location, price, imageUrl }: Props) => {
+const EventCard = ({ title, date, location, price, imageUrl, id }: Props) => {
+  const formatEventDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const months = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+
+    const day = days[date.getDay()];
+    const dayOfMonth = date.getDate();
+    const month = months[date.getMonth()];
+    const year = date.getFullYear();
+
+    return `${day}, ${dayOfMonth}${getDaySuffix(dayOfMonth)} ${month} ${year}`;
+  };
+
+  const getDaySuffix = (day: number) => {
+    if (day >= 11 && day <= 13) return "th";
+    switch (day % 10) {
+      case 1:
+        return "st";
+      case 2:
+        return "nd";
+      case 3:
+        return "rd";
+      default:
+        return "th";
+    }
+  };
+
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
@@ -40,7 +81,7 @@ const EventCard = ({ title, date, location, price, imageUrl }: Props) => {
             {title}
           </Text>
           <View style={styles.subInfo}>
-            <Text style={styles.date}>{date}</Text>
+            <Text style={styles.date}>{formatEventDate(date)}</Text>
             <Entypo name="dot-single" size={16} color="red" />
             <Text style={styles.location}>{location}</Text>
           </View>
@@ -48,7 +89,7 @@ const EventCard = ({ title, date, location, price, imageUrl }: Props) => {
         <View style={styles.actionContainer}>
           <Text style={styles.price}>{price}</Text>
           <TouchableOpacity
-            onPress={() => router.push("/eventScreens/eventDetails")}
+            onPress={() => router.push(`/eventScreens/${id}`)}
             style={styles.joinNowContainer}
           >
             <Text style={styles.joinNow}>JOIN NOW</Text>

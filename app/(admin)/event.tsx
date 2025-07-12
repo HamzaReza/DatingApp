@@ -7,6 +7,7 @@ import RnDropdown from "@/components/RnDropdown";
 import RnInput from "@/components/RnInput";
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
+import { Borders } from "@/constants/Borders";
 import {
   addCreator,
   createEvent,
@@ -28,9 +29,10 @@ import * as Yup from "yup";
 const eventValidationSchema = Yup.object().shape({
   eventName: Yup.string().required("Event name is required"),
   eventLocation: Yup.string().required("Event location is required"),
-  eventPrice: Yup.number().required("Event price is required"),
   normalTicket: Yup.number().required("Normal ticket is required"),
+  normalPrice: Yup.number().required("Normal price is required"),
   vipTicket: Yup.number().required("VIP ticket is required"),
+  vipPrice: Yup.number().required("VIP price is required"),
   eventGenre: Yup.string().required("Event genre is required"),
   eventDate: Yup.date().required("Event date is required"),
   eventTime: Yup.date().required("Event time is required"),
@@ -70,26 +72,27 @@ export default function AdminEventTicketScreen() {
   const [eventLoader, setEventLoader] = useState(false);
 
   useEffect(() => {
-    loadEvents();
-    loadCreators();
+    const unsubscribeEvents = fetchEvents(eventsData => {
+      setEvents(eventsData);
+    });
+
+    const unsubscribeCreators = fetchCreators(creatorsData => {
+      setCreatorItems(
+        creatorsData.map((creator: any) => ({
+          id: creator.id,
+          label: creator.name,
+          value: creator.id,
+          image: creator.image,
+        }))
+      );
+    });
+
+    // Cleanup function
+    return () => {
+      unsubscribeEvents();
+      unsubscribeCreators();
+    };
   }, []);
-
-  const loadEvents = async () => {
-    const fetched = await fetchEvents();
-    setEvents(fetched);
-  };
-
-  const loadCreators = async () => {
-    const fetched = await fetchCreators();
-    setCreatorItems(
-      fetched.map((creator: any) => ({
-        id: creator.id,
-        label: creator.name,
-        value: creator.id,
-        image: creator.image,
-      }))
-    );
-  };
 
   const handleCreateEvent = () => {
     setIsEventSheetVisible(true);
@@ -115,19 +118,7 @@ export default function AdminEventTicketScreen() {
 
     if (creatorImage) imageUrl = await uploadImage(creatorImage, "creator");
 
-    const id = await addCreator({ name: creatorName, image: imageUrl });
-    const updated = [
-      ...creatorItems,
-      { id, name: creatorName, image: imageUrl },
-    ];
-    setCreatorItems(
-      updated.map(creator => ({
-        id: creator.id,
-        label: creator.name,
-        value: creator.id,
-        image: creator.image,
-      }))
-    );
+    await addCreator({ name: creatorName, image: imageUrl });
     setCreatorLoader(false);
     handleCloseCreatorSheet();
   };
@@ -142,7 +133,8 @@ export default function AdminEventTicketScreen() {
     await createEvent({
       name: values.eventName,
       venue: values.eventLocation,
-      price: parseFloat(values.eventPrice),
+      normalPrice: parseFloat(values.normalPrice),
+      vipPrice: parseFloat(values.vipPrice),
       normalTicket: parseInt(values.normalTicket),
       vipTicket: parseInt(values.vipTicket),
       creator,
@@ -151,7 +143,6 @@ export default function AdminEventTicketScreen() {
       time: values.eventTime,
       image: imageUrl,
     });
-    loadEvents();
     handleCloseEventSheet();
     setEventLoader(false);
   };
@@ -179,9 +170,9 @@ export default function AdminEventTicketScreen() {
               </RnText>
             </View>
             <View style={{ alignItems: "flex-end" }}>
-              <RnText style={styles.label}>Seat</RnText>
+              <RnText style={styles.label}>Seat (Normal + VIP)</RnText>
               <RnText style={styles.value}>
-                {event.normalTicket + event.vipTicket}
+                {`${event.normalTicket} + ${event.vipTicket}`}
               </RnText>
             </View>
           </View>
@@ -191,13 +182,16 @@ export default function AdminEventTicketScreen() {
           </View>
           <View style={styles.dashedLine} />
           <View style={styles.priceContainer}>
-            <RnText style={styles.priceText}>Price: ₹{event.price}</RnText>
+            <RnText style={styles.priceText}>
+              Price: ₹{event.normalPrice} + ₹{event.vipPrice}
+            </RnText>
           </View>
           <QRCode
             value={event.id + "-" + event.name}
             size={hp(20)}
             logo={{ uri: event.image }}
             logoSize={hp(6)}
+            logoBorderRadius={Borders.radius2}
           />
         </View>
       </View>
@@ -253,7 +247,8 @@ export default function AdminEventTicketScreen() {
             initialValues={{
               eventName: "",
               eventLocation: "",
-              eventPrice: "",
+              normalPrice: "",
+              vipPrice: "",
               eventGenre: "",
               eventCreator: "",
               eventDate: new Date(),
@@ -288,14 +283,6 @@ export default function AdminEventTicketScreen() {
                   onBlur={handleBlur("eventLocation")}
                   error={errors.eventLocation}
                 />
-                <RnInput
-                  placeholder="Price"
-                  value={values.eventPrice}
-                  onChangeText={handleChange("eventPrice")}
-                  onBlur={handleBlur("eventPrice")}
-                  keyboardType="numeric"
-                  error={errors.eventPrice}
-                />
                 <View style={styles.formRowContainer}>
                   <RnInput
                     placeholder="Normal Ticket"
@@ -310,12 +297,38 @@ export default function AdminEventTicketScreen() {
                     ]}
                   />
                   <RnInput
+                    placeholder="Normal Price"
+                    value={values.normalPrice}
+                    onChangeText={handleChange("normalPrice")}
+                    onBlur={handleBlur("normalPrice")}
+                    keyboardType="numeric"
+                    error={errors.normalPrice}
+                    containerStyle={[
+                      styles.formHalfField,
+                      styles.formHalfFieldRight,
+                    ]}
+                  />
+                </View>
+                <View style={styles.formRowContainer}>
+                  <RnInput
                     placeholder="VIP Ticket"
                     value={values.vipTicket}
                     onChangeText={handleChange("vipTicket")}
                     onBlur={handleBlur("vipTicket")}
                     keyboardType="numeric"
                     error={errors.vipTicket}
+                    containerStyle={[
+                      styles.formHalfField,
+                      styles.formHalfFieldLeft,
+                    ]}
+                  />
+                  <RnInput
+                    placeholder="VIP Price"
+                    value={values.vipPrice}
+                    onChangeText={handleChange("vipPrice")}
+                    onBlur={handleBlur("vipPrice")}
+                    keyboardType="numeric"
+                    error={errors.vipPrice}
                     containerStyle={[
                       styles.formHalfField,
                       styles.formHalfFieldRight,
@@ -374,6 +387,7 @@ export default function AdminEventTicketScreen() {
                       }
                       mode="time"
                       placeholder="Select Time"
+                      minuteInterval={15}
                       error={errors.eventTime as string}
                     />
                   </View>

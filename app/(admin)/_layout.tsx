@@ -13,7 +13,7 @@ export default function TabLayout() {
     iconContainer: {
       width: wp(10),
       height: wp(10),
-     borderRadius: Borders.radius4,
+      borderRadius: Borders.radius4,
       justifyContent: "center",
       alignItems: "center",
     },
@@ -44,7 +44,7 @@ export default function TabLayout() {
         name="dashboard"
         options={{
           title: "Dashboard",
-          tabBarButton: (props) => {
+          tabBarButton: props => {
             const { ref, ...rest } = props;
             return (
               <Pressable {...rest} android_ripple={null} style={props.style}>
@@ -76,7 +76,7 @@ export default function TabLayout() {
         name="user"
         options={{
           title: "Users",
-          tabBarButton: (props) => {
+          tabBarButton: props => {
             const { ref, ...rest } = props;
             return (
               <Pressable {...rest} android_ripple={null} style={props.style}>
@@ -108,7 +108,7 @@ export default function TabLayout() {
         name="event"
         options={{
           title: "Event",
-          tabBarButton: (props) => {
+          tabBarButton: props => {
             const { ref, ...rest } = props;
             return (
               <Pressable {...rest} android_ripple={null} style={props.style}>
@@ -140,7 +140,7 @@ export default function TabLayout() {
         name="pricing"
         options={{
           title: "Pricing",
-          tabBarButton: (props) => {
+          tabBarButton: props => {
             const { ref, ...rest } = props;
             return (
               <Pressable {...rest} android_ripple={null} style={props.style}>

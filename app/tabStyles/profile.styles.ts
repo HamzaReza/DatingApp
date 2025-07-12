@@ -261,7 +261,6 @@ export default (theme: "dark" | "light") =>
       borderRadius: Borders.radius3,
     },
     thumbnailList: {
-   
       paddingHorizontal: wp(2),
       alignItems: "center",
       height: hp(20),

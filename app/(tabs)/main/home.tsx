@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import createStyles from "@/app/tabStyles/home.styles";
 import QuestionCard from "@/components/QuestionCard";
+import RnAvatar from "@/components/RnAvatar";
 import Container from "@/components/RnContainer";
 import RnText from "@/components/RnText";
 import RoundButton from "@/components/RoundButton";
@@ -12,13 +13,14 @@ import {
   setLocationPermissionGranted,
   setToken,
 } from "@/redux/slices/userSlice";
-import { hp } from "@/utils";
+import { RootState } from "@/redux/store";
+import { encodeImagePath, hp, wp } from "@/utils";
 import { requestLocationPermission } from "@/utils/Permission";
 import * as Location from "expo-location";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { FlatList, TouchableOpacity, View } from "react-native";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 type Story = {
   id: string;
@@ -123,6 +125,7 @@ export default function Home() {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
+  const { user } = useSelector((state: RootState) => state.user);
 
   const [activeTab, setActiveTab] = useState<
     "Make Friends" | "Search Partners"
@@ -175,7 +178,7 @@ export default function Home() {
           onPress={() => {
             router.dismissAll();
             router.replace("/onboarding");
-            dispatch(setToken(false));
+            dispatch(setToken(null));
           }}
         >
           XYZ
@@ -189,20 +192,19 @@ export default function Home() {
             onPress={() => router.push("/main/notification")}
             showDot={hasNotification}
           />
-          <RoundButton
-            iconName="tv"
-            iconSize={24}
-            iconColor={Colors[theme].primary}
-            backgroundColour={Colors[theme].whiteText}
-            onPress={() => router.push("/eventScreens/explore")}
-          />
+          <TouchableOpacity style={{}}>
+            <RnAvatar
+              source={encodeImagePath(user.photo)}
+              avatarHeight={wp(9)}
+            />
+          </TouchableOpacity>
         </View>
       </View>
 
       <View style={styles.storiesContainer}>
         <FlatList
           data={stories}
-          keyExtractor={(item) => item.id}
+          keyExtractor={item => item.id}
           renderItem={({ item }) => (
             <StoryCircle
               image={item.image}
@@ -252,7 +254,7 @@ export default function Home() {
 
       <FlatList
         data={questions}
-        keyExtractor={(item) => item.id}
+        keyExtractor={item => item.id}
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: hp(10) }}
         renderItem={({ item }: { item: Question }) => (

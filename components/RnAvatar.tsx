@@ -39,14 +39,14 @@ const RnAvatar: React.FC<RnAvatarProps> = ({
       rounded
     />
   ) : (
-    <Avatar
-      size={avatarHeight ?? styles.avatar.height}
-      containerStyle={style}
-      rounded
-      source={{
-        uri: source,
-      }}
-    />
+    source && (
+      <Avatar
+        size={avatarHeight ?? styles.avatar.height}
+        containerStyle={style}
+        rounded
+        source={{ uri: source }}
+      />
+    )
   );
 };
 

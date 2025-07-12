@@ -3,6 +3,7 @@ import createStyles from "@/app/adminStyles/dashboard.styles";
 import RnDropdown from "@/components/RnDropdown";
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
+import RoundButton from "@/components/RoundButton";
 import { Colors } from "@/constants/Colors";
 import {
   dashboardStats,
@@ -231,16 +232,21 @@ export default function Dashboard() {
 
   return (
     <ScrollContainer>
-      <RnText
-        style={styles.headerTitle}
-        onPress={() => {
-          router.replace("/onboarding");
-          dispatch(setUser(null));
-          dispatch(setToken(false));
-        }}
-      >
-        Dashboard
-      </RnText>
+      <View style={styles.headerContainer}>
+        <RoundButton noShadow />
+        <RnText style={styles.headerTitle}>Dashboard</RnText>
+        <RoundButton
+          iconName="logout"
+          iconSize={22}
+          iconColor={Colors[theme].primary}
+          backgroundColour={Colors[theme].whiteText}
+          onPress={() => {
+            router.replace("/onboarding");
+            dispatch(setUser(null));
+            dispatch(setToken(null));
+          }}
+        />
+      </View>
       <FlatList
         data={dashboardStats}
         numColumns={2}

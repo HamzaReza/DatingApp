@@ -92,4 +92,10 @@ export default (theme: "light" | "dark") =>
     bottomSpacer: {
       height: hp(10),
     },
+    loadingContainer: {
+      flex: 1,
+      backgroundColor: Colors[theme].background,
+      justifyContent: "center",
+      alignItems: "center",
+    },
   });

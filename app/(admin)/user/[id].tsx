@@ -2,15 +2,16 @@
 import createStyles from "@/app/adminStyles/user.id.styles";
 import RnContainer from "@/components/RnContainer";
 import RnText from "@/components/RnText";
+import RoundButton from "@/components/RoundButton";
 import { Colors } from "@/constants/Colors";
 import { getUserByUid, updateUser } from "@/firebase/auth";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { UserStatus } from "@/types/Admin";
 import { encodeImagePath, wp } from "@/utils";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Image, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, Image, TouchableOpacity, View } from "react-native";
 
 export default function UserProfile() {
   const colorScheme = useColorScheme();
@@ -23,10 +24,10 @@ export default function UserProfile() {
   const [selectedOption, setSelectedOption] = useState<UserStatus | null>(null);
 
   useEffect(() => {
-    fetchUser();
+    getSelectedUser();
   }, [id]);
 
-  const fetchUser = async () => {
+  const getSelectedUser = async () => {
     try {
       const data = await getUserByUid(id);
       if (data) {
@@ -40,11 +41,19 @@ export default function UserProfile() {
     }
   };
 
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={Colors[theme].primary} />
+      </View>
+    );
+  }
+
   if (!user) {
     return (
-      <RnContainer>
+      <View style={styles.loadingContainer}>
         <RnText style={styles.userName}>User not found</RnText>
-      </RnContainer>
+      </View>
     );
   }
 
@@ -67,7 +76,17 @@ export default function UserProfile() {
 
   return (
     <RnContainer>
-      <RnText style={styles.headerTitle}>User Profile</RnText>
+      <View style={styles.headerContainer}>
+        <RoundButton
+          iconName="chevron-left"
+          iconSize={22}
+          iconColor={Colors[theme].primary}
+          backgroundColour={Colors[theme].whiteText}
+          onPress={() => router.back()}
+        />
+        <RnText style={styles.headerTitle}>User Profile</RnText>
+        <RoundButton noShadow />
+      </View>
       <View style={styles.avatarContainer}>
         <Image
           source={{ uri: encodeImagePath(user?.photo) }}

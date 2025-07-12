@@ -7,6 +7,7 @@ import RnDropdown from "@/components/RnDropdown";
 import RnInput from "@/components/RnInput";
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
+import { Borders } from "@/constants/Borders";
 import {
   addCreator,
   createEvent,
@@ -70,26 +71,27 @@ export default function AdminEventTicketScreen() {
   const [eventLoader, setEventLoader] = useState(false);
 
   useEffect(() => {
-    loadEvents();
-    loadCreators();
+    const unsubscribeEvents = fetchEvents(eventsData => {
+      setEvents(eventsData);
+    });
+
+    const unsubscribeCreators = fetchCreators(creatorsData => {
+      setCreatorItems(
+        creatorsData.map((creator: any) => ({
+          id: creator.id,
+          label: creator.name,
+          value: creator.id,
+          image: creator.image,
+        }))
+      );
+    });
+
+    // Cleanup function
+    return () => {
+      unsubscribeEvents();
+      unsubscribeCreators();
+    };
   }, []);
-
-  const loadEvents = async () => {
-    const fetched = await fetchEvents();
-    setEvents(fetched);
-  };
-
-  const loadCreators = async () => {
-    const fetched = await fetchCreators();
-    setCreatorItems(
-      fetched.map((creator: any) => ({
-        id: creator.id,
-        label: creator.name,
-        value: creator.id,
-        image: creator.image,
-      }))
-    );
-  };
 
   const handleCreateEvent = () => {
     setIsEventSheetVisible(true);
@@ -115,19 +117,7 @@ export default function AdminEventTicketScreen() {
 
     if (creatorImage) imageUrl = await uploadImage(creatorImage, "creator");
 
-    const id = await addCreator({ name: creatorName, image: imageUrl });
-    const updated = [
-      ...creatorItems,
-      { id, name: creatorName, image: imageUrl },
-    ];
-    setCreatorItems(
-      updated.map(creator => ({
-        id: creator.id,
-        label: creator.name,
-        value: creator.id,
-        image: creator.image,
-      }))
-    );
+    await addCreator({ name: creatorName, image: imageUrl });
     setCreatorLoader(false);
     handleCloseCreatorSheet();
   };
@@ -151,7 +141,6 @@ export default function AdminEventTicketScreen() {
       time: values.eventTime,
       image: imageUrl,
     });
-    loadEvents();
     handleCloseEventSheet();
     setEventLoader(false);
   };
@@ -181,7 +170,7 @@ export default function AdminEventTicketScreen() {
             <View style={{ alignItems: "flex-end" }}>
               <RnText style={styles.label}>Seat</RnText>
               <RnText style={styles.value}>
-                {event.normalTicket + event.vipTicket}
+                {`${event.normalTicket} + ${event.vipTicket}`}
               </RnText>
             </View>
           </View>
@@ -198,6 +187,7 @@ export default function AdminEventTicketScreen() {
             size={hp(20)}
             logo={{ uri: event.image }}
             logoSize={hp(6)}
+            logoBorderRadius={Borders.radius2}
           />
         </View>
       </View>

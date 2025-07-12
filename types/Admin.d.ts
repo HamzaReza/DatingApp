@@ -1,7 +1,5 @@
 export type DashboardStat = {
   label: string;
-  value: string;
-  change: number;
   period: string;
 };
 

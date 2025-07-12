@@ -2,15 +2,12 @@ import createStyles from "@/app/adminStyles/user.styles";
 import RnContainer from "@/components/RnContainer";
 import RnText from "@/components/RnText";
 import { Colors } from "@/constants/Colors";
+import { fetchUsers } from "@/firebase/admin";
+import { updateUser } from "@/firebase/auth";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { UserStatus } from "@/types/Admin";
 import { encodeImagePath, wp } from "@/utils";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
-import {
-  collection,
-  getDocs,
-  getFirestore,
-} from "@react-native-firebase/firestore";
 import { router } from "expo-router";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { FlatList, Image, TouchableOpacity, View } from "react-native";
@@ -37,6 +34,7 @@ export default function AdminUsers() {
   );
 
   const handleStatusChange = (id: string, status: UserStatus) => {
+    updateUser(id, { status });
     setUserStatuses(prev => ({ ...prev, [id]: status }));
   };
 
@@ -46,33 +44,22 @@ export default function AdminUsers() {
     if (flatListRef.current) {
       flatListRef.current.scrollToOffset({ offset: 0, animated: true });
     }
-
-    fetchUsers();
   }, [page]);
 
-  const fetchUsers = async () => {
-    try {
-      const db = getFirestore();
-
-      const snapshot = await getDocs(collection(db, "users"));
-      const usersData = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-          status: data.status || "pending",
-        };
-      });
+  useEffect(() => {
+    const unsubscribe = fetchUsers(usersData => {
       setUsers(usersData);
       setUserStatuses(
         Object.fromEntries(usersData.map(user => [user.id, user.status]))
       );
-    } catch (error) {
-      console.error("Failed to fetch users:", error);
-    } finally {
       setLoading(false);
-    }
-  };
+    });
+
+    // Cleanup function
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   const renderUserItem = ({ item: user }: { item: any }) => (
     <TouchableOpacity

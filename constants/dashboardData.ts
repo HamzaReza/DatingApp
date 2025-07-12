@@ -1,28 +1,24 @@
-import { BarChartDataPoint, ChartDataPoint, DashboardStat } from "@/types/Admin";
+import {
+  BarChartDataPoint,
+  ChartDataPoint,
+  DashboardStat,
+} from "@/types/Admin";
 
 export const dashboardStats: DashboardStat[] = [
   {
     label: "Total User",
-    value: "40,689",
-    change: 8.5,
     period: "from yesterday",
   },
   {
     label: "Total Like each other",
-    value: "500",
-    change: 1.3,
-    period: "from past week",
-  },
-  {
-    label: "Event Total Ticket",
-    value: "400",
-    change: -4.3,
     period: "from yesterday",
   },
   {
-    label: "Total Pending",
-    value: "2040",
-    change: 1.8,
+    label: "Total Events",
+    period: "from yesterday",
+  },
+  {
+    label: "Pending User",
     period: "from yesterday",
   },
 ];
@@ -55,4 +51,4 @@ export const monthlyProgressData: BarChartDataPoint[] = [
   { value: 80, label: "Oct" },
   { value: 30, label: "Nov" },
   { value: 20, label: "Dec" },
-]; 
+];

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import createStyles from "@/app/adminStyles/dashboard.styles";
 import RnDropdown from "@/components/RnDropdown";
 import ScrollContainer from "@/components/RnScrollContainer";
@@ -9,6 +10,7 @@ import {
   monthlyProgressData,
 } from "@/constants/dashboardData";
 import { FontSize } from "@/constants/FontSize";
+import { fetchEvents, fetchUsers } from "@/firebase/admin";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { setToken, setUser } from "@/redux/slices/userSlice";
 import { hp, wp } from "@/utils";
@@ -17,10 +19,9 @@ import {
   Ionicons,
   MaterialCommunityIcons,
 } from "@expo/vector-icons";
-import { collection, getDocs, getFirestore, query, Timestamp, where } from "@react-native-firebase/firestore";
 import { router } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
-import { FlatList, View } from "react-native";
+import { ActivityIndicator, FlatList, View } from "react-native";
 import { BarChart, LineChart } from "react-native-gifted-charts";
 import { useDispatch } from "react-redux";
 
@@ -37,56 +38,145 @@ export default function Dashboard() {
     { label: "Yearly", value: "yearly" },
   ]);
 
-    const [stats, setStats] = useState({
+  const [users, setUsers] = useState<any[]>([]);
+  const [events, setEvents] = useState<any[]>([]);
+  const [stats, setStats] = useState({
     totalUsers: 0,
     todayUsers: 0,
     yesterdayUsers: 0,
-    growthPercentage: 0,
+    userGrowthPercentage: 0,
+    placeholder: null,
+    totalEvents: 0,
+    todayEvents: 0,
+    yesterdayEvents: 0,
+    eventGrowthPercentage: 0,
+    totalPendingUsers: 0,
+    todayPendingUsers: 0,
+    yesterdayPendingUsers: 0,
+    pendingUserGrowthPercentage: 0,
   });
+  const [loading, setLoading] = useState(true);
 
-useEffect(() => {
- getAllUsers()
-}, [])
+  useEffect(() => {
+    const unsubscribeUsers = fetchUsers(usersData => {
+      setUsers(usersData);
+    });
 
+    const unsubscribeEvents = fetchEvents(eventsData => {
+      setEvents(eventsData);
+    });
 
-const getAllUsers = async()=> {
-  const db = getFirestore()
-const usersRef = collection(db,'users')
+    // Cleanup function
+    return () => {
+      unsubscribeUsers();
+      unsubscribeEvents();
+    };
+  }, []);
 
-const now = new Date()
+  useEffect(() => {
+    if (users.length > 0 || events.length > 0) {
+      calculateStats();
+    }
+  }, [users, events]);
 
-const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const startOfYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+  const calculateStats = () => {
+    const now = new Date();
 
-  const qToday = query(usersRef, where('createdAt', '>=', Timestamp.fromDate(startOfToday)));
-  const qYesterday = query(usersRef, where('createdAt', '>=', Timestamp.fromDate(startOfYesterday)), where('createdAt', '<', Timestamp.fromDate(startOfToday)));
+    const startOfToday = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate()
+    );
+    const startOfYesterday = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() - 1
+    );
 
- const allUsersSnap = await getDocs(usersRef);
-  const todayUsersSnap = await getDocs(qToday);
-  const yesterdayUsersSnap = await getDocs(qYesterday);
+    // User statistics
+    const todayUsers = users.filter(user => {
+      const createdAt =
+        (user as any).createdAt?.toDate?.() ||
+        new Date((user as any).createdAt || Date.now());
+      return createdAt >= startOfToday;
+    });
 
-  const totalUsers = allUsersSnap.size;
-  const todayUsers = todayUsersSnap.size;
-  const yesterdayUsers = yesterdayUsersSnap.size;
+    const yesterdayUsers = users.filter(user => {
+      const createdAt =
+        (user as any).createdAt?.toDate?.() ||
+        new Date((user as any).createdAt || Date.now());
+      return createdAt >= startOfYesterday && createdAt < startOfToday;
+    });
 
-   let growthPercentage = 0;
-  if (yesterdayUsers > 0) {
-    growthPercentage = ((todayUsers - yesterdayUsers) / yesterdayUsers) * 100;
-  } else if (todayUsers > 0) {
-    growthPercentage = 100; // Pure growth since there were none yesterday
-  }
+    // Pending user statistics
+    const pendingUsers = users.filter(
+      user => (user as any).status === "pending"
+    );
+    const todayPendingUsers = pendingUsers.filter(user => {
+      const createdAt =
+        (user as any).createdAt?.toDate?.() ||
+        new Date((user as any).createdAt || Date.now());
+      return createdAt >= startOfToday;
+    });
 
-setStats({
-        totalUsers,
-        todayUsers,
-        yesterdayUsers,
-        growthPercentage: Number(growthPercentage.toFixed(2)),
-      });
-    
+    const yesterdayPendingUsers = pendingUsers.filter(user => {
+      const createdAt =
+        (user as any).createdAt?.toDate?.() ||
+        new Date((user as any).createdAt || Date.now());
+      return createdAt >= startOfYesterday && createdAt < startOfToday;
+    });
 
+    // Event statistics
+    const todayEvents = events.filter(event => {
+      const eventDate = new Date(event.date);
+      return eventDate >= startOfToday;
+    });
 
-}
+    const yesterdayEvents = events.filter(event => {
+      const eventDate = new Date(event.date);
+      return eventDate >= startOfYesterday && eventDate < startOfToday;
+    });
 
+    // Calculate growth percentages
+    const userGrowthPercentage = calculateGrowthPercentage(
+      todayUsers.length,
+      yesterdayUsers.length
+    );
+    const eventGrowthPercentage = calculateGrowthPercentage(
+      todayEvents.length,
+      yesterdayEvents.length
+    );
+    const pendingUserGrowthPercentage = calculateGrowthPercentage(
+      todayPendingUsers.length,
+      yesterdayPendingUsers.length
+    );
+
+    setStats({
+      totalUsers: users.length,
+      todayUsers: todayUsers.length,
+      yesterdayUsers: yesterdayUsers.length,
+      userGrowthPercentage,
+      placeholder: null,
+      totalEvents: events.length,
+      todayEvents: todayEvents.length,
+      yesterdayEvents: yesterdayEvents.length,
+      eventGrowthPercentage,
+      totalPendingUsers: pendingUsers.length,
+      todayPendingUsers: todayPendingUsers.length,
+      yesterdayPendingUsers: yesterdayPendingUsers.length,
+      pendingUserGrowthPercentage,
+    });
+    setLoading(false);
+  };
+
+  const calculateGrowthPercentage = (today: number, yesterday: number) => {
+    if (yesterday > 0) {
+      return Number((((today - yesterday) / yesterday) * 100).toFixed(2));
+    } else if (today > 0) {
+      return 100;
+    }
+    return 0;
+  };
 
   const progressData = useMemo(() => {
     if (selectedPeriod === "monthly") {
@@ -96,7 +186,7 @@ setStats({
       const years = [];
       for (let year = 2025; year <= currentYear; year++) {
         years.push({
-          value: Math.floor(Math.random() * 100) + 20, // Random value between 20-120
+          value: Math.floor(Math.random() * 100) + 20,
           label: year.toString(),
         });
       }
@@ -131,6 +221,14 @@ setStats({
     />,
   ];
 
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={Colors[theme].primary} />
+      </View>
+    );
+  }
+
   return (
     <ScrollContainer>
       <RnText
@@ -150,32 +248,62 @@ setStats({
         columnWrapperStyle={styles.flatlistColumnWrapper}
         style={styles.flatlist}
         scrollEnabled={false}
-        keyExtractor={(item) => item.label}
-        renderItem={({ item, index }) => (
-          <View key={item.label} style={styles.statCard}>
-            <View style={styles.topStat}>
-              {statIcons[index]}
-              <RnText style={styles.statValue}>{stats.totalUsers}</RnText>
-              <RnText style={styles.statLabel}>{item.label}</RnText>
+        keyExtractor={item => item.label}
+        renderItem={({ item, index }) => {
+          let statValue, growthPercentage;
+
+          switch (index) {
+            case 0: // Total Users
+              statValue = stats.totalUsers;
+              growthPercentage = stats.userGrowthPercentage;
+              break;
+            case 1: // Placeholder (null)
+              statValue = "-";
+              growthPercentage = 0;
+              break;
+            case 2: // Total Events
+              statValue = stats.totalEvents;
+              growthPercentage = stats.eventGrowthPercentage;
+              break;
+            case 3: // Total Pending Users
+              statValue = stats.totalPendingUsers;
+              growthPercentage = stats.pendingUserGrowthPercentage;
+              break;
+            default:
+              statValue = 0;
+              growthPercentage = 0;
+          }
+
+          return (
+            <View key={item.label} style={styles.statCard}>
+              <View style={styles.topStat}>
+                {statIcons[index]}
+                <RnText style={styles.statValue}>{statValue}</RnText>
+                <RnText style={styles.statLabel}>{item.label}</RnText>
+              </View>
+              <RnText
+                style={[
+                  styles.statChange,
+                  {
+                    color:
+                      growthPercentage === 0
+                        ? Colors[theme].placeholderText
+                        : growthPercentage > 0
+                        ? Colors[theme].greenText
+                        : Colors[theme].redText,
+                  },
+                ]}
+              >
+                {growthPercentage === 0
+                  ? `No Change`
+                  : growthPercentage > 0
+                  ? `▲ ${growthPercentage}% Up`
+                  : `▼ ${growthPercentage}% Down`}{" "}
+                {item.period}
+              </RnText>
             </View>
-            <RnText
-              style={[
-                styles.statChange,
-                {
-                  color:
-                    item.change > 0
-                      ? Colors[theme].greenText
-                      : Colors[theme].redText,
-                },
-              ]}
-            >
-              {stats.growthPercentage > 0
-                ? `▲ ${stats.growthPercentage}% Up`
-                : `▼ ${stats.growthPercentage}% Down`}{" "}
-              {item.period}
-            </RnText>
-          </View>
-        )}
+          );
+        }}
       />
       <View style={styles.chartCard}>
         <RnText style={styles.sectionTitle}>Earning Overview</RnText>

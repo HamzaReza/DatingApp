@@ -79,6 +79,12 @@ export default (theme: "dark" | "light") =>
       color: Colors[theme].pink,
       textAlign: "center",
     },
+    availableTickets: {
+      fontSize: FontSize.small,
+      color: Colors[theme].placeholderText,
+      textAlign: "center",
+      marginTop: hp(1),
+    },
     singlePriceContainer: {
       flexDirection: "row",
       alignItems: "center",
@@ -102,5 +108,14 @@ export default (theme: "dark" | "light") =>
     continueButton: {
       marginTop: hp(10),
       backgroundColor: Colors[theme].pink,
+    },
+    loaderContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    loaderText: {
+      fontSize: FontSize.medium,
+      fontFamily: FontFamily.medium,
     },
   });

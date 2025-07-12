@@ -1,6 +1,7 @@
 import {
   collection,
   doc,
+  FirebaseFirestoreTypes,
   getFirestore,
   onSnapshot,
   orderBy,
@@ -102,10 +103,12 @@ const fetchCreatorsEvent = (callback: (creators: any[]) => void) => {
 
     const unsubscribeCreators = onSnapshot(creatorsRef, creatorsSnapshot => {
       const unsubscribeEvents = onSnapshot(eventsRef, eventsSnapshot => {
-        const events = eventsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as any[];
+        const events = eventsSnapshot.docs.map(
+          (doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => ({
+            id: doc.id,
+            ...doc.data(),
+          })
+        ) as any[];
 
         const upcomingEvents = events.filter(event => {
           const eventDate = formatDate(event.date);
@@ -133,11 +136,13 @@ const fetchCreatorsEvent = (callback: (creators: any[]) => void) => {
         );
 
         const creatorsWithUpcomingEvents = creatorsSnapshot.docs
-          .map(doc => ({
+          .map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => ({
             id: doc.id,
             ...doc.data(),
           }))
-          .filter(creator => creatorIdsWithUpcomingEvents.has(creator.id));
+          .filter((creator: any) =>
+            creatorIdsWithUpcomingEvents.has(creator.id)
+          );
 
         callback(creatorsWithUpcomingEvents);
       });
@@ -164,10 +169,12 @@ const fetchAllFutureEvents = (callback: (events: any[]) => void) => {
     const unsubscribe = onSnapshot(
       eventsRef,
       snapshot => {
-        const events = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as any[];
+        const events = snapshot.docs.map(
+          (doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => ({
+            id: doc.id,
+            ...doc.data(),
+          })
+        ) as any[];
 
         const futureEvents = events.filter(event => {
           const eventDate = formatDate(event.date);
@@ -248,10 +255,12 @@ const fetchEventsByCreatorId = (
     const unsubscribe = onSnapshot(
       eventsRef,
       snapshot => {
-        const events = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as any[];
+        const events = snapshot.docs.map(
+          (doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => ({
+            id: doc.id,
+            ...doc.data(),
+          })
+        ) as any[];
 
         const creatorEvents = events.filter(event => {
           // Check if the event belongs to the specified creator
@@ -337,11 +346,11 @@ const fetchEventById = (
       eventsRef,
       snapshot => {
         const event = snapshot.docs
-          .map(doc => ({
+          .map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => ({
             id: doc.id,
             ...doc.data(),
           }))
-          .find(doc => doc.id === eventId) as any;
+          .find((doc: any) => doc.id === eventId) as any;
 
         callback(event || null);
       },
@@ -369,11 +378,68 @@ const updateEvent = async (eventId: string, updateData: any) => {
   }
 };
 
+const fetchEventTicketInfo = (
+  eventId: string,
+  callback: (
+    ticketInfo: {
+      normalTicket: number;
+      vipTicket: number;
+      normalTicketSold: number;
+      vipTicketSold: number;
+      normalTicketPrice: number;
+      vipTicketPrice: number;
+    } | null
+  ) => void
+) => {
+  try {
+    const db = getFirestore();
+    const eventsRef = collection(db, "events");
+
+    const unsubscribe = onSnapshot(
+      eventsRef,
+      snapshot => {
+        const event = snapshot.docs
+          .map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => ({
+            id: doc.id,
+            ...doc.data(),
+          }))
+          .find((doc: any) => doc.id === eventId) as any;
+
+        if (!event) {
+          callback(null);
+          return;
+        }
+
+        const ticketInfo = {
+          normalTicket: event.normalTicket || 0,
+          vipTicket: event.vipTicket || 0,
+          normalTicketSold: event.normalTicketSold || 0,
+          vipTicketSold: event.vipTicketSold || 0,
+          normalTicketPrice: event.normalPrice || 0,
+          vipTicketPrice: event.vipPrice || 0,
+        };
+
+        callback(ticketInfo);
+      },
+      error => {
+        console.error("Error in event ticket info listener:", error);
+        callback(null);
+      }
+    );
+
+    return unsubscribe;
+  } catch (error) {
+    console.error("Error setting up event ticket info listener:", error);
+    throw error;
+  }
+};
+
 export {
   fetchAllFutureEvents,
   fetchCreatorsEvent,
   fetchEventById,
   fetchEventsByCreatorId,
+  fetchEventTicketInfo,
   fetchNextUpcomingEvent,
   formatDate,
   updateEvent,

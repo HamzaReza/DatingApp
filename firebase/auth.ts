@@ -7,6 +7,7 @@ import {
 import {
   collection,
   doc,
+  FirebaseFirestoreTypes,
   getDoc,
   getDocs,
   getFirestore,
@@ -285,26 +286,28 @@ const fetchAllUsers = async () => {
     const threeDaysAgo = new Date();
     threeDaysAgo.setDate(now.getDate() - 3);
 
-    const users = snapshot.docs.map(doc => {
-      const data = doc.data();
+    const users = snapshot.docs.map(
+      (doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
+        const data = doc.data();
 
-      let createdAt: Date = new Date(0); // default very old date
+        let createdAt: Date = new Date(0); // default very old date
 
-      if (data.createdAt instanceof Timestamp) {
-        createdAt = data.createdAt.toDate();
-      } else if (
-        typeof data.createdAt === "string" ||
-        typeof data.createdAt === "number"
-      ) {
-        createdAt = new Date(data.createdAt);
+        if (data.createdAt instanceof Timestamp) {
+          createdAt = data.createdAt.toDate();
+        } else if (
+          typeof data.createdAt === "string" ||
+          typeof data.createdAt === "number"
+        ) {
+          createdAt = new Date(data.createdAt);
+        }
+
+        return {
+          id: doc.id,
+          ...data,
+          isNew: createdAt > threeDaysAgo,
+        };
       }
-
-      return {
-        id: doc.id,
-        ...data,
-        isNew: createdAt > threeDaysAgo,
-      };
-    });
+    );
 
     return users;
   } catch (error) {

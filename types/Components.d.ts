@@ -97,7 +97,7 @@ export interface RnModalProps {
 }
 
 export interface RnToastProps {
-  type: string;
+  type?: string;
   message: string;
   heading?: string;
   position?: ToastPosition;

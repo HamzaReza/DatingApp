@@ -1,6 +1,7 @@
 import {
   addDoc,
   collection,
+  FirebaseFirestoreTypes,
   getFirestore,
   onSnapshot,
   Timestamp,
@@ -28,6 +29,8 @@ const createEvent = async (event: {
       vipPrice: event.vipPrice,
       normalTicket: event.normalTicket,
       vipTicket: event.vipTicket,
+      normalTicketSold: 0,
+      vipTicketSold: 0,
       creator: event.creator,
       genre: event.genre,
       date: event.date,
@@ -49,27 +52,29 @@ const fetchEvents = (callback: (events: any[]) => void) => {
     const unsubscribe = onSnapshot(
       eventsRef,
       snapshot => {
-        const events = snapshot.docs.map(doc => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            name: data.name,
-            venue: data.venue,
-            normalPrice: data.normalPrice,
-            vipPrice: data.vipPrice,
-            genre: data.genre,
-            normalTicket: data.normalTicket,
-            vipTicket: data.vipTicket,
-            creator: {
-              id: data.creator.id,
-              label: data.creator.label,
-              image: data.creator.image,
-            },
-            image: data.image,
-            date: data.date?.toDate?.()?.toLocaleDateString() || data.date,
-            time: data.time?.toDate?.()?.toLocaleTimeString() || data.time,
-          };
-        });
+        const events = snapshot.docs.map(
+          (doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              name: data.name,
+              venue: data.venue,
+              normalPrice: data.normalPrice,
+              vipPrice: data.vipPrice,
+              genre: data.genre,
+              normalTicket: data.normalTicket,
+              vipTicket: data.vipTicket,
+              creator: {
+                id: data.creator.id,
+                label: data.creator.label,
+                image: data.creator.image,
+              },
+              image: data.image,
+              date: data.date?.toDate?.()?.toLocaleDateString() || data.date,
+              time: data.time?.toDate?.()?.toLocaleTimeString() || data.time,
+            };
+          }
+        );
 
         callback(events);
       },
@@ -112,10 +117,12 @@ const fetchPricingPlans = (callback: (plans: any[]) => void) => {
     const unsubscribe = onSnapshot(
       collection(db, "pricingPlans"),
       snapshot => {
-        const plans = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+        const plans = snapshot.docs.map(
+          (doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => ({
+            id: doc.id,
+            ...doc.data(),
+          })
+        );
 
         callback(plans);
       },
@@ -148,10 +155,12 @@ const fetchCreators = (callback: (creators: any[]) => void) => {
     const unsubscribe = onSnapshot(
       collection(db, "creator"),
       snapshot => {
-        const creators = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+        const creators = snapshot.docs.map(
+          (doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => ({
+            id: doc.id,
+            ...doc.data(),
+          })
+        );
 
         callback(creators);
       },
@@ -174,14 +183,16 @@ const fetchUsers = (callback: (users: any[]) => void) => {
     const unsubscribe = onSnapshot(
       collection(db, "users"),
       snapshot => {
-        const usersData = snapshot.docs.map(doc => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            ...data,
-            status: data.status || "pending",
-          };
-        });
+        const usersData = snapshot.docs.map(
+          (doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              ...data,
+              status: data.status || "pending",
+            };
+          }
+        );
 
         callback(usersData);
       },

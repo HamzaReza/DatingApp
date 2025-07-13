@@ -56,6 +56,9 @@ export default (theme: "dark" | "light") =>
       backgroundColor: Colors[theme].primaryOpaque,
       height: hp(6),
       paddingHorizontal: wp(2),
+      marginTop: hp(2),
+      width: "80%",
+      alignSelf: "center",
     },
     cardText: {
       fontSize: FontSize.medium,
@@ -76,12 +79,12 @@ export default (theme: "dark" | "light") =>
     },
     applyText: {
       color: Colors[theme].whiteText,
-    fontFamily:FontFamily.semiBold,
+      fontFamily: FontFamily.semiBold,
     },
     checkoutText: {
       color: Colors[theme].whiteText,
       fontSize: FontSize.medium,
-      fontFamily:FontFamily.bold,
+      fontFamily: FontFamily.bold,
     },
     selectedRadio: {
       width: wp(5),
@@ -138,6 +141,7 @@ export default (theme: "dark" | "light") =>
     },
     inputlabel: {
       fontSize: FontSize.medium,
+      marginBottom: hp(1),
     },
     row: {
       flexDirection: "row",
@@ -169,7 +173,7 @@ export default (theme: "dark" | "light") =>
     confirmText: {
       color: Colors[theme].whiteText,
       fontSize: FontSize.medium,
-    fontFamily:FontFamily.semiBold,
+      fontFamily: FontFamily.semiBold,
     },
     bottomSheetBackground: {
       backgroundColor: Colors[theme].pink,

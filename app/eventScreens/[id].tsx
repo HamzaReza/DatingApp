@@ -316,9 +316,7 @@ const EventDetails = () => {
         </View>
         <RnButton
           style={[styles.buyButton, styles.buyText]}
-          onPress={() =>
-            router.push(`/eventScreens/ticketDetails?id=${eventId}`)
-          }
+          onPress={() => router.push(`/eventScreens/tickets/${eventId}`)}
           title="Buy Tickets"
         />
       </View>

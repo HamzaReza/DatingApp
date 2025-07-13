@@ -121,6 +121,7 @@ const TicketScreen = () => {
             heading: "Success!",
             message: "Ticket saved to your gallery",
           });
+          router.dismissAll();
         })
         .catch(e => {
           console.log(e);

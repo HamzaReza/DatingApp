@@ -136,71 +136,6 @@ const TicketScreen = () => {
     } finally {
       setDownloading(false);
     }
-
-    // if (!ticketRef.current || !event) {
-    //   showToaster({
-    //     type: "error",
-    //     heading: "Error",
-    //     message: "Unable to download ticket",
-    //   });
-    //   return;
-    // }
-
-    // try {
-    //   setDownloading(true);
-
-    //   // Request media library permissions
-    //   const { status } = await MediaLibrary.requestPermissionsAsync();
-    //   if (status !== "granted") {
-    //     showToaster({
-    //       type: "error",
-    //       heading: "Permission Denied",
-    //       message: "Please allow access to save the ticket to your gallery",
-    //     });
-    //     return;
-    //   }
-
-    //   // Capture the ticket as an image
-    //   if (!ticketRef.current) {
-    //     throw new Error("Ticket reference not available");
-    //   }
-
-    //   // Small delay to ensure view is fully rendered
-    //   await new Promise(resolve => setTimeout(resolve, 100));
-
-    //   const capturedFilePath = await captureRef(ticketRef, {
-    //     format: "png",
-    //     quality: 0.9,
-    //     result: "tmpfile",
-    //   });
-    //   if (!capturedFilePath) {
-    //     throw new Error("Failed to capture ticket image");
-    //   }
-
-    //   // Save directly to media library
-    //   const asset = await MediaLibrary.createAssetAsync(capturedFilePath);
-
-    //   // Try to create album, but don't fail if it already exists
-    //   try {
-    //     await MediaLibrary.createAlbumAsync("Tickets", asset, false);
-    //   } catch (albumError) {
-    //     console.log("Album creation failed (might already exist):", albumError);
-    //   }
-
-    //   showToaster({
-    //     heading: "Success!",
-    //     message: "Ticket saved to your gallery",
-    //   });
-    // } catch (error: any) {
-    //   console.error("Error downloading ticket:", error);
-    //   showToaster({
-    //     type: "error",
-    //     heading: "Download Failed",
-    //     message: error?.message || "Unable to save ticket to gallery",
-    //   });
-    // } finally {
-    //   setDownloading(false);
-    // }
   };
 
   if (loading) {
@@ -212,7 +147,7 @@ const TicketScreen = () => {
             iconSize={22}
             iconColor={Colors[theme].primary}
             backgroundColour={Colors[theme].whiteText}
-            onPress={() => router.back()}
+            onPress={() => router.dismissAll()}
           />
           <RnText style={styles.headerTitle}>Tickets</RnText>
           <RoundButton noShadow />
@@ -238,7 +173,7 @@ const TicketScreen = () => {
             iconSize={22}
             iconColor={Colors[theme].primary}
             backgroundColour={Colors[theme].whiteText}
-            onPress={() => router.back()}
+            onPress={() => router.dismissAll()}
           />
           <RnText style={styles.headerTitle}>Tickets</RnText>
           <RoundButton noShadow />
@@ -262,7 +197,7 @@ const TicketScreen = () => {
           iconSize={22}
           iconColor={Colors[theme].primary}
           backgroundColour={Colors[theme].whiteText}
-          onPress={() => router.back()}
+          onPress={() => router.dismissAll()}
         />
         <RnText style={styles.headerTitle}>Tickets</RnText>
         <RoundButton noShadow />

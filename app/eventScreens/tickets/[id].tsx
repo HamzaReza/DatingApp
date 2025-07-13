@@ -70,9 +70,7 @@ const TicketDetails = () => {
 
   const getAvailableTickets = () => {
     if (!ticketData) return 0;
-    return selected === "Vip"
-      ? ticketData.vipTicket - ticketData.vipTicketSold
-      : ticketData.normalTicket - ticketData.normalTicketSold;
+    return selected === "Vip" ? ticketData.vipTicket : ticketData.normalTicket;
   };
 
   const currentPrice = getCurrentTicketPrice();

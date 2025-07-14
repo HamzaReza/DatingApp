@@ -39,8 +39,7 @@ export default function Religion() {
     if (!values.religion) return;
     setIsLoading(true);
     try {
-      // Get current user
-      const auth = getCurrentAuth();
+      const auth = await getCurrentAuth();
       const currentUser = auth.currentUser;
 
       if (!currentUser) {
@@ -103,7 +102,7 @@ export default function Religion() {
             </RnText>
 
             <View style={styles.optionsContainer}>
-              {RELIGIONS.map((option) =>
+              {RELIGIONS.map(option =>
                 renderOption(option, values.religion, setFieldValue)
               )}
             </View>

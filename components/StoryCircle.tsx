@@ -10,9 +10,10 @@ type Props = {
   username: string;
   isOwn: boolean;
   onPress?: () => void;
+  ownUploadOnPress:()=>void
 };
 
-const StoryCircle: React.FC<Props> = ({ image, username, isOwn, onPress }) => {
+const StoryCircle: React.FC<Props> = ({ image, username, isOwn, onPress,ownUploadOnPress }) => {
 
 
 const colorScheme = useColorScheme();
@@ -22,16 +23,23 @@ const colorScheme = useColorScheme();
   return (
     <TouchableOpacity style={[styles.container,{marginLeft:isOwn?0:hp(1.5)}]} onPress={onPress}>
       <View style={[styles.imageWrapper, isOwn && styles.ownStoryBorder]}>
-        <Image source={{ uri: image }} style={styles.image} />
+        <Image source={{ uri: (image) }} style={styles.image} />
         {isOwn && (
-          <View style={styles.plusIcon}>
+          <TouchableOpacity style={styles.plusIcon} onPress={ownUploadOnPress}>
             <AntDesign name="pluscircle" size={20} color={Colors[theme].greenText} />
-          </View>
+          </TouchableOpacity>
         )}
       </View>
-      <Text style={styles.username} numberOfLines={1}>
+      {isOwn?(
+          <Text style={styles.username} numberOfLines={1}>
+        {`My Story`}
+      </Text>
+      ):(
+         <Text style={styles.username} numberOfLines={1}>
         {username}
       </Text>
+      )}
+     
     </TouchableOpacity>
   );
 };

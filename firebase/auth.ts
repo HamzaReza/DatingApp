@@ -316,11 +316,108 @@ const fetchAllUsers = async () => {
   }
 };
 
+export const fetchUsersWithLocation = async () => {
+  const db = getFirestore();
+  const usersRef = collection(db, "users");
+  const snapshot = await getDocs(usersRef);
+
+  return snapshot.docs.map(doc => {
+    const data = doc.data();
+    const interestsArray = data.interests?.split(",") || [];
+
+    return {
+      id: doc.id,
+      name: data.name,
+      photo: data.photo,
+      location: data.location, // GeoPoint
+      interests: interestsArray,
+    };
+  });
+};
+
+const fetchAllUserStories = async () => {
+  try {
+    const db = getFirestore();
+    const auth = getAuth();
+    const userId = auth.currentUser?.uid;
+
+    const [usersSnapshot, storiesSnapshot] = await Promise.all([
+      getDocs(collection(db, "users")),
+      getDocs(collection(db, "stories")),
+    ]);
+
+    const usersData = usersSnapshot.docs.map(doc => ({
+      id: doc.id,
+      username: doc.data().name || "User",
+      profilePic: doc.data().photo || "https://example.com/default.jpg",
+      isOwn: doc.id === userId,
+    }));
+
+    const storiesByUser = {};
+    storiesSnapshot.forEach(doc => {
+      storiesByUser[doc.id] = (doc.data().storyItems || [])
+        .map(story => ({
+          ...story,
+          date: story.date?.toDate() || new Date(),
+        }))
+        .sort((a, b) => b.date - a.date);
+    });
+
+    return usersData
+      .map(user => {
+        const userStories = storiesByUser[user.id] || [];
+
+        return {
+          ...user,
+          hasStories: userStories.length > 0,
+          image: user.isOwn
+            ? userStories[0]?.storyUrls[0] || user.profilePic
+            : userStories[0]?.storyUrls[0] || null,
+          storyCount: userStories.length,
+        };
+      })
+      .filter(user => user.isOwn || user.image !== null)
+      .sort((a, b) => b.isOwn - a.isOwn);
+  } catch (error) {
+    console.error("Error fetching stories:", error);
+    return [];
+  }
+};
+
+
+const fetchStoriesForUser = async (userId) => {
+  const db = getFirestore();
+  const docSnap = await getDoc(doc(db, "stories", userId));
+
+  if (docSnap.exists()) {
+    return docSnap.data().storyItems || [];
+  } else {
+    return []; // No stories for this user
+  }
+};
+
+
+
+const fetchNextUsersStories = async (currentUserId) => {
+  const db = getFirestore();
+
+  const snapshot = await getDocs(collection(db, "stories"));
+
+  const allUsers = snapshot.docs
+    .filter(doc => doc.id !== currentUserId) // filter out current user manually
+    .map(doc => ({
+      userId: doc.id,
+      ...doc.data()
+    }));
+
+  return allUsers;
+};
+
 export {
   authenticateWithPhone,
   deleteImage,
   fetchAllUsers,
-  getCurrentAuth,
+  fetchAllUserStories, fetchNextUsersStories, fetchStoriesForUser, getCurrentAuth,
   getUserByEmail,
   getUserByUid,
   saveUserToDatabase,

@@ -4,6 +4,7 @@ import RnOtp from "@/components/RnOtp";
 import RnProgressBar from "@/components/RnProgressBar";
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
+import showToaster from "@/components/RnToast";
 import {
   authenticateWithPhone,
   getUserByUid,
@@ -50,11 +51,15 @@ export default function OtpScreen() {
 
           if (existingUser) {
             if (existingUser.isProfileComplete) {
-              AsyncStorage.clear();
-              router.dismissAll();
-              router.push("/main/home");
-              dispatch(setToken(true));
-              dispatch(setUser(existingUser));
+              if (existingUser.status === "pending") {
+                showToaster({ type: "error", message: "Waiting for approval" });
+              } else {
+                AsyncStorage.clear();
+                router.dismissAll();
+                router.push("/main/home");
+                dispatch(setToken(true));
+                dispatch(setUser(existingUser));
+              }
             } else {
               AsyncStorage.clear();
               router.replace("/name");

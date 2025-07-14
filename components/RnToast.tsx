@@ -9,7 +9,7 @@ export default function showToaster({
 }: RnToastProps) {
   Toast.show({
     type: type ?? "success",
-    text1: heading,
+    text1: heading ?? "Social Dating",
     text2: message,
     position: position ?? "top",
   });

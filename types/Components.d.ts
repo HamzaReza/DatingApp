@@ -9,7 +9,7 @@ import {
   TextStyle,
   ViewStyle,
 } from "react-native";
-import { ToastPosition } from "react-native-toast-message";
+import { ToastPosition, ToastType } from "react-native-toast-message";
 
 export interface RnInputProps {
   value: string;
@@ -97,7 +97,7 @@ export interface RnModalProps {
 }
 
 export interface RnToastProps {
-  type?: string;
+  type?: ToastType;
   message: string;
   heading?: string;
   position?: ToastPosition;

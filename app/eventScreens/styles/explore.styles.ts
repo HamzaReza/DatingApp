@@ -56,7 +56,7 @@ export default (theme: "light" | "dark") =>
       fontFamily: FontFamily.semiBold,
     },
     upcomingCardContainer: {
-      paddingVertical: hp(2),
+      paddingVertical: hp(1),
     },
     btnTxt: {
       fontSize: FontSize.small,

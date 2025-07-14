@@ -28,7 +28,7 @@ export default function LocationScreen() {
     if (!values.location) return;
     setIsLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 1000));
     } catch (error) {
       console.error(error);
     } finally {
@@ -45,7 +45,7 @@ export default function LocationScreen() {
         return;
       }
 
-      const location = await Location.getCurrentPositionAsync({});
+      const location = await Location.getCurrentPositionAsync();
       formikRef.current?.setFieldValue("location", {
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,

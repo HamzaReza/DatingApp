@@ -6,12 +6,16 @@ import RnInput from "@/components/RnInput";
 import RnText from "@/components/RnText";
 import RoundButton from "@/components/RoundButton";
 import { Colors } from "@/constants/Colors";
+import { addOrUpdateTicketSale } from "@/firebase/ticket";
+import { useColorScheme } from "@/hooks/useColorScheme";
+import { RootState } from "@/redux/store";
 import { wp } from "@/utils";
 import { AntDesign, FontAwesome5 } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { Formik } from "formik";
 import React, { useState } from "react";
-import { TouchableOpacity, useColorScheme, View } from "react-native";
+import { TouchableOpacity, View } from "react-native";
+import { useSelector } from "react-redux";
 import * as Yup from "yup";
 
 const paymentMethods = [
@@ -33,16 +37,27 @@ const paymentMethods = [
     icon: <FontAwesome5 name="google-pay" size={24} color="#5F6368" />,
     selected: false,
   },
+  {
+    id: "debit/credit",
+    name: "Debit/Credit Card",
+    icon: <FontAwesome5 name="cc-mastercard" size={24} color="#EB001B" />,
+    selected: false,
+  },
 ];
 
 const PaymentScreen = () => {
   const [selectedMethod, setSelectedMethod] = useState("apple");
   const [voucher, setVoucher] = useState("");
   const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
+  const { user } = useSelector((state: RootState) => state.user);
+
+  const { eventId, normalTicketPurchased, vipTicketPurchased } =
+    useLocalSearchParams();
 
   // Validation schema for payment form
   const paymentValidationSchema = Yup.object().shape({
@@ -71,7 +86,6 @@ const PaymentScreen = () => {
 
   const handlePaymentSubmit = (values: typeof initialValues) => {
     console.log("Payment form submitted:", values);
-    // Handle payment submission here
     setIsBottomSheetVisible(false);
   };
 
@@ -87,6 +101,41 @@ const PaymentScreen = () => {
       return cleaned.slice(0, 2) + "/" + cleaned.slice(2, 4);
     }
     return cleaned;
+  };
+
+  const _handleTicketCheckout = async () => {
+    if (!user?.uid || !eventId) {
+      console.error("User UID or Event ID not found");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const normalTickets = parseInt(normalTicketPurchased as string) || 0;
+      const vipTickets = parseInt(vipTicketPurchased as string) || 0;
+
+      await addOrUpdateTicketSale(
+        eventId as string,
+        user.uid,
+        normalTickets,
+        vipTickets,
+        selectedMethod
+      );
+
+      console.log("Ticket purchase successful!");
+      router.push({
+        pathname: "/eventScreens/tickets/ticket",
+        params: {
+          eventId: eventId,
+          normalTicketPurchased: normalTickets,
+          vipTicketPurchased: vipTickets,
+        },
+      });
+    } catch (error) {
+      console.error("Error purchasing tickets:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -120,7 +169,7 @@ const PaymentScreen = () => {
       </View>
 
       {/* Payment Options */}
-      {paymentMethods.map((item) => (
+      {paymentMethods.map(item => (
         <TouchableOpacity
           key={item.id}
           style={styles.methodButton}
@@ -143,17 +192,25 @@ const PaymentScreen = () => {
         </TouchableOpacity>
       ))}
 
-      {/* Debit/Credit Option */}
-      <TouchableOpacity style={styles.radioRowForPayment}>
-        <View style={styles.unselectedRadio} />
-        <RnText style={styles.methodName}>Pay by Debit / Credit Card</RnText>
-      </TouchableOpacity>
-
-      {/* Existing Card */}
-      <View style={styles.cardItem}>
-        <FontAwesome5 name="cc-mastercard" size={24} color="#EB001B" />
-        <RnText style={styles.cardText}>**** **** **** 0213</RnText>
-      </View>
+      {selectedMethod === "debit/credit" && (
+        <View style={styles.cardItem}>
+          <View style={styles.radioRow}>
+            <View
+              style={
+                selectedMethod === "debit/credit"
+                  ? styles.selectedRadio
+                  : styles.unselectedRadio
+              }
+            >
+              {selectedMethod === "debit/credit" && (
+                <View style={styles.radioDot} />
+              )}
+            </View>
+            <FontAwesome5 name="cc-mastercard" size={24} color="#EB001B" />
+            <RnText style={styles.cardText}>**** **** **** 0213</RnText>
+          </View>
+        </View>
+      )}
 
       {/* Voucher */}
       <View style={styles.voucherSection}>
@@ -177,7 +234,8 @@ const PaymentScreen = () => {
       <RnButton
         title="Checkout"
         style={[styles.checkoutBtn]}
-        onPress={() => router.push("/eventScreens/ticket")}
+        onPress={_handleTicketCheckout}
+        loading={isLoading}
       />
 
       <RnBottomSheet
@@ -204,7 +262,7 @@ const PaymentScreen = () => {
                 <RnInput
                   placeholder="3456 133112 50832"
                   value={values.cardNumber}
-                  onChangeText={(text) =>
+                  onChangeText={text =>
                     setFieldValue("cardNumber", formatCardNumber(text))
                   }
                   onBlur={handleBlur("cardNumber")}
@@ -217,7 +275,7 @@ const PaymentScreen = () => {
                     <RnInput
                       placeholder="07/22"
                       value={values.expiryDate}
-                      onChangeText={(text) =>
+                      onChangeText={text =>
                         setFieldValue("expiryDate", formatExpiryDate(text))
                       }
                       onBlur={handleBlur("expiryDate")}

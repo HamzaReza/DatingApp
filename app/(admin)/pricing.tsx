@@ -45,17 +45,15 @@ export default function AdminPricingPlanScreen() {
   const [durationItems, setDurationItems] = useState(durationOptions);
 
   useEffect(() => {
-    loadPlans();
-  }, []);
+    const unsubscribe = fetchPricingPlans(plansData => {
+      setPlans(plansData as AdminPricingPlan[]);
+    });
 
-  const loadPlans = async () => {
-    try {
-      const fetched = await fetchPricingPlans();
-      setPlans(fetched as AdminPricingPlan[]);
-    } catch (error) {
-      console.error("Failed to load pricing plans:", error);
-    }
-  };
+    // Cleanup function
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   const renderPlanCard = ({ item: plan }: { item: AdminPricingPlan }) => (
     <View style={styles.planCardWrapper}>
@@ -97,8 +95,6 @@ export default function AdminPricingPlanScreen() {
         features: values.features,
       });
 
-      const updatedPlans = await fetchPricingPlans();
-      setPlans(updatedPlans as AdminPricingPlan[]);
       resetForm();
       handleCloseBottomSheet();
     } catch (error) {

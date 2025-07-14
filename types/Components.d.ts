@@ -2,7 +2,6 @@ import { BottomSheetHandleProps } from "@gorhom/bottom-sheet";
 import { IconNode, TextProps, ViewProps } from "@rneui/base";
 import { ReactElement, ReactNode } from "react";
 import {
-  ImageSourcePropType,
   KeyboardTypeOptions,
   StatusBarProps,
   StatusBarStyle,
@@ -98,7 +97,7 @@ export interface RnModalProps {
 }
 
 export interface RnToastProps {
-  type: string;
+  type?: string;
   message: string;
   heading?: string;
   position?: ToastPosition;
@@ -154,7 +153,7 @@ export interface ListItemType {
 export interface RnAvatarProps {
   avatarHeight?: number;
   showAvatarIcon?: boolean;
-  source?: ImageSourcePropType | null;
+  source?: string | undefined | null;
   style?: StyleProp<ViewStyle>;
 }
 

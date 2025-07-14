@@ -1,11 +1,17 @@
-import { Borders } from '@/constants/Borders';
-import { Colors } from '@/constants/Colors';
-import { FontFamily } from '@/constants/FontFamily';
-import { FontSize } from '@/constants/FontSize';
-import { hp, wp } from '@/utils';
-import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View, useColorScheme } from 'react-native';
+import { Borders } from "@/constants/Borders";
+import { Colors } from "@/constants/Colors";
+import { FontFamily } from "@/constants/FontFamily";
+import { FontSize } from "@/constants/FontSize";
+import { hp, wp } from "@/utils";
+import { Ionicons } from "@expo/vector-icons";
+import React from "react";
+import {
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  useColorScheme,
+} from "react-native";
 
 type Props = {
   title: string;
@@ -21,7 +27,7 @@ type Props = {
 const CustomHeader = ({
   title,
   onBackPress,
-  leftIcon = 'arrow-back',
+  leftIcon = "arrow-back",
   rightIcon,
   onRightPress,
   backgroundColor,
@@ -65,20 +71,20 @@ export default CustomHeader;
 
 const styles = StyleSheet.create({
   headerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginTop: hp(2),
   },
   iconButton: {
     width: wp(10),
     height: wp(10),
     borderRadius: Borders.circle,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   title: {
     fontSize: FontSize.large,
-    fontFamily:FontFamily.semiBold,
+    fontFamily: FontFamily.semiBold,
   },
 });

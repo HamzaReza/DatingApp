@@ -7,6 +7,11 @@ import { StyleSheet } from "react-native";
 
 const createStyles = (theme: "light" | "dark") =>
   StyleSheet.create({
+    headerContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
     headerRow: {
       flexDirection: "row",
       alignItems: "center",
@@ -176,7 +181,7 @@ const createStyles = (theme: "light" | "dark") =>
     radioOuter: {
       width: wp(5),
       height: wp(5),
-      borderRadius:Borders.circle,
+      borderRadius: Borders.circle,
       borderWidth: 2,
       alignItems: "center",
       justifyContent: "center",
@@ -210,6 +215,12 @@ const createStyles = (theme: "light" | "dark") =>
     },
     radioLabelRejected: {
       color: Colors[theme].pink,
+    },
+    loadingContainer: {
+      flex: 1,
+      backgroundColor: Colors[theme].background,
+      justifyContent: "center",
+      alignItems: "center",
     },
   });
 

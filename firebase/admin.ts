@@ -1,15 +1,17 @@
 import {
   addDoc,
   collection,
-  getDocs,
+  FirebaseFirestoreTypes,
   getFirestore,
+  onSnapshot,
   Timestamp,
 } from "@react-native-firebase/firestore";
 
-export const createEvent = async (event: {
+const createEvent = async (event: {
   name: string;
   venue: string;
-  price: number;
+  normalPrice: number;
+  vipPrice: number;
   normalTicket: number;
   vipTicket: number;
   genre: string;
@@ -23,10 +25,13 @@ export const createEvent = async (event: {
     const docRef = await addDoc(collection(db, "events"), {
       name: event.name,
       venue: event.venue,
-      price: event.price,
+      normalPrice: event.normalPrice,
+      vipPrice: event.vipPrice,
       normalTicket: event.normalTicket,
       vipTicket: event.vipTicket,
-      creatorName: event.creator.label,
+      normalTicketSold: 0,
+      vipTicketSold: 0,
+      creator: event.creator,
       genre: event.genre,
       date: event.date,
       time: event.time,
@@ -39,40 +44,53 @@ export const createEvent = async (event: {
   }
 };
 
-export const fetchEvents = async () => {
+const fetchEvents = (callback: (events: any[]) => void) => {
   try {
     const db = getFirestore();
     const eventsRef = collection(db, "events");
-    const snapshot = await getDocs(eventsRef);
 
-    const events = snapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        name: data.name,
-        venue: data.venue,
-        price: data.price,
-        genre: data.genre,
-        normalTicket: data.normalTicket,
-        vipTicket: data.vipTicket,
-        creator: {
-          id: data.creatorId,
-          label: data.creatorName,
-          image: data.creatorImage,
-        },
-        image: data.image,
-        date: data.date.toDate().toLocaleDateString(),
-        time: data.time.toDate().toLocaleTimeString(),
-      };
-    });
+    const unsubscribe = onSnapshot(
+      eventsRef,
+      snapshot => {
+        const events = snapshot.docs.map(
+          (doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              name: data.name,
+              venue: data.venue,
+              normalPrice: data.normalPrice,
+              vipPrice: data.vipPrice,
+              genre: data.genre,
+              normalTicket: data.normalTicket,
+              vipTicket: data.vipTicket,
+              creator: {
+                id: data.creator.id,
+                label: data.creator.label,
+                image: data.creator.image,
+              },
+              image: data.image,
+              date: data.date?.toDate?.()?.toLocaleDateString() || data.date,
+              time: data.time?.toDate?.()?.toLocaleTimeString() || data.time,
+            };
+          }
+        );
 
-    return events;
+        callback(events);
+      },
+      error => {
+        console.error("Error in events listener:", error);
+      }
+    );
+
+    return unsubscribe;
   } catch (error) {
+    console.error("Error setting up events listener:", error);
     throw error;
   }
 };
 
-export const createPricingPlan = async (plan: {
+const createPricingPlan = async (plan: {
   name: string;
   description: string;
   price: number;
@@ -92,23 +110,35 @@ export const createPricingPlan = async (plan: {
   }
 };
 
-export const fetchPricingPlans = async () => {
+const fetchPricingPlans = (callback: (plans: any[]) => void) => {
   try {
     const db = getFirestore();
-    const snapshot = await getDocs(collection(db, "pricingPlans"));
 
-    const plans = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    const unsubscribe = onSnapshot(
+      collection(db, "pricingPlans"),
+      snapshot => {
+        const plans = snapshot.docs.map(
+          (doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => ({
+            id: doc.id,
+            ...doc.data(),
+          })
+        );
 
-    return plans;
+        callback(plans);
+      },
+      error => {
+        console.error("Error in pricing plans listener:", error);
+      }
+    );
+
+    return unsubscribe;
   } catch (error) {
+    console.error("Error setting up pricing plans listener:", error);
     throw error;
   }
 };
 
-export const addCreator = async (creator: { name: string; image: string }) => {
+const addCreator = async (creator: { name: string; image: string }) => {
   const db = getFirestore();
   const docRef = await addDoc(collection(db, "creator"), {
     ...creator,
@@ -118,12 +148,72 @@ export const addCreator = async (creator: { name: string; image: string }) => {
   return docRef.id;
 };
 
-export const fetchCreators = async () => {
-  const db = getFirestore();
-  const snapshot = await getDocs(collection(db, "creator"));
+const fetchCreators = (callback: (creators: any[]) => void) => {
+  try {
+    const db = getFirestore();
 
-  return snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
+    const unsubscribe = onSnapshot(
+      collection(db, "creator"),
+      snapshot => {
+        const creators = snapshot.docs.map(
+          (doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => ({
+            id: doc.id,
+            ...doc.data(),
+          })
+        );
+
+        callback(creators);
+      },
+      error => {
+        console.error("Error in creators listener:", error);
+      }
+    );
+
+    return unsubscribe;
+  } catch (error) {
+    console.error("Error setting up creators listener:", error);
+    throw error;
+  }
+};
+
+const fetchUsers = (callback: (users: any[]) => void) => {
+  try {
+    const db = getFirestore();
+
+    const unsubscribe = onSnapshot(
+      collection(db, "users"),
+      snapshot => {
+        const usersData = snapshot.docs.map(
+          (doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              ...data,
+              status: data.status || "pending",
+            };
+          }
+        );
+
+        callback(usersData);
+      },
+      error => {
+        console.error("Error in users listener:", error);
+      }
+    );
+
+    return unsubscribe;
+  } catch (error) {
+    console.error("Error setting up users listener:", error);
+    throw error;
+  }
+};
+
+export {
+  addCreator,
+  createEvent,
+  createPricingPlan,
+  fetchCreators,
+  fetchEvents,
+  fetchPricingPlans,
+  fetchUsers,
 };

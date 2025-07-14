@@ -1,6 +1,8 @@
 import { Colors } from "@/constants/Colors";
+import { FontSize } from "@/constants/FontSize";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { persistor, store } from "@/redux/store";
+import { wp } from "@/utils/Dimensions";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import {
   DarkTheme,
@@ -13,6 +15,12 @@ import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Toast, {
+  BaseToast,
+  ErrorToast,
+  InfoToast,
+  ToastProps,
+} from "react-native-toast-message";
 import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
 
@@ -42,7 +50,54 @@ export default function RootLayout() {
       justifyContent: "center",
       alignItems: "center",
     },
+    headingText: {
+      fontSize: FontSize.medium,
+      color: Colors[theme].blackText,
+    },
+    messageText: {
+      fontSize: FontSize.small,
+      color: Colors[theme].blackText,
+    },
+    successToast: {
+      borderLeftColor: Colors[theme].primary,
+      borderLeftWidth: wp(3),
+    },
+    errorToast: {
+      borderLeftColor: Colors[theme].pink,
+      borderLeftWidth: wp(3),
+    },
+    infoToast: {
+      borderLeftColor: Colors[theme].primary,
+      borderLeftWidth: wp(3),
+    },
   });
+
+  const toastConfig = {
+    success: (props: ToastProps) => (
+      <BaseToast
+        {...props}
+        text1Style={styles.headingText}
+        text2Style={styles.messageText}
+        style={styles.successToast}
+      />
+    ),
+    error: (props: ToastProps) => (
+      <ErrorToast
+        {...props}
+        text1Style={styles.headingText}
+        text2Style={styles.messageText}
+        style={styles.errorToast}
+      />
+    ),
+    info: (props: ToastProps) => (
+      <InfoToast
+        {...props}
+        text1Style={styles.headingText}
+        text2Style={styles.messageText}
+        style={styles.infoToast}
+      />
+    ),
+  };
 
   return (
     <GestureHandlerRootView>
@@ -72,6 +127,7 @@ export default function RootLayout() {
           </Provider>
         </SafeAreaView>
       </BottomSheetModalProvider>
+      <Toast config={toastConfig} />
     </GestureHandlerRootView>
   );
 }

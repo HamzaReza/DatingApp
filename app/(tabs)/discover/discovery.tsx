@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import createStyles from "@/app/tabStyles/discover.styles";
 import InterestTag from "@/components/InterestTag";
 import RnButton from "@/components/RnButton";
@@ -40,23 +41,29 @@ import {
   Platform,
   TouchableOpacity,
   useColorScheme,
-  View
+  View,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import MapView, { Marker, PROVIDER_DEFAULT, PROVIDER_GOOGLE } from "react-native-maps";
+import MapView, {
+  Marker,
+  PROVIDER_DEFAULT,
+  PROVIDER_GOOGLE,
+} from "react-native-maps";
 import { useDispatch, useSelector } from "react-redux";
 
 type UsersList = {
   id: string;
-  name: string;
-  age: number;
-  location: string;
-  distance: string;
-  photo: string;
+  name?: string;
+  age?: number;
+  distance?: string;
+  photo?: string;
   isNew: boolean;
-  uid: String;
-  interests: String;
-
+  uid?: string;
+  interests?: string;
+  location?: {
+    _latitude: number;
+    _longitude: number;
+  };
 };
 
 const interests = [
@@ -80,29 +87,27 @@ export default function Discover() {
   const styles = createStyles(theme);
   const dispatch = useDispatch();
   const [usersList, setUsersList] = useState(Array<UsersList>);
-  const [filteredUsers, setFilteredUsers] = useState([]);
-const [selectedInterests, setSelectedInterests] = useState<string[]>([ ]);
-const [showAllInterests, setShowAllInterests] = useState(false);
-const displayedInterests = showAllInterests ? interests : interests.slice(0, 6);
+  const [filteredUsers, setFilteredUsers] = useState<UsersList[]>([]);
+  const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+  const [showAllInterests, setShowAllInterests] = useState(false);
+  const displayedInterests = showAllInterests
+    ? interests
+    : interests.slice(0, 6);
 
-
-useEffect(() => {
-console.log('hi',filteredUsers)
-console.log('selectedInterests', selectedInterests)
-  getUsers();
-}, [selectedInterests]);
-
+  useEffect(() => {
+    getUsers();
+  }, [selectedInterests]);
 
   const getUsers = async () => {
     try {
-      const users = await fetchAllUsers();
+      const users = (await fetchAllUsers()) as UsersList[];
 
       setUsersList(users);
 
       const filtered = users.filter(user =>
         user.interests
           ?.split(",")
-          .some(interest => selectedInterests.includes(interest))
+          .some((interest: string) => selectedInterests.includes(interest))
       );
 
       setFilteredUsers(filtered);
@@ -110,8 +115,6 @@ console.log('selectedInterests', selectedInterests)
       console.error("Failed to fetch users:", err);
     }
   };
-
-  
 
   // Get location from Redux state
   const { deviceLocation, locationPermissionGranted } = useSelector(
@@ -250,13 +253,17 @@ console.log('selectedInterests', selectedInterests)
           renderItem={({ item }) => (
             <UserCard
               id={item.id}
-              name={item.name}
-              age={item.age}
-              location={item.location}
-              distance={item.distance}
-              image={encodeImagePath(item.photo)}
+              name={item.name || ""}
+              age={item.age || 0}
+              location={
+                item.location
+                  ? `${item.location._latitude}, ${item.location._longitude}`
+                  : ""
+              }
+              distance={item.distance || ""}
+              image={encodeImagePath(item.photo || "")}
               isNew={item.isNew}
-              onPress={() => router.push(`/discover/${item.uid}`)}
+              onPress={() => router.push(`/discover/${item.uid || item.id}`)}
             />
           )}
           horizontal
@@ -269,22 +276,36 @@ console.log('selectedInterests', selectedInterests)
       <View style={styles.section}>
         <View style={styles.subHeadContainer}>
           <RnText style={styles.sectionTitle}>Interests</RnText>
-          
-           <RnText style={styles.viewAllText} onPress={() => setShowAllInterests(!showAllInterests)}>
-        {showAllInterests ? "Show Less" : "View All"}
-      </RnText>
+          <RnText
+            style={styles.viewAllText}
+            onPress={() => setShowAllInterests(!showAllInterests)}
+          >
+            {showAllInterests ? "Show Less" : "View All"}
+          </RnText>
         </View>
- <View style={styles.interestsContainer}>
-    {displayedInterests.map((interest) => (
-      <InterestTag
-        key={interest.id}
-        title={interest.label}
-        icon={interest.icon}
-        isSelected={selectedInterests.includes(interest.id)}
-        onPress={() => handleInterestPress(interest.id)}
-      />
-    ))}
-  </View>
+
+        <View style={styles.interestsContainer}>
+          {interests.map(interest => (
+            <InterestTag
+              key={interest.id}
+              title={interest.label}
+              icon={interest.icon}
+              isSelected={selectedInterests.includes(interest.id)}
+              onPress={() => handleInterestPress(interest.id)}
+            />
+          ))}
+        </View>
+        <View style={styles.interestsContainer}>
+          {displayedInterests.map(interest => (
+            <InterestTag
+              key={interest.id}
+              title={interest.label}
+              icon={interest.icon}
+              isSelected={selectedInterests.includes(interest.id)}
+              onPress={() => handleInterestPress(interest.id)}
+            />
+          ))}
+        </View>
       </View>
 
       {/* Around Me Section */}
@@ -303,66 +324,62 @@ console.log('selectedInterests', selectedInterests)
           around you
         </RnText>
 
-   {locationPermissionGranted ? (
-  <MapView
-    style={styles.map}
-    initialRegion={{
-      latitude: deviceLocation?.coords.latitude || 37.7749,
-      longitude: deviceLocation?.coords.longitude || -122.4194,
-      latitudeDelta: 0.01,
-      longitudeDelta: 0.01,
-    }}
-    provider={
-      Platform.OS === "android" ? PROVIDER_GOOGLE : PROVIDER_DEFAULT
-    }
-    showsUserLocation={locationPermissionGranted}
-    showsMyLocationButton={locationPermissionGranted}
-  >
-    {/* 🔽 Show user markers */}
-    {usersList.map((user, index) => {
-      const lat = user.location?._latitude;
-      const lng = user.location?._longitude;
+        {locationPermissionGranted ? (
+          <MapView
+            style={styles.map}
+            initialRegion={{
+              latitude: deviceLocation?.coords.latitude || 37.7749,
+              longitude: deviceLocation?.coords.longitude || -122.4194,
+              latitudeDelta: 0.01,
+              longitudeDelta: 0.01,
+            }}
+            provider={
+              Platform.OS === "android" ? PROVIDER_GOOGLE : PROVIDER_DEFAULT
+            }
+            showsUserLocation={locationPermissionGranted}
+            showsMyLocationButton={locationPermissionGranted}
+          >
+            {/* 🔽 Show user markers */}
+            {usersList.map((user, index) => {
+              const lat = user.location?._latitude;
+              const lng = user.location?._longitude;
 
+              if (!lat || !lng) return null;
 
+              return (
+                <>
+                  <Marker
+                    key={user.id || index}
+                    coordinate={{ latitude: lat, longitude: lng }}
+                    title={user.name}
+                  >
+                    {/* Show profile photo in marker */}
 
-      if (!lat || !lng) return null;
-
-      return (
-        <>
-        <Marker
-          key={user.id || index}
-          coordinate={{ latitude: lat, longitude: lng }}
-          title={user.name}
-        >
-          {/* Show profile photo in marker */}
-          
-          <Image
-            source={{ uri: encodeImagePath(user.photo) }}
-            style={{ width: 40, height: 40, borderRadius: 20 }}
-            resizeMode="cover"
-          />
-         
-        </Marker>
-         </>
-      );
-    })}
-  </MapView>
-) : (
-  <View
-    style={[
-      styles.map,
-      styles.getLocationContainer,
-      { justifyContent: "center" },
-    ]}
-  >
-    <RnButton
-      title="Get Location"
-      onPress={() => getCurrentLocation()}
-      style={[styles.getLocationButton, styles.getLocationButtonText]}
-    />
-  </View>
-)}
-
+                    <Image
+                      source={{ uri: encodeImagePath(user.photo || "") }}
+                      style={{ width: 40, height: 40, borderRadius: 20 }}
+                      resizeMode="cover"
+                    />
+                  </Marker>
+                </>
+              );
+            })}
+          </MapView>
+        ) : (
+          <View
+            style={[
+              styles.map,
+              styles.getLocationContainer,
+              { justifyContent: "center" },
+            ]}
+          >
+            <RnButton
+              title="Get Location"
+              onPress={() => getCurrentLocation()}
+              style={[styles.getLocationButton, styles.getLocationButtonText]}
+            />
+          </View>
+        )}
       </View>
 
       <RnModal show={filterModal} backButton={() => setFilterModal(false)}>

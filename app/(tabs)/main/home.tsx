@@ -10,7 +10,7 @@ import { Colors } from "@/constants/Colors";
 import {
   fetchAllUserStories,
   fetchStoriesForUser,
-  uploadMultipleImages
+  uploadMultipleImages,
 } from "@/firebase/auth";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import {
@@ -21,7 +21,6 @@ import {
 import { RootState } from "@/redux/store";
 import { encodeImagePath, hp, wp } from "@/utils";
 import { requestLocationPermission } from "@/utils/Permission";
-import { getAuth } from "@react-native-firebase/auth";
 import {
   collection,
   doc,
@@ -36,7 +35,6 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import { router } from "expo-router";
-import { onAuthStateChanged } from "firebase/auth";
 import React, { useEffect, useState } from "react";
 import { FlatList, TouchableOpacity, View } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
@@ -114,22 +112,7 @@ export default function Home() {
   const [hasNotification] = useState(true);
 
   const dispatch = useDispatch();
-  const [userId, setUserId] = useState("");
-  const [allStories, setAllStories] = useState<UserStory[]>([]);
-
-  useEffect(() => {
-    const auth = getAuth();
-    const unsubscribe = onAuthStateChanged(auth, user => {
-      if (user) {
-        console.log("✅ Logged-in user ID:", user.uid);
-        setUserId(user.uid);
-      } else {
-        console.log("❌ No user is logged in");
-      }
-    });
-
-    return () => unsubscribe(); 
-  }, []);
+  const [allStories, setAllStories] = useState<Story[]>([]);
 
   // Get user's current location
   const getCurrentLocation = async () => {
@@ -164,21 +147,20 @@ export default function Home() {
     }
   };
 
-  const handleStoryPress = async (userStory) => {
-  const currentUserStories = await fetchStoriesForUser(userStory.id);
+  const handleStoryPress = async (userStory: Story) => {
+    const currentUserStories = await fetchStoriesForUser(userStory.id);
 
-  router.push({
-    pathname: "/mainScreens/storyView",
-    params: {
-      userId: userStory.id,
-      username: userStory.username,
-      profilePic: userStory.profilePic,
-      stories: JSON.stringify(currentUserStories),
-      initialStoryIndex: 0,
-    }
-  });
-};
-
+    router.push({
+      pathname: "/mainScreens/storyView",
+      params: {
+        userId: userStory.id,
+        username: userStory.username,
+        profilePic: userStory.image,
+        stories: JSON.stringify(currentUserStories),
+        initialStoryIndex: 0,
+      },
+    });
+  };
 
   const handleCardAction = (action: string, questionId: string) => {
     console.log(`${action} on question ${questionId}`);
@@ -190,12 +172,7 @@ export default function Home() {
 
     if (!result || result.length === 0) return;
 
-    const uploadedUrls = await uploadMultipleImages(
-      result,
-      "user",
-      userId,
-      "story"
-    );
+    const uploadedUrls = await uploadMultipleImages(result, "story");
 
     const now = new Date();
 
@@ -206,7 +183,7 @@ export default function Home() {
 
     const db = getFirestore();
     const usersRef = collection(db, "users");
-    const q = query(usersRef, where("uid", "==", userId));
+    const q = query(usersRef, where("uid", "==", user.uid));
     const querySnapshot = await getDocs(q);
 
     if (querySnapshot.empty) {
@@ -227,7 +204,7 @@ export default function Home() {
       updatedAt: new Date(),
     });
 
-    const storyRef = doc(db, "stories", userId);
+    const storyRef = doc(db, "stories", user.uid);
     const storyDoc = await getDoc(storyRef);
 
     const newStoryItem = {
@@ -255,7 +232,7 @@ export default function Home() {
 
   const pickStory = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All, 
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
       allowsMultipleSelection: true,
       quality: 0.8,
     });

@@ -1,83 +1,100 @@
-import { Colors } from '@/constants/Colors';
-import { FontSize } from '@/constants/FontSize';
-import { hp } from '@/utils';
-import { AntDesign } from '@expo/vector-icons';
-import React from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
+import { Colors } from "@/constants/Colors";
+import { FontSize } from "@/constants/FontSize";
+import { hp } from "@/utils";
+import { AntDesign } from "@expo/vector-icons";
+import React from "react";
+import {
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  useColorScheme,
+  View,
+} from "react-native";
 
 type Props = {
   image: string;
   username: string;
   isOwn: boolean;
   onPress?: () => void;
-  ownUploadOnPress:()=>void
+  ownUploadOnPress: () => void;
 };
 
-const StoryCircle: React.FC<Props> = ({ image, username, isOwn, onPress,ownUploadOnPress }) => {
-
-
-const colorScheme = useColorScheme();
+const StoryCircle: React.FC<Props> = ({
+  image,
+  username,
+  isOwn,
+  onPress,
+  ownUploadOnPress,
+}) => {
+  console.log("🚀 ~ StoryCircle.tsx:30 ~ image:", isOwn, image);
+  const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
 
   return (
-    <TouchableOpacity style={[styles.container,{marginLeft:isOwn?0:hp(1.5)}]} onPress={onPress}>
+    <TouchableOpacity
+      style={[styles.container, { marginLeft: isOwn ? 0 : hp(1.5) }]}
+      onPress={onPress}
+    >
       <View style={[styles.imageWrapper, isOwn && styles.ownStoryBorder]}>
-        <Image source={{ uri: (image) }} style={styles.image} />
+        <Image source={{ uri: image }} style={styles.image} />
         {isOwn && (
           <TouchableOpacity style={styles.plusIcon} onPress={ownUploadOnPress}>
-            <AntDesign name="pluscircle" size={20} color={Colors[theme].greenText} />
+            <AntDesign
+              name="pluscircle"
+              size={20}
+              color={Colors[theme].greenText}
+            />
           </TouchableOpacity>
         )}
       </View>
-      {isOwn?(
-          <Text style={styles.username} numberOfLines={1}>
-        {`My Story`}
-      </Text>
-      ):(
-         <Text style={styles.username} numberOfLines={1}>
-        {username}
-      </Text>
+      {isOwn ? (
+        <Text style={styles.username} numberOfLines={1}>
+          {`My Story`}
+        </Text>
+      ) : (
+        <Text style={styles.username} numberOfLines={1}>
+          {username}
+        </Text>
       )}
-     
     </TouchableOpacity>
   );
 };
-const createStyles  = (theme:'dark'|'light')=>StyleSheet.create({
-  container: {
-    alignItems: 'center',
-    width: hp(8), 
-    
-  },
-  imageWrapper: {
-    padding: hp(0.2),            
-    borderRadius: hp(5),         
-    borderWidth: hp(0.25),      
-    borderColor: Colors[theme].greenText,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  ownStoryBorder: {
-    borderColor: Colors[theme].primary,
-  },
-  image: {
-    width: hp(7),                
-    height: hp(7),
-    borderRadius: hp(4),
-  },
-  plusIcon: {
-    position: 'absolute',
-    bottom: -hp(0.5),            
-    right: -hp(0.5),             
-  },
-  username: {
-    marginTop: hp(0.8),
-    fontSize:FontSize.regular,
-    textAlign: 'center',
-    color: Colors[theme].redText,
-  },
-});
-
+const createStyles = (theme: "dark" | "light") =>
+  StyleSheet.create({
+    container: {
+      alignItems: "center",
+      width: hp(8),
+    },
+    imageWrapper: {
+      padding: hp(0.2),
+      borderRadius: hp(5),
+      borderWidth: hp(0.25),
+      borderColor: Colors[theme].greenText,
+      justifyContent: "center",
+      alignItems: "center",
+      position: "relative",
+    },
+    ownStoryBorder: {
+      borderColor: Colors[theme].primary,
+    },
+    image: {
+      width: hp(7),
+      height: hp(7),
+      borderRadius: hp(4),
+    },
+    plusIcon: {
+      position: "absolute",
+      bottom: -hp(0.5),
+      right: -hp(0.5),
+    },
+    username: {
+      marginTop: hp(0.8),
+      fontSize: FontSize.regular,
+      textAlign: "center",
+      color: Colors[theme].redText,
+    },
+  });
 
 export default StoryCircle;

@@ -27,7 +27,6 @@ const StoryCircle: React.FC<Props> = ({
   onPress,
   ownUploadOnPress,
 }) => {
-  console.log("🚀 ~ StoryCircle.tsx:30 ~ image:", isOwn, image);
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);

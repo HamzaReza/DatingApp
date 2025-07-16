@@ -1,3 +1,4 @@
+import getDistanceFromLatLonInMeters from "@/utils/Distance";
 import {
   getAuth,
   GoogleAuthProvider,
@@ -419,6 +420,57 @@ const fetchNextUsersStories = async (currentUserId: string) => {
   return allUsers;
 };
 
+const getUserLocation = async (userId: string) => {
+  try {
+    const db = getFirestore();
+    const userDocRef = doc(db, "users", userId);
+    const snapshot = await getDoc(userDocRef);
+    if (snapshot.exists()) {
+      return snapshot.data()?.location || null;  // assuming location is a field in user doc
+    } else {
+      console.log("No location data found!");
+      return null;
+    }
+  } catch (error) {
+    console.log("Error fetching user location:", error);
+    return null;
+  }
+};
+
+export const getNearbyUsers = async (currentUserLocation) => {
+  const db = getFirestore();
+  const usersRef = collection(db, "users");
+  const snapshot = await getDocs(usersRef);
+
+  const nearbyUsers: any[] = [];
+
+  snapshot.forEach((doc) => {
+    const data = doc.data();
+    const userLocation = data.location;
+
+    if (userLocation?.latitude && userLocation?.longitude) {
+      const distance = getDistanceFromLatLonInMeters(
+        currentUserLocation.latitude,
+        currentUserLocation.longitude,
+        userLocation.latitude,
+        userLocation.longitude
+      );
+
+      if (distance <= 10) {
+        nearbyUsers.push({
+          id: doc.id,
+          ...data,
+        });
+      }
+    }
+  });
+
+  return nearbyUsers;
+};
+
+
+
+
 export {
   authenticateWithPhone,
   deleteImage,
@@ -435,4 +487,6 @@ export {
   uploadImage,
   uploadMultipleImages,
   verifyCode,
+  getUserLocation,
+  
 };

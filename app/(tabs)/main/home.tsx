@@ -10,6 +10,7 @@ import { Colors } from "@/constants/Colors";
 import {
   fetchAllUserStories,
   fetchStoriesForUser,
+  updateUser,
   uploadMultipleImages,
 } from "@/firebase/auth";
 import { useColorScheme } from "@/hooks/useColorScheme";
@@ -21,6 +22,7 @@ import {
 import { RootState } from "@/redux/store";
 import { encodeImagePath, hp, wp } from "@/utils";
 import { requestLocationPermission } from "@/utils/Permission";
+import { getAuth } from "@react-native-firebase/auth";
 import {
   collection,
   doc,
@@ -122,6 +124,23 @@ export default function Home() {
         dispatch(setLocationPermissionGranted(true));
         const location = await Location.getCurrentPositionAsync({});
         dispatch(setDeviceLocation(location));
+
+        const currentUser = getAuth().currentUser?.uid;
+        const db = getFirestore();
+
+        if (currentUser) {
+          await setDoc(
+            doc(db, "users", currentUser),
+            {
+              location: {
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude,
+                timestamp: new Date().toISOString(),
+              },
+            },
+            { merge: true }
+          );
+        }
       } else {
         console.log("Location permission denied");
         dispatch(setLocationPermissionGranted(false));
@@ -135,6 +154,12 @@ export default function Home() {
   useEffect(() => {
     getCurrentLocation();
     getStories();
+
+    const interval = setInterval(() => {
+      getCurrentLocation();
+    }, 60000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const getStories = async () => {

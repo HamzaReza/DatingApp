@@ -11,6 +11,7 @@ import {
   fetchAllUserStories,
   fetchStoriesForUser,
   updateUser,
+  handleStoryUpload,
   uploadMultipleImages,
 } from "@/firebase/auth";
 import { useColorScheme } from "@/hooks/useColorScheme";
@@ -180,7 +181,7 @@ export default function Home() {
       params: {
         userId: userStory.id,
         username: userStory.username,
-        profilePic: userStory.image,
+        profilePic: userStory.profilePic,
         stories: JSON.stringify(currentUserStories),
         initialStoryIndex: 0,
       },
@@ -189,70 +190,6 @@ export default function Home() {
 
   const handleCardAction = (action: string, questionId: string) => {
     console.log(`${action} on question ${questionId}`);
-  };
-
-  const handleStoryUpload = async (story: Story) => {
-    console.log("hi");
-    const result = await pickStory();
-
-    if (!result || result.length === 0) return;
-
-    const uploadedUrls = await uploadMultipleImages(result, "story");
-
-    const now = new Date();
-
-    const newStoryItems = uploadedUrls.map(url => ({
-      url,
-      createdAt: now,
-    }));
-
-    const db = getFirestore();
-    const usersRef = collection(db, "users");
-    const q = query(usersRef, where("uid", "==", user.uid));
-    const querySnapshot = await getDocs(q);
-
-    if (querySnapshot.empty) {
-      console.log("User not found");
-      return;
-    }
-
-    const userDoc = querySnapshot.docs[0];
-    const userRef = doc(db, "users", userDoc.id);
-    const userData = userDoc.data();
-
-    const existingStories = userData?.stories || [];
-
-    const updatedStories = [...existingStories, ...newStoryItems];
-
-    await updateDoc(userRef, {
-      stories: updatedStories,
-      updatedAt: new Date(),
-    });
-
-    const storyRef = doc(db, "stories", user.uid);
-    const storyDoc = await getDoc(storyRef);
-
-    const newStoryItem = {
-      date: now,
-      storyUrls: uploadedUrls,
-    };
-
-    if (storyDoc.exists()) {
-      const existingData = storyDoc.data();
-      const existingStories = existingData?.storyItems || [];
-
-      const updatedStories = [...existingStories, newStoryItem];
-
-      await setDoc(storyRef, {
-        storyItems: updatedStories,
-      });
-    } else {
-      await setDoc(storyRef, {
-        storyItems: [newStoryItem],
-      });
-    }
-
-    console.log("✅ Story added");
   };
 
   const pickStory = async () => {
@@ -306,11 +243,11 @@ export default function Home() {
           keyExtractor={item => item.id}
           renderItem={({ item }) => (
             <StoryCircle
-              image={item.image}
+              image={encodeImagePath(item.profilePic)}
               username={item.username || "user"}
               isOwn={item.isOwn}
               onPress={() => handleStoryPress(item)}
-              ownUploadOnPress={() => handleStoryUpload(item)}
+              ownUploadOnPress={() => handleStoryUpload(item,pickStory(),user)}
             />
           )}
           horizontal

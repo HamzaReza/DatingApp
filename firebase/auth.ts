@@ -411,7 +411,7 @@ const fetchNextUsersStories = async (currentUserId: string) => {
     .filter(
       (doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) =>
         doc.id !== currentUserId
-    ) // filter out current user manually
+    ) 
     .map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => ({
       userId: doc.id,
       ...doc.data(),
@@ -419,6 +419,7 @@ const fetchNextUsersStories = async (currentUserId: string) => {
 
   return allUsers;
 };
+
 
 const getUserLocation = async (userId: string) => {
   try {
@@ -468,7 +469,69 @@ export const getNearbyUsers = async (currentUserLocation) => {
   return nearbyUsers;
 };
 
+ const handleStoryUpload = async (story: Story,pickStory,user) => {
+    console.log("hi");
+    const result = await pickStory;
 
+    if (!result || result.length === 0) return;
+
+    const uploadedUrls = await uploadMultipleImages(result, "story");
+
+    const now = new Date();
+
+    const newStoryItems = uploadedUrls.map(url => ({
+      url,
+      createdAt: now,
+    }));
+
+    const db = getFirestore();
+    const usersRef = collection(db, "users");
+    const q = query(usersRef, where("uid", "==", user.uid));
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      console.log("User not found");
+      return;
+    }
+
+    const userDoc = querySnapshot.docs[0];
+    const userRef = doc(db, "users", userDoc.id);
+    const userData = userDoc.data();
+
+    const existingStories = userData?.stories || [];
+
+    const updatedStories = [...existingStories, ...newStoryItems];
+
+    await updateDoc(userRef, {
+      stories: updatedStories,
+      updatedAt: new Date(),
+    });
+
+    const storyRef = doc(db, "stories", user.uid);
+    const storyDoc = await getDoc(storyRef);
+
+    const newStoryItem = {
+      date: now,
+      storyUrls: uploadedUrls,
+    };
+
+    if (storyDoc.exists()) {
+      const existingData = storyDoc.data();
+      const existingStories = existingData?.storyItems || [];
+
+      const updatedStories = [...existingStories, newStoryItem];
+
+      await setDoc(storyRef, {
+        storyItems: updatedStories,
+      });
+    } else {
+      await setDoc(storyRef, {
+        storyItems: [newStoryItem],
+      });
+    }
+
+    console.log("✅ Story added");
+  };
 
 
 export {
@@ -488,5 +551,5 @@ export {
   uploadMultipleImages,
   verifyCode,
   getUserLocation,
-  
+  handleStoryUpload
 };

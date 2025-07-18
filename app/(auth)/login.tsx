@@ -48,7 +48,7 @@ export default function Login() {
 
       router.push({
         pathname: "/otp",
-        params: { phone: formattedPhone },
+        params: { phone: formattedPhone, login: "true" },
       });
     } catch (error: any) {
       console.error(error);
@@ -102,7 +102,7 @@ export default function Login() {
               <RnPhoneInput
                 ref={phoneInput}
                 value={values.phone}
-                onChangeText={(text) => {
+                onChangeText={text => {
                   handleChange("phone")(text);
                 }}
                 error={errors.phone}

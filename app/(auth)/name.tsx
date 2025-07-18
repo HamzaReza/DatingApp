@@ -4,8 +4,11 @@ import RnInput from "@/components/RnInput";
 import RnProgressBar from "@/components/RnProgressBar";
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
+import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { NameValues } from "@/types";
+import { wp } from "@/utils";
+import { FontAwesome6 } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { Formik } from "formik";
 import React, { useState } from "react";
@@ -38,9 +41,27 @@ export default function Name() {
   };
 
   return (
-    <ScrollContainer topBar={<RnProgressBar progress={3 / 11} />}>
+    <ScrollContainer
+      topBar={
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+          }}
+        >
+          <FontAwesome6
+            name="house"
+            size={24}
+            color={Colors[theme].primary}
+            style={{ marginLeft: wp(5) }}
+            onPress={() => router.dismissAll()}
+          />
+          <RnProgressBar progress={3 / 12} />
+        </View>
+      }
+    >
       <Formik
-        initialValues={{ name: "" }}
+        initialValues={{ name: __DEV__ ? "Test" : "" }}
         validationSchema={nameSchema}
         onSubmit={handleNameSubmit}
         validateOnChange

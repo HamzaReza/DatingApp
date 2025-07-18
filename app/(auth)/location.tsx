@@ -62,10 +62,6 @@ export default function LocationScreen() {
     }
   };
 
-  const handleManualLocation = () => {
-    // router.push("/auth/interests");
-  };
-
   return (
     <ScrollContainer>
       <Formik
@@ -88,13 +84,6 @@ export default function LocationScreen() {
               onPress={() => handleLocationAccess()}
               disabled={isLoading}
               loading={isLoading}
-            />
-
-            <RnButton
-              title="Enter Location Manually"
-              style={[styles.manualButton, styles.manualButtonText]}
-              onPress={handleManualLocation}
-              disabled={isLoading}
             />
 
             {errors.location && (

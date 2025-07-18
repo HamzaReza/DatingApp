@@ -1,46 +1,38 @@
-import createStyles from "@/app/authStyles/age.styles";
+import createStyles from "@/app/authStyles/about.styles";
 import RnButton from "@/components/RnButton";
+import RnInput from "@/components/RnInput";
 import RnProgressBar from "@/components/RnProgressBar";
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
-import RnWheelPicker from "@/components/RnWheelPicker";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { AgeValues } from "@/types";
-import { wp } from "@/utils";
+import { AboutValues } from "@/types";
+import { hp, wp } from "@/utils";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { Formik } from "formik";
-import { useState } from "react";
+import React, { useState } from "react";
 import { View } from "react-native";
 import * as Yup from "yup";
 
-const ageSchema = Yup.object().shape({
-  age: Yup.number()
-    .min(18, "Must be at least 18")
-    .max(100, "Must be at most 100")
-    .required("Age is required"),
+const aboutSchema = Yup.object().shape({
+  bio: Yup.string().required("Bio is required"),
+  aboutMe: Yup.string().required("About Me is required"),
 });
 
-const AGE_MIN = 18;
-const AGE_MAX = 100;
-const ageOptions = Array.from({ length: AGE_MAX - AGE_MIN + 1 }, (_, i) =>
-  (AGE_MIN + i).toString()
-);
-
-export default function Age() {
+export default function About() {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
   const [isLoading, setIsLoading] = useState(false);
   const params = useLocalSearchParams();
 
-  const handleAgeSubmit = async (values: AgeValues) => {
+  const handleAboutSubmit = async (values: AboutValues) => {
     setIsLoading(true);
     try {
       router.push({
-        pathname: "/gender",
-        params: { ...params, age: values.age },
+        pathname: "/age",
+        params: { ...params, bio: values.bio, aboutMe: values.aboutMe },
       });
     } catch (error) {
       console.error(error);
@@ -65,38 +57,44 @@ export default function Age() {
             style={{ marginLeft: wp(5) }}
             onPress={() => router.dismissAll()}
           />
-          <RnProgressBar progress={6 / 12} />
+          <RnProgressBar progress={5 / 12} />
         </View>
       }
     >
       <Formik
-        initialValues={{ age: 25 }}
-        validationSchema={ageSchema}
-        onSubmit={handleAgeSubmit}
+        initialValues={{
+          bio: __DEV__ ? "Test Bio" : "",
+          aboutMe: __DEV__ ? "Test About Me" : "",
+        }}
+        validationSchema={aboutSchema}
+        onSubmit={handleAboutSubmit}
         validateOnChange
         validateOnMount={false}
       >
-        {({ setFieldValue, handleSubmit, values, errors }) => (
+        {({ handleChange, handleSubmit, values, errors }) => (
           <View style={styles.innerContainer}>
             <View>
-              <RnText style={styles.title}>How Old Are You?</RnText>
+              <RnText style={styles.title}>Tell Us About Yourself</RnText>
               <RnText style={styles.subtitle}>
-                Please provide your age in years
+                Share a bit more about who you are
               </RnText>
-              <View style={styles.pickerContainer}>
-                <RnWheelPicker
-                  dataSource={ageOptions}
-                  selectedIndex={values.age - AGE_MIN}
-                  onValueChange={(_, index) =>
-                    setFieldValue("age", parseInt(ageOptions[index], 10))
-                  }
-                  renderItem={data => (
-                    <RnText style={{ fontSize: 28, textAlign: "center" }}>
-                      {data}
-                    </RnText>
-                  )}
-                />
-              </View>
+              <RnInput
+                value={values.bio}
+                onChangeText={handleChange("bio")}
+                error={errors.bio}
+                placeholder="Enter your bio"
+              />
+              <RnInput
+                value={values.aboutMe}
+                onChangeText={handleChange("aboutMe")}
+                error={errors.aboutMe}
+                placeholder="Tell us more about yourself"
+                maxLength={500}
+                multiline
+                numberOfLines={5}
+                inputContainerStyle={{ height: hp(10) }}
+                style={{ height: hp(10) }}
+              />
               <RnButton
                 title="Continue"
                 style={styles.button}

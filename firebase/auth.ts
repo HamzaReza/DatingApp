@@ -12,6 +12,7 @@ import {
   getDoc,
   getDocs,
   getFirestore,
+  onSnapshot,
   query,
   setDoc,
   Timestamp,
@@ -30,6 +31,32 @@ import {
   isErrorWithCode,
   isSuccessResponse,
 } from "@react-native-google-signin/google-signin";
+
+interface Location {
+  latitude: number;
+  longitude: number;
+}
+
+interface Story {
+  url: string;
+  createdAt: Date;
+}
+
+interface User {
+  uid: string;
+  email?: string;
+  displayName?: string;
+  photoURL?: string;
+  provider?: string;
+  name?: string;
+  photo?: string;
+  location?: Location;
+  interests?: string[];
+  stories?: Story[];
+  createdAt?: Date;
+  updatedAt?: Date;
+  isProfileComplete?: boolean;
+}
 
 const auth = getAuth();
 const storage = getStorage();
@@ -207,6 +234,38 @@ const getUserByUid = async (userId: string) => {
   }
 };
 
+const getUserByPhoneNumber = async (phoneNumber: string) => {
+  try {
+    const db = getFirestore();
+
+    const usersRef = collection(db, "users");
+    const q = query(usersRef, where("phoneNumber", "==", phoneNumber));
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      return null;
+    }
+
+    const userData = querySnapshot.docs[0].data();
+    return userData;
+  } catch (error: any) {
+    console.error("Error getting user data by phone number:", error);
+    throw new Error(`Failed to get user data: ${error.message}`);
+  }
+};
+
+const checkUserExistsForSignup = async (phoneNumber: string) => {
+  const existingUser = await getUserByPhoneNumber(phoneNumber);
+
+  if (existingUser) {
+    if (existingUser.isProfileComplete) {
+      throw new Error("User already exists");
+    }
+  }
+
+  return true;
+};
+
 const uploadImage = async (
   imageUri: string,
   type: "user" | "event" | "creator" | "story",
@@ -281,7 +340,14 @@ const fetchAllUsers = async () => {
   try {
     const db = getFirestore();
     const usersRef = collection(db, "users");
-    const snapshot = await getDocs(usersRef);
+
+    const q = query(
+      usersRef,
+      where("isProfileComplete", "==", true),
+      where("status", "==", "approved")
+    );
+
+    const snapshot = await getDocs(q);
 
     const now = new Date();
     const threeDaysAgo = new Date();
@@ -291,7 +357,7 @@ const fetchAllUsers = async () => {
       (doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
         const data = doc.data();
 
-        let createdAt: Date = new Date(0); // default very old date
+        let createdAt: Date = new Date(0);
 
         if (data.createdAt instanceof Timestamp) {
           createdAt = data.createdAt.toDate();
@@ -320,7 +386,12 @@ const fetchAllUsers = async () => {
 export const fetchUsersWithLocation = async () => {
   const db = getFirestore();
   const usersRef = collection(db, "users");
-  const snapshot = await getDocs(usersRef);
+  const q = query(
+    usersRef,
+    where("isProfileComplete", "==", true),
+    where("status", "==", "approved")
+  );
+  const snapshot = await getDocs(q);
 
   return snapshot.docs.map(
     (doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
@@ -398,7 +469,7 @@ const fetchStoriesForUser = async (userId: string) => {
   if (docSnap.exists()) {
     return docSnap.data()?.storyItems || [];
   } else {
-    return []; // No stories for this user
+    return [];
   }
 };
 
@@ -411,7 +482,7 @@ const fetchNextUsersStories = async (currentUserId: string) => {
     .filter(
       (doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) =>
         doc.id !== currentUserId
-    ) 
+    )
     .map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => ({
       userId: doc.id,
       ...doc.data(),
@@ -420,14 +491,13 @@ const fetchNextUsersStories = async (currentUserId: string) => {
   return allUsers;
 };
 
-
 const getUserLocation = async (userId: string) => {
   try {
     const db = getFirestore();
     const userDocRef = doc(db, "users", userId);
     const snapshot = await getDoc(userDocRef);
     if (snapshot.exists()) {
-      return snapshot.data()?.location || null;  // assuming location is a field in user doc
+      return snapshot.data()?.location || null;
     } else {
       console.log("No location data found!");
       return null;
@@ -438,14 +508,14 @@ const getUserLocation = async (userId: string) => {
   }
 };
 
-export const getNearbyUsers = async (currentUserLocation) => {
+export const getNearbyUsers = async (currentUserLocation: Location) => {
   const db = getFirestore();
   const usersRef = collection(db, "users");
   const snapshot = await getDocs(usersRef);
 
   const nearbyUsers: any[] = [];
 
-  snapshot.forEach((doc) => {
+  snapshot.forEach((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
     const data = doc.data();
     const userLocation = data.location;
 
@@ -469,87 +539,138 @@ export const getNearbyUsers = async (currentUserLocation) => {
   return nearbyUsers;
 };
 
- const handleStoryUpload = async (story: Story,pickStory,user) => {
-    console.log("hi");
-    const result = await pickStory;
+const handleStoryUpload = async (
+  story: Story,
+  pickStory: Promise<string[]>,
+  user: User
+) => {
+  const result = await pickStory;
 
-    if (!result || result.length === 0) return;
+  if (!result || result.length === 0) return;
 
-    const uploadedUrls = await uploadMultipleImages(result, "story");
+  const uploadedUrls = await uploadMultipleImages(result, "story");
 
-    const now = new Date();
+  const now = new Date();
 
-    const newStoryItems = uploadedUrls.map(url => ({
-      url,
-      createdAt: now,
-    }));
+  const newStoryItems = uploadedUrls.map(url => ({
+    url,
+    createdAt: now,
+  }));
 
-    const db = getFirestore();
-    const usersRef = collection(db, "users");
-    const q = query(usersRef, where("uid", "==", user.uid));
-    const querySnapshot = await getDocs(q);
+  const db = getFirestore();
+  const usersRef = collection(db, "users");
+  const q = query(usersRef, where("uid", "==", user.uid));
+  const querySnapshot = await getDocs(q);
 
-    if (querySnapshot.empty) {
-      console.log("User not found");
-      return;
-    }
+  if (querySnapshot.empty) {
+    console.log("User not found");
+    return;
+  }
 
-    const userDoc = querySnapshot.docs[0];
-    const userRef = doc(db, "users", userDoc.id);
-    const userData = userDoc.data();
+  const userDoc = querySnapshot.docs[0];
+  const userRef = doc(db, "users", userDoc.id);
+  const userData = userDoc.data();
 
-    const existingStories = userData?.stories || [];
+  const existingStories = userData?.stories || [];
 
-    const updatedStories = [...existingStories, ...newStoryItems];
+  const updatedStories = [...existingStories, ...newStoryItems];
 
-    await updateDoc(userRef, {
-      stories: updatedStories,
-      updatedAt: new Date(),
-    });
+  await updateDoc(userRef, {
+    stories: updatedStories,
+    updatedAt: new Date(),
+  });
 
-    const storyRef = doc(db, "stories", user.uid);
-    const storyDoc = await getDoc(storyRef);
+  const storyRef = doc(db, "stories", user.uid);
+  const storyDoc = await getDoc(storyRef);
 
-    const newStoryItem = {
-      date: now,
-      storyUrls: uploadedUrls,
-    };
-
-    if (storyDoc.exists()) {
-      const existingData = storyDoc.data();
-      const existingStories = existingData?.storyItems || [];
-
-      const updatedStories = [...existingStories, newStoryItem];
-
-      await setDoc(storyRef, {
-        storyItems: updatedStories,
-      });
-    } else {
-      await setDoc(storyRef, {
-        storyItems: [newStoryItem],
-      });
-    }
-
-    console.log("✅ Story added");
+  const newStoryItem = {
+    date: now,
+    storyUrls: uploadedUrls,
   };
 
+  if (storyDoc.exists()) {
+    const existingData = storyDoc.data();
+    const existingStories = existingData?.storyItems || [];
+
+    const updatedStories = [...existingStories, newStoryItem];
+
+    await setDoc(storyRef, {
+      storyItems: updatedStories,
+    });
+  } else {
+    await setDoc(storyRef, {
+      storyItems: [newStoryItem],
+    });
+  }
+};
+
+const fetchTags = (callback: (tags: any[]) => void) => {
+  try {
+    const db = getFirestore();
+    const tagsRef = collection(db, "tags");
+
+    const unsubscribe = onSnapshot(
+      tagsRef,
+      snapshot => {
+        const firstDoc = snapshot.docs[0];
+        const data = firstDoc.data();
+        callback(data.tags || []);
+      },
+      error => {
+        console.error("❌ Error in tags listener:", error);
+      }
+    );
+    return unsubscribe;
+  } catch (error) {
+    console.error("❌ Error fetching tags:", error);
+    throw error;
+  }
+};
+
+const fetchGenders = (callback: (genders: any[]) => void) => {
+  try {
+    const db = getFirestore();
+    const gendersRef = collection(db, "genders");
+
+    const unsubscribe = onSnapshot(
+      gendersRef,
+      snapshot => {
+        const firstDoc = snapshot.docs[0];
+        const data = firstDoc.data();
+        callback(data.genders || []);
+      },
+      error => {
+        console.error("❌ Error in genders listener:", error);
+      }
+    );
+
+    return unsubscribe;
+  } catch (error) {
+    console.error("❌ Error fetching genders:", error);
+    throw error;
+  }
+};
 
 export {
   authenticateWithPhone,
+  checkUserExistsForSignup,
   deleteImage,
   fetchAllUsers,
   fetchAllUserStories,
+  fetchGenders,
   fetchNextUsersStories,
   fetchStoriesForUser,
+  fetchTags,
   getCurrentAuth,
   getUserByEmail,
+  getUserByPhoneNumber,
   getUserByUid,
+  getUserLocation,
+  handleStoryUpload,
   saveUserToDatabase,
   signInWithGoogleFirebase,
   updateUser,
   uploadImage,
   uploadMultipleImages,
   verifyCode,
-  getUserLocation,
-  handleStoryUpload
 };

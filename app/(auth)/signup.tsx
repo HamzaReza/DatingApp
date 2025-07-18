@@ -4,10 +4,16 @@ import RnPhoneInput from "@/components/RnPhoneInput";
 import RnProgressBar from "@/components/RnProgressBar";
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
-import { authenticateWithPhone } from "@/firebase/auth";
+import showToaster from "@/components/RnToast";
+import { Colors } from "@/constants/Colors";
+import {
+  authenticateWithPhone,
+  checkUserExistsForSignup,
+} from "@/firebase/auth";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { setConfirmation } from "@/redux/slices/userSlice";
-import { SignupValues } from "@/types";
+import { wp } from "@/utils";
+import { FontAwesome6 } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { Formik } from "formik";
 import React, { useRef, useState } from "react";
@@ -28,13 +34,15 @@ export default function Signup() {
   const phoneInput = useRef<PhoneInput>(null);
   const dispatch = useDispatch();
 
-  const handleSignup = async (values: SignupValues) => {
+  const handleSignup = async () => {
     setIsLoading(true);
     try {
       const callingCode = `+${phoneInput.current?.state?.code}`;
       const cleanPhone = phoneInput?.current?.state?.number;
 
       const formattedPhone = `${callingCode}${cleanPhone}`;
+
+      await checkUserExistsForSignup(formattedPhone);
 
       const confirmation = await authenticateWithPhone(formattedPhone);
 
@@ -44,15 +52,36 @@ export default function Signup() {
         pathname: "/otp",
         params: { phone: formattedPhone },
       });
-    } catch (error) {
-      console.error("Signup error:", error);
+    } catch (error: any) {
+      showToaster({
+        type: "error",
+        message: error.message,
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <ScrollContainer topBar={<RnProgressBar progress={1 / 11} />}>
+    <ScrollContainer
+      topBar={
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+          }}
+        >
+          <FontAwesome6
+            name="house"
+            size={24}
+            color={Colors[theme].primary}
+            style={{ marginLeft: wp(5) }}
+            onPress={() => router.dismissAll()}
+          />
+          <RnProgressBar progress={1 / 12} />
+        </View>
+      }
+    >
       <Formik
         initialValues={{ phone: __DEV__ ? "3360102900" : "" }}
         validationSchema={signupSchema}
@@ -70,7 +99,7 @@ export default function Signup() {
               <RnPhoneInput
                 ref={phoneInput}
                 value={values.phone}
-                onChangeText={(text) => {
+                onChangeText={text => {
                   handleChange("phone")(text);
                 }}
                 error={errors.phone}

@@ -5,9 +5,12 @@ import RnImagePicker from "@/components/RnImagePicker";
 import RnProgressBar from "@/components/RnProgressBar";
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
+import { Colors } from "@/constants/Colors";
 import { uploadImage } from "@/firebase/auth";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { PhotoValues } from "@/types";
+import { wp } from "@/utils";
+import { FontAwesome6 } from "@expo/vector-icons";
 import { getAuth } from "@react-native-firebase/auth";
 import { router, useLocalSearchParams } from "expo-router";
 import { Formik } from "formik";
@@ -40,7 +43,25 @@ export default function Photo() {
   };
 
   return (
-    <ScrollContainer topBar={<RnProgressBar progress={9 / 11} />}>
+    <ScrollContainer
+      topBar={
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+          }}
+        >
+          <FontAwesome6
+            name="house"
+            size={24}
+            color={Colors[theme].primary}
+            style={{ marginLeft: wp(5) }}
+            onPress={() => router.dismissAll()}
+          />
+          <RnProgressBar progress={10 / 12} />
+        </View>
+      }
+    >
       <Formik
         initialValues={{
           photo: null,

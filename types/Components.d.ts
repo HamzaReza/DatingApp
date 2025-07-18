@@ -29,6 +29,8 @@ export interface RnInputProps {
   leftIcon?: IconNode;
   rightIcon?: IconNode;
   noError?: boolean;
+  multiline?: boolean;
+  numberOfLines?: number;
 }
 
 export interface RnPhoneInputProps {
@@ -249,4 +251,11 @@ export interface RnDateTimePickerProps {
   negativeButtonLabel?: string;
   is24Hour?: boolean;
   disabled?: boolean;
+}
+
+export interface SvgIconProps {
+  svgString: string;
+  width?: number;
+  height?: number;
+  color?: string;
 }

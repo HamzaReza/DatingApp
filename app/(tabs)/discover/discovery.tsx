@@ -22,7 +22,7 @@ import {
   relationshipIntentOptions,
   smokingPreferenceOptions,
 } from "@/constants/FilterOptions";
-import { fetchAllUsers, getNearbyUsers, getUserLocation } from "@/firebase/auth";
+import { fetchAllUsers, fetchTags } from "@/firebase/auth";
 import {
   setDeviceLocation,
   setLocationPermissionGranted,
@@ -31,7 +31,6 @@ import { RootState } from "@/redux/store";
 import { encodeImagePath, hp } from "@/utils";
 import { requestLocationPermission } from "@/utils/Permission";
 import { Ionicons } from "@expo/vector-icons";
-import { getAuth } from "@react-native-firebase/auth";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Location from "expo-location";
 import { router } from "expo-router";
@@ -39,17 +38,12 @@ import React, { useEffect, useState } from "react";
 import {
   FlatList,
   Image,
-  Platform,
   TouchableOpacity,
   useColorScheme,
   View,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import MapView, {
-  Marker,
-  PROVIDER_DEFAULT,
-  PROVIDER_GOOGLE,
-} from "react-native-maps";
+import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { useDispatch, useSelector } from "react-redux";
 
 type UsersList = {
@@ -67,20 +61,11 @@ type UsersList = {
   };
 };
 
-const interests = [
-  { id: "reading", label: "Reading", icon: "📚" },
-  { id: "photography", label: "Photography", icon: "📸" },
-  { id: "gaming", label: "Gaming", icon: "🎮" },
-  { id: "music", label: "Music", icon: "🎵" },
-  { id: "travel", label: "Travel", icon: "✈️" },
-  { id: "painting", label: "Painting", icon: "🎨" },
-  { id: "politics", label: "Politics", icon: "👥" },
-  { id: "charity", label: "Charity", icon: "❤️" },
-  { id: "cooking", label: "Cooking", icon: "🍳" },
-  { id: "pets", label: "Pets", icon: "🐾" },
-  { id: "sports", label: "Sports", icon: "⚽" },
-  { id: "fashion", label: "Fashion", icon: "👔" },
-];
+type Tag = {
+  id: string;
+  label: string;
+  iconSvg: string;
+};
 
 export default function Discover() {
   const colorScheme = useColorScheme();
@@ -91,47 +76,27 @@ export default function Discover() {
   const [filteredUsers, setFilteredUsers] = useState<UsersList[]>([]);
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [showAllInterests, setShowAllInterests] = useState(false);
-  const [currentUserLocation,setCurrentUserLocation] = useState({})
-  const displayedInterests = showAllInterests
-    ? interests
-    : interests.slice(0, 6);
-    const [isLocationLoaded, setIsLocationLoaded] = useState(false);
+  const [interests, setInterests] = useState<Tag[] | []>([]);
+  const [isLoadingTags, setIsLoadingTags] = useState(true);
 
+  useEffect(() => {
+    const unsubscribe = fetchTags(tagsArray => {
+      setInterests(tagsArray);
+      setIsLoadingTags(false);
+    });
 
- useEffect(() => {
-  const fetchNearby = async () => {
-    const userId = getAuth().currentUser?.uid;
-    if (!userId) return;
-
-    const currentLoc = await getUserLocation(userId); 
-    if (currentLoc) {
-      setCurrentUserLocation(currentLoc); 
-      const nearby = await getNearbyUsers(currentLoc);
-      setUsersList(nearby); 
-    }
-  };
-
- 
-  fetchNearby();
-
-  const interval = setInterval(fetchNearby, 30000);
-
-  return () => clearInterval(interval); 
-}, []);
-
-const fetchUserLocation = async () => {
-    const userId = getAuth().currentUser?.uid;
-    if (userId) {
-      const userLocation = await getUserLocation(userId);  
-      setCurrentUserLocation(userLocation)
-      setIsLocationLoaded(true)
-    }
-  };
-
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     getUsers();
   }, [selectedInterests]);
+
+  const displayedInterests = showAllInterests
+    ? interests
+    : interests.slice(0, 6);
 
   const getUsers = async () => {
     try {
@@ -151,11 +116,9 @@ const fetchUserLocation = async () => {
     }
   };
 
-
   const { deviceLocation, locationPermissionGranted } = useSelector(
     (state: RootState) => state.user
   );
-
 
   const [locationDropdownOpen, setLocationDropdownOpen] = useState(false);
   const [locationDropdownItems, setLocationDropdownItems] =
@@ -222,7 +185,6 @@ const fetchUserLocation = async () => {
     );
   };
 
-  // Get user's current location
   const getCurrentLocation = async () => {
     try {
       const permissionGranted = await requestLocationPermission();
@@ -239,7 +201,6 @@ const fetchUserLocation = async () => {
       dispatch(setLocationPermissionGranted(false));
     }
   };
-
 
   return (
     <ScrollContainer>
@@ -281,7 +242,6 @@ const fetchUserLocation = async () => {
         </View>
       </View>
 
-      {/* New Users Section */}
       <View style={styles.section}>
         <FlatList
           data={usersList}
@@ -308,7 +268,6 @@ const fetchUserLocation = async () => {
         />
       </View>
 
-      {/* Interests Section */}
       <View style={styles.section}>
         <View style={styles.subHeadContainer}>
           <RnText style={styles.sectionTitle}>Interests</RnText>
@@ -321,30 +280,22 @@ const fetchUserLocation = async () => {
         </View>
 
         <View style={styles.interestsContainer}>
-          {interests.map(interest => (
-            <InterestTag
-              key={interest.id}
-              title={interest.label}
-              icon={interest.icon}
-              isSelected={selectedInterests.includes(interest.id)}
-              onPress={() => handleInterestPress(interest.id)}
-            />
-          ))}
-        </View>
-        <View style={styles.interestsContainer}>
-          {displayedInterests.map(interest => (
-            <InterestTag
-              key={interest.id}
-              title={interest.label}
-              icon={interest.icon}
-              isSelected={selectedInterests.includes(interest.id)}
-              onPress={() => handleInterestPress(interest.id)}
-            />
-          ))}
+          {isLoadingTags ? (
+            <RnText style={styles.sectionSubtitle}>Loading interests...</RnText>
+          ) : (
+            displayedInterests.map(interest => (
+              <InterestTag
+                key={interest.id}
+                title={interest.label}
+                icon={interest.iconSvg}
+                isSelected={selectedInterests.includes(interest.id)}
+                onPress={() => handleInterestPress(interest.id)}
+              />
+            ))
+          )}
         </View>
       </View>
 
-      {/* Around Me Section */}
       <View style={[styles.section, { marginBottom: hp(12) }]}>
         <View style={styles.subHeadContainer}>
           <RnText style={styles.sectionTitle}>Around me</RnText>
@@ -360,63 +311,60 @@ const fetchUserLocation = async () => {
           around you
         </RnText>
 
-      {locationPermissionGranted && isLocationLoaded ? (
-<MapView
-  style={styles.map}
-  initialRegion={{
-    latitude: currentUserLocation.latitude,
-    longitude: currentUserLocation.longitude,
-    latitudeDelta: 0.01,
-    longitudeDelta: 0.01,
-  }}
-  provider={Platform.OS === "android" ? PROVIDER_GOOGLE : PROVIDER_DEFAULT}
-  showsUserLocation={true}
-  showsMyLocationButton={true}
->
-  {usersList.map((user, index) => {
-    const lat = parseFloat(user.location?.latitude || user.location?._latitude);
-    const lng = parseFloat(user.location?.longitude || user.location?._longitude);
+        {locationPermissionGranted ? (
+          <MapView
+            style={styles.map}
+            initialRegion={{
+              latitude: deviceLocation?.coords.latitude || 37.7749,
+              longitude: deviceLocation?.coords.longitude || -122.4194,
+              latitudeDelta: 0.01,
+              longitudeDelta: 0.01,
+            }}
+            // provider={
+            //   Platform.OS === "android" ? PROVIDER_GOOGLE : PROVIDER_DEFAULT
+            // }
+            provider={PROVIDER_GOOGLE}
+            showsUserLocation={locationPermissionGranted}
+            showsMyLocationButton={locationPermissionGranted}
+          >
+            {usersList.map((user, index) => {
+              const lat = user.location?._latitude;
+              const lng = user.location?._longitude;
 
-    if (!lat || !lng || user.uid === getAuth().currentUser?.uid) return null;
+              if (!lat || !lng) return null;
 
-    return (
-      <Marker
-        key={user.id || index}
-        coordinate={{ latitude: lat, longitude: lng }}
-        title={user.name}
-      >
-        <Image
-          source={{ uri: encodeImagePath(user.photo || "") }}
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: 20,
-            borderWidth: 2,
-            borderColor: "#fff",
-          }}
-          resizeMode="cover"
-        />
-      </Marker>
-    );
-  })}
-</MapView>
-
-) : (
-  <View
-    style={[
-      styles.map,
-      styles.getLocationContainer,
-      { justifyContent: "center" },
-    ]}
-  >
-    <RnButton
-      title="Get Location"
-      onPress={() => getCurrentLocation()}
-      style={[styles.getLocationButton, styles.getLocationButtonText]}
-    />
-  </View>
-)}
-
+              return (
+                <>
+                  <Marker
+                    key={user.id || index}
+                    coordinate={{ latitude: lat, longitude: lng }}
+                    title={user.name}
+                  >
+                    <Image
+                      source={{ uri: encodeImagePath(user.photo || "") }}
+                      style={{ width: 40, height: 40, borderRadius: 20 }}
+                      resizeMode="cover"
+                    />
+                  </Marker>
+                </>
+              );
+            })}
+          </MapView>
+        ) : (
+          <View
+            style={[
+              styles.map,
+              styles.getLocationContainer,
+              { justifyContent: "center" },
+            ]}
+          >
+            <RnButton
+              title="Get Location"
+              onPress={() => getCurrentLocation()}
+              style={[styles.getLocationButton, styles.getLocationButtonText]}
+            />
+          </View>
+        )}
       </View>
 
       <RnModal show={filterModal} backButton={() => setFilterModal(false)}>

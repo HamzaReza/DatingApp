@@ -1,34 +1,34 @@
 import getDistanceFromLatLonInMeters from "@/utils/Distance";
 import {
-  getAuth,
-  GoogleAuthProvider,
-  signInWithCredential,
-  signInWithPhoneNumber,
+    getAuth,
+    GoogleAuthProvider,
+    signInWithCredential,
+    signInWithPhoneNumber,
 } from "@react-native-firebase/auth";
 import {
-  collection,
-  doc,
-  FirebaseFirestoreTypes,
-  getDoc,
-  getDocs,
-  getFirestore,
-  query,
-  setDoc,
-  Timestamp,
-  updateDoc,
-  where,
+    collection,
+    doc,
+    FirebaseFirestoreTypes,
+    getDoc,
+    getDocs,
+    getFirestore,
+    query,
+    setDoc,
+    Timestamp,
+    updateDoc,
+    where,
 } from "@react-native-firebase/firestore";
 import {
-  deleteObject,
-  getDownloadURL,
-  getStorage,
-  putFile,
-  ref,
+    deleteObject,
+    getDownloadURL,
+    getStorage,
+    putFile,
+    ref,
 } from "@react-native-firebase/storage";
 import {
-  GoogleSignin,
-  isErrorWithCode,
-  isSuccessResponse,
+    GoogleSignin,
+    isErrorWithCode,
+    isSuccessResponse,
 } from "@react-native-google-signin/google-signin";
 
 const auth = getAuth();
@@ -649,19 +649,99 @@ const getNextUserForSwipe = async (currentUserId: string, excludeUserIds: string
   }
 };
 
+const fetchUserMatches = async (currentUserId: string) => {
+  try {
+    const db = getFirestore();
+    
+    // Get all matches where current user is involved
+    const matchesRef = collection(db, "matches");
+    const matchesSnapshot = await getDocs(matchesRef);
+    
+    const userMatches: any[] = [];
+    
+    matchesSnapshot.forEach((doc) => {
+      const matchData = doc.data();
+      const users = matchData.users || [];
+      
+      // Check if current user is in this match
+      if (users.includes(currentUserId) && matchData.isActive) {
+        // Get the other user's ID
+        const otherUserId = users.find((id: string) => id !== currentUserId);
+        if (otherUserId) {
+          userMatches.push({
+            matchId: doc.id,
+            otherUserId,
+            matchedAt: matchData.matchedAt,
+          });
+        }
+      }
+    });
+    
+    // Fetch user data for all matched users
+    const matchesWithUserData = await Promise.all(
+      userMatches.map(async (match) => {
+        try {
+          const userDoc = await getDoc(doc(db, "users", match.otherUserId));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            
+            // Generate random distance and match percentage if not available
+            const distance = `${(Math.random() * 10 + 0.5).toFixed(1)} km away`;
+            const matchPercentage = Math.floor(Math.random() * 20 + 80); // 80-100%
+            
+            // Handle location field properly
+            let locationString = "UNKNOWN";
+            if (userData.location) {
+              if (typeof userData.location === 'string') {
+                locationString = userData.location;
+              } else if (userData.location.city) {
+                locationString = userData.location.city;
+              } else if (userData.location.latitude && userData.location.longitude) {
+                locationString = "LOCATION";
+              }
+            }
+            
+            return {
+              id: match.matchId,
+              name: userData.name || "Unknown",
+              age: userData.age || 25,
+              location: locationString,
+              distance,
+              image: userData.photo || "https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=300",
+              matchPercentage,
+              matchedAt: match.matchedAt,
+            };
+          }
+          return null;
+        } catch (error) {
+          console.error("Error fetching user data for match:", error);
+          return null;
+        }
+      })
+    );
+    
+    // Filter out null values and return
+    return matchesWithUserData.filter(match => match !== null);
+  } catch (error) {
+    console.error("Error fetching user matches:", error);
+    return [];
+  }
+};
+
 export {
-  authenticateWithPhone, checkForMatch, deleteImage,
-  fetchAllUsers,
-  fetchAllUserStories,
-  fetchNextUsersStories,
-  fetchStoriesForUser,
-  getCurrentAuth, getNextUserForSwipe, getRandomUser, getUserByEmail,
-  getUserByUid, getUserLocation,
-  handleStoryUpload, recordLike, saveUserToDatabase,
-  signInWithGoogleFirebase,
-  updateUser,
-  uploadImage,
-  uploadMultipleImages,
-  verifyCode
+    authenticateWithPhone, checkForMatch, deleteImage,
+    fetchAllUsers,
+    fetchAllUserStories,
+    fetchNextUsersStories,
+    fetchStoriesForUser,
+    fetchUserMatches,
+    getCurrentAuth, getNextUserForSwipe, getRandomUser, getUserByEmail,
+    getUserByUid, getUserLocation,
+    handleStoryUpload, recordLike, saveUserToDatabase,
+    signInWithGoogleFirebase,
+    updateUser,
+    uploadImage,
+    uploadMultipleImages,
+    verifyCode
 };
 

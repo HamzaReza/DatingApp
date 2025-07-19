@@ -87,17 +87,17 @@ export default function Interests() {
     selectedInterests: string[],
     setFieldValue: (field: string, value: any) => void
   ) => {
-    const isSelected = selectedInterests.includes(interest.id);
+    const isSelected = selectedInterests.includes(interest.label);
     const canSelect = selectedInterests.length < 7 || isSelected;
 
     const handlePress = () => {
       if (isSelected) {
         setFieldValue(
           "interests",
-          selectedInterests.filter(id => id !== interest.id)
+          selectedInterests.filter(label => label !== interest.label)
         );
       } else if (canSelect) {
-        setFieldValue("interests", [...selectedInterests, interest.id]);
+        setFieldValue("interests", [...selectedInterests, interest.label]);
       }
     };
 

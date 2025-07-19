@@ -29,6 +29,7 @@ import {
 } from "@/redux/slices/userSlice";
 import { RootState } from "@/redux/store";
 import { encodeImagePath, hp } from "@/utils";
+import getDistanceFromLatLonInMeters from "@/utils/Distance";
 import { requestLocationPermission } from "@/utils/Permission";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -56,8 +57,8 @@ type UsersList = {
   uid?: string;
   interests?: string;
   location?: {
-    _latitude: number;
-    _longitude: number;
+    latitude: number;
+    longitude: number;
   };
 };
 
@@ -92,7 +93,7 @@ export default function Discover() {
 
   useEffect(() => {
     getUsers();
-  }, [selectedInterests]);
+  }, []);
 
   const displayedInterests = showAllInterests
     ? interests
@@ -100,30 +101,45 @@ export default function Discover() {
 
   const getUsers = async () => {
     try {
-      const users = (await fetchAllUsers()) as UsersList[];
+      const users: UsersList[] = await fetchAllUsers();
 
-      setUsersList(users);
-
-      const filtered = users.filter(user =>
-        user.interests
-          ?.split(",")
-          .some((interest: string) => selectedInterests.includes(interest))
+      const usersWithoutCurrentUser = users.filter(
+        user => user.id !== currentUser?.uid
       );
 
-      setFilteredUsers(filtered);
+      setUsersList(usersWithoutCurrentUser);
+      setFilteredUsers(usersWithoutCurrentUser);
     } catch (err) {
       console.error("Failed to fetch users:", err);
     }
   };
 
-  const { deviceLocation, locationPermissionGranted } = useSelector(
-    (state: RootState) => state.user
-  );
+  useEffect(() => {
+    if (usersList.length === 0) return;
 
-  const [locationDropdownOpen, setLocationDropdownOpen] = useState(false);
-  const [locationDropdownItems, setLocationDropdownItems] =
-    useState(locationOptions);
-  const [locationDropdownValue, setLocationDropdownValue] = useState("germany");
+    if (selectedInterests.length === 0) {
+      setFilteredUsers(usersList);
+      return;
+    }
+
+    const filtered = usersList.filter(user => {
+      const userInterests = user.interests?.split(",").map(i => i.trim()) || [];
+
+      const hasAllSelectedInterests = selectedInterests.every(
+        (selectedInterest: string) => userInterests.includes(selectedInterest)
+      );
+
+      return hasAllSelectedInterests;
+    });
+
+    setFilteredUsers(filtered);
+  }, [selectedInterests, usersList]);
+
+  const {
+    deviceLocation,
+    locationPermissionGranted,
+    user: currentUser,
+  } = useSelector((state: RootState) => state.user);
 
   const [filterModal, setFilterModal] = useState(false);
 
@@ -177,12 +193,13 @@ export default function Discover() {
   const [casualDatingAndMatrimonyValue, setCasualDatingAndMatrimonyValue] =
     useState("");
 
-  const handleInterestPress = (interestId: string) => {
-    setSelectedInterests(prev =>
-      prev.includes(interestId)
-        ? prev.filter(id => id !== interestId)
-        : [...prev, interestId]
-    );
+  const handleInterestPress = (label: string) => {
+    setSelectedInterests(prev => {
+      const newSelection = prev.includes(label)
+        ? prev.filter(id => id !== label)
+        : [...prev, label];
+      return newSelection;
+    });
   };
 
   const getCurrentLocation = async () => {
@@ -205,19 +222,6 @@ export default function Discover() {
   return (
     <ScrollContainer>
       <View style={styles.header}>
-        <View>
-          <RnDropdown
-            open={locationDropdownOpen}
-            items={locationDropdownItems}
-            value={locationDropdownValue}
-            setOpen={setLocationDropdownOpen}
-            setItems={setLocationDropdownItems}
-            setValue={setLocationDropdownValue}
-            placeholder="Location"
-            style={styles.locationDropdown}
-            dropdownText={styles.locationDropdownText}
-          />
-        </View>
         <RnText style={styles.title}>Discover</RnText>
 
         <View style={styles.headerActions}>
@@ -244,27 +248,43 @@ export default function Discover() {
 
       <View style={styles.section}>
         <FlatList
-          data={usersList}
+          data={filteredUsers}
           keyExtractor={item => item.id}
-          renderItem={({ item }) => (
-            <UserCard
-              id={item.id}
-              name={item.name || ""}
-              age={item.age || 0}
-              location={
-                item.location
-                  ? `${item.location._latitude}, ${item.location._longitude}`
-                  : ""
-              }
-              distance={item.distance || ""}
-              image={encodeImagePath(item.photo || "")}
-              isNew={item.isNew}
-              onPress={() => router.push(`/discover/${item.uid || item.id}`)}
-            />
-          )}
+          renderItem={({ item }) => {
+            let calculatedDistance: number | undefined;
+            if (
+              deviceLocation?.coords &&
+              item.location?.latitude &&
+              item.location?.longitude
+            ) {
+              calculatedDistance = getDistanceFromLatLonInMeters(
+                deviceLocation.coords.latitude,
+                deviceLocation.coords.longitude,
+                item.location.latitude,
+                item.location.longitude
+              );
+            }
+
+            return (
+              <UserCard
+                id={item.id}
+                name={item.name || ""}
+                age={item.age || 0}
+                image={encodeImagePath(item.photo || "")}
+                isNew={item.isNew}
+                distance={calculatedDistance}
+                onPress={() => router.push(`/discover/${item.uid || item.id}`)}
+              />
+            );
+          }}
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.usersList}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <RnText style={styles.emptyText}>No users found</RnText>
+            </View>
+          }
         />
       </View>
 
@@ -288,8 +308,12 @@ export default function Discover() {
                 key={interest.id}
                 title={interest.label}
                 icon={interest.iconSvg}
-                isSelected={selectedInterests.includes(interest.id)}
-                onPress={() => handleInterestPress(interest.id)}
+                isSelected={selectedInterests.includes(
+                  interest.label.toLowerCase()
+                )}
+                onPress={() =>
+                  handleInterestPress(interest.label.toLowerCase())
+                }
               />
             ))
           )}
@@ -304,7 +328,9 @@ export default function Discover() {
           People
           {selectedInterests.length > 0
             ? ` with interest in ${interests
-                .filter(item => selectedInterests.includes(item.id))
+                .filter(item =>
+                  selectedInterests.includes(item.label.toLowerCase())
+                )
                 .map(item => item.label)
                 .join(", ")}`
             : ""}{" "}
@@ -320,33 +346,28 @@ export default function Discover() {
               latitudeDelta: 0.01,
               longitudeDelta: 0.01,
             }}
-            // provider={
-            //   Platform.OS === "android" ? PROVIDER_GOOGLE : PROVIDER_DEFAULT
-            // }
             provider={PROVIDER_GOOGLE}
             showsUserLocation={locationPermissionGranted}
             showsMyLocationButton={locationPermissionGranted}
           >
             {usersList.map((user, index) => {
-              const lat = user.location?._latitude;
-              const lng = user.location?._longitude;
+              const lat = user.location?.latitude;
+              const lng = user.location?.longitude;
 
               if (!lat || !lng) return null;
 
               return (
-                <>
-                  <Marker
-                    key={user.id || index}
-                    coordinate={{ latitude: lat, longitude: lng }}
-                    title={user.name}
-                  >
-                    <Image
-                      source={{ uri: encodeImagePath(user.photo || "") }}
-                      style={{ width: 40, height: 40, borderRadius: 20 }}
-                      resizeMode="cover"
-                    />
-                  </Marker>
-                </>
+                <Marker
+                  key={user.id || index}
+                  coordinate={{ latitude: lat, longitude: lng }}
+                  title={user.name}
+                >
+                  <Image
+                    source={{ uri: encodeImagePath(user.photo || "") }}
+                    style={{ width: 40, height: 40, borderRadius: 20 }}
+                    resizeMode="cover"
+                  />
+                </Marker>
               );
             })}
           </MapView>
@@ -493,20 +514,6 @@ export default function Discover() {
               style={styles.filterInput}
               zIndex={5000}
               zIndexInverse={4000}
-            />
-
-            <RnText style={styles.modalOptionText}>Hobbies</RnText>
-            <RnDropdown
-              open={hobbiesOpen}
-              items={hobbiesItems}
-              value={hobbiesValue}
-              setOpen={setHobbiesOpen}
-              setItems={setHobbiesItems}
-              setValue={setHobbiesValue}
-              placeholder="Select hobbies"
-              style={styles.filterInput}
-              zIndex={4000}
-              zIndexInverse={5000}
             />
 
             <RnText style={styles.modalOptionText}>Alcohol Preference</RnText>

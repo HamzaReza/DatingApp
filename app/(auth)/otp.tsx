@@ -60,6 +60,11 @@ export default function OtpScreen() {
                     type: "error",
                     message: "Waiting for approval",
                   });
+                } else if (existingUser.status === "rejected") {
+                  showToaster({
+                    type: "error",
+                    message: "Account blocked. Contact support",
+                  });
                 } else {
                   AsyncStorage.clear();
                   router.dismissAll();

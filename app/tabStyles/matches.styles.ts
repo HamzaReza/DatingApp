@@ -11,7 +11,6 @@ export default (theme: "dark" | "light") =>
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "space-between",
-      paddingHorizontal: wp(4),
       paddingBottom: hp(1),
     },
     headerTitle: {

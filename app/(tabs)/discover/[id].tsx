@@ -6,11 +6,13 @@ import RnText from "@/components/RnText";
 import RoundButton from "@/components/RoundButton";
 import { Colors } from "@/constants/Colors";
 import { getUserByUid } from "@/firebase/auth";
+import { RootState } from "@/redux/store";
 import { encodeImagePath, hp, wp } from "@/utils";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Animated,
   FlatList,
   Image,
@@ -20,48 +22,24 @@ import {
   useColorScheme,
   View,
 } from "react-native";
+import { useSelector } from "react-redux";
 
 const IMAGE_HEIGHT = hp(60);
-
-// const profileData = {
-//   name: "Jessica Parker",
-//   age: 23,
-//   profession: "Professional model",
-//   bio: "lorem ipsum lorem ipsum lorem ipsum",
-//   location: "Chicago, IL United States",
-//   distance: "1 km",
-//   about:
-//     "My name is Jessica Parker and I enjoy meeting new people and finding ways to help them have an uplifting experience. I enjoy reading...",
-//   interests: [
-//     { title: "Travelling", isSelected: true },
-//     { title: "Books", isSelected: true },
-//     { title: "Music", isSelected: false },
-//     { title: "Dancing", isSelected: false },
-//     { title: "Modeling", isSelected: false },
-//   ],
-//   gallery: [
-//     "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=300",
-//     "https://images.pexels.com/photos/1130626/pexels-photo-1130626.jpeg?auto=compress&cs=tinysrgb&w=300",
-//     "https://images.pexels.com/photos/1499327/pexels-photo-1499327.jpeg?auto=compress&cs=tinysrgb&w=300",
-//     "https://images.pexels.com/photos/1674752/pexels-photo-1674752.jpeg?auto=compress&cs=tinysrgb&w=300",
-//   ],
-//   mainImage:
-//     "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=400",
-// };
 
 export default function Profile() {
   const colorScheme = useColorScheme() || "light";
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
 
+  const { user } = useSelector((state: RootState) => state.user);
+
   const { id } = useLocalSearchParams();
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [showFullAbout, setShowFullAbout] = useState(false);
-  const [profileData, setProfileData] = useState(Object);
+  const [profileData, setProfileData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const scrollY = useRef(new Animated.Value(0)).current;
-
-  console.log(profileData?.interests);
 
   useEffect(() => {
     getUserDetails();
@@ -70,6 +48,7 @@ export default function Profile() {
   const getUserDetails = async () => {
     const data = await getUserByUid(id as string);
     setProfileData(data);
+    setLoading(false);
   };
 
   const handleEditPress = () => {
@@ -124,6 +103,14 @@ export default function Profile() {
     extrapolate: "clamp",
   });
 
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color={Colors[theme].primary} />
+      </View>
+    );
+  }
+
   return (
     <Container>
       <View style={styles.header}>
@@ -134,14 +121,15 @@ export default function Profile() {
           backgroundColour={Colors[theme].whiteText}
           onPress={() => router.back()}
         />
-        <View />
-        <RoundButton
-          iconName="edit"
-          iconSize={22}
-          iconColor={Colors[theme].primary}
-          backgroundColour={Colors[theme].whiteText}
-          onPress={handleEditPress}
-        />
+        {user.uid === id && (
+          <RoundButton
+            iconName="edit"
+            iconSize={22}
+            iconColor={Colors[theme].primary}
+            backgroundColour={Colors[theme].whiteText}
+            onPress={handleEditPress}
+          />
+        )}
       </View>
 
       {/* Animated Profile Image */}
@@ -161,36 +149,39 @@ export default function Profile() {
       </Animated.View>
 
       {/* Floating Action Buttons */}
-      <Animated.View
-        style={[
-          styles.floatingActionButtons,
-          {
-            transform: [{ translateY: actionButtonsTranslateY }],
-            opacity: actionButtonsOpacity,
-          },
-        ]}
-      >
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={handleDislikePress}
-        >
-          <Ionicons name="close" size={28} color={Colors[theme].greenText} />
-        </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.actionButton, styles.likeButton]}
-          onPress={handleLikePress}
+      {user.uid !== id && (
+        <Animated.View
+          style={[
+            styles.floatingActionButtons,
+            {
+              transform: [{ translateY: actionButtonsTranslateY }],
+              opacity: actionButtonsOpacity,
+            },
+          ]}
         >
-          <Ionicons name="heart" size={32} color={Colors[theme].whiteText} />
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={handleDislikePress}
+          >
+            <Ionicons name="close" size={28} color={Colors[theme].greenText} />
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={handleSuperLikePress}
-        >
-          <Ionicons name="star" size={28} color={Colors[theme].greenText} />
-        </TouchableOpacity>
-      </Animated.View>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.likeButton]}
+            onPress={handleLikePress}
+          >
+            <Ionicons name="heart" size={32} color={Colors[theme].whiteText} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={handleSuperLikePress}
+          >
+            <Ionicons name="star" size={28} color={Colors[theme].greenText} />
+          </TouchableOpacity>
+        </Animated.View>
+      )}
 
       {/* Scrollable Content */}
       <Animated.ScrollView
@@ -257,7 +248,7 @@ export default function Profile() {
               style={styles.about}
               numberOfLines={showFullAbout ? undefined : 3}
             >
-              {profileData?.about}
+              {profileData?.aboutMe}
             </RnText>
             <TouchableOpacity onPress={() => setShowFullAbout(!showFullAbout)}>
               <RnText style={styles.readMore}>
@@ -274,8 +265,8 @@ export default function Profile() {
                 (interest: string, index: number) => (
                   <InterestTag
                     key={index}
-                    title={interest.trim()} // trims any space
-                    isSelected={true} // or use any logic you want
+                    title={interest.trim()}
+                    isSelected={true}
                   />
                 )
               )}

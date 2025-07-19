@@ -216,7 +216,10 @@ export default function Home() {
             onPress={() => router.push("/main/notification")}
             showDot={hasNotification}
           />
-          <TouchableOpacity style={{}}>
+          <TouchableOpacity
+            style={{}}
+            onPress={() => router.push(`/discover/${user?.uid}`)}
+          >
             <RnAvatar
               source={encodeImagePath(user?.photo)}
               avatarHeight={wp(9)}

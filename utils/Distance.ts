@@ -14,4 +14,16 @@ export default function getDistanceFromLatLonInMeters(lat1:number, lon1:number, 
   return distance; 
 }
 
+export async function getNearbyHangoutUsers(currentLat: number, currentLon: number, allUsers: any[]) {
+  return allUsers.filter(user => {
+    const distance = getDistanceFromLatLonInMeters(
+      currentLat,
+      currentLon,
+      user.latitude,
+      user.longitude
+    );
+    return distance <= 10000; // 10 km
+  });
+}
+
 

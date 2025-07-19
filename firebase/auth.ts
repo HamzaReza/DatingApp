@@ -6,6 +6,8 @@ import {
   signInWithPhoneNumber,
 } from "@react-native-firebase/auth";
 import {
+  arrayRemove,
+  arrayUnion,
   collection,
   doc,
   FirebaseFirestoreTypes,
@@ -17,6 +19,7 @@ import {
   Timestamp,
   updateDoc,
   where,
+  writeBatch,
 } from "@react-native-firebase/firestore";
 import {
   deleteObject,
@@ -469,6 +472,148 @@ export const getNearbyUsers = async (currentUserLocation) => {
   return nearbyUsers;
 };
 
+
+export const sendGroupInvites = async (
+  invitedBy: string,
+  invitedUsers: string[]
+) => {
+  try {
+    const db = getFirestore();
+    
+    // 1. First fetch all required user names
+    const userFetchPromises = [
+      getDoc(doc(db, "users", invitedBy)), // Get inviter info
+      ...invitedUsers.map(uid => getDoc(doc(db, "users", uid))) // Get all invited users
+    ];
+
+    const userSnapshots = await Promise.all(userFetchPromises);
+    const inviterData = userSnapshots[0].data();
+    const inviterName = inviterData?.name || "Someone";
+
+    // 2. Create the group document
+    const groupRef = doc(collection(db, "messages"));
+    const groupId = groupRef.id;
+    const invitedAt = Timestamp.now();
+
+    const inviteUserObjects = invitedUsers.map((uid, index) => {
+      const userData = userSnapshots[index + 1]?.data();
+      return {
+        uid,
+        name: userData?.name || "User",
+        status: "pending",
+        invitedAt
+      };
+    });
+
+    await setDoc(groupRef, {
+      id: groupId,
+      invitedBy,
+      invitedByName: inviterName,
+      invitedAt,
+      type: 'group',
+      users: inviteUserObjects,
+      createdAt: Timestamp.now()
+    });
+
+    // 3. Save notifications with personalized messages
+    const notificationBatch = writeBatch(db);
+    const now = Timestamp.now();
+
+    for (let i = 0; i < invitedUsers.length; i++) {
+      const userId = invitedUsers[i];
+      const userData = userSnapshots[i + 1]?.data();
+      const userName = userData?.name || "User";
+      
+      const notificationRef = doc(db, "notifications", userId);
+      const notificationDoc = await getDoc(notificationRef);
+
+      const newNotification = {
+        title: 'Group chat',
+        subtitle: `${inviterName} has invited you for a hangout. Want to join?`,
+        type: "messages",
+        groupId,
+        createdAt: now,
+      };
+
+      if (notificationDoc.exists()) {
+        const existingNotifications = notificationDoc.data()?.items || [];
+        notificationBatch.update(notificationRef, {
+          items: [...existingNotifications, newNotification]
+        });
+      } else {
+        notificationBatch.set(notificationRef, {
+          items: [newNotification]
+        });
+      }
+    }
+
+    await notificationBatch.commit();
+    console.log("✅ Group created with personalized notifications");
+    return groupId;
+
+  } catch (error) {
+    console.error("❌ Error in group creation:", error);
+    throw new Error("Failed to create group and send invitations");
+  }
+};
+
+
+export const getUserNotifications = async (userId: string) => {
+  const db = getFirestore();
+  try {
+    const notificationRef = doc(db, "notifications", userId);
+    const snapshot = await getDoc(notificationRef);
+    
+    if (snapshot.exists()) {
+      return snapshot.data().items || [];
+    }
+    return [];
+  } catch (error) {
+    console.error("Error fetching notifications:", error);
+    return [];
+  }
+};
+
+export const respondToGroupInvite = async (
+  groupId: string,
+  userId: string,
+  accept: boolean
+) => {
+  const db = getFirestore();
+  try {
+    // 1. Get the current group data
+    const groupRef = doc(db, "messages", groupId);
+    const groupSnap = await getDoc(groupRef);
+
+    if (!groupSnap.exists()) {
+      throw new Error("Group not found");
+    }
+
+    // 2. Find and update the specific user's status
+    const currentUsers = groupSnap.data().users || [];
+    const updatedUsers = currentUsers.map(user => {
+      if (user.uid === userId) {
+        return {
+          ...user, // Preserve all existing user data (including name)
+          status: accept ? "accepted" : "rejected",
+          respondedAt: new Date()
+        };
+      }
+      return user;
+    });
+
+    // 3. Update the group document with the modified users array
+    await updateDoc(groupRef, {
+      users: updatedUsers
+    });
+
+    return true;
+  } catch (error) {
+    console.error("Error responding to invite:", error);
+    throw error;
+  }
+};
+
  const handleStoryUpload = async (story: Story,pickStory,user) => {
     console.log("hi");
     const result = await pickStory;
@@ -532,6 +677,7 @@ export const getNearbyUsers = async (currentUserLocation) => {
 
     console.log("✅ Story added");
   };
+
 
 
 export {

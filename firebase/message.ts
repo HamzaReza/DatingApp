@@ -1,0 +1,320 @@
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  FirebaseFirestoreTypes,
+  getDocs,
+  getFirestore,
+  onSnapshot,
+  orderBy,
+  query,
+  Timestamp,
+  updateDoc,
+  where,
+} from "@react-native-firebase/firestore";
+
+// Types for message data
+export interface Message {
+  id: string;
+  senderId: string;
+  receiverId: string;
+  content: string;
+  timestamp: Date;
+  isRead: boolean;
+  messageType: 'text' | 'image' | 'audio';
+  mediaUrl?: string;
+}
+
+export interface Conversation {
+  id: string;
+  participants: string[];
+  lastMessage?: Message;
+  lastMessageTime?: Date;
+  unreadCount: number;
+}
+
+// Create a new message
+const createMessage = async (messageData: {
+  senderId: string;
+  receiverId: string;
+  content: string;
+  messageType?: 'text' | 'image' | 'audio';
+  mediaUrl?: string;
+}) => {
+  try {
+    const db = getFirestore();
+    const messageRef = await addDoc(collection(db, "messages"), {
+      senderId: messageData.senderId,
+      receiverId: messageData.receiverId,
+      content: messageData.content,
+      messageType: messageData.messageType || 'text',
+      mediaUrl: messageData.mediaUrl,
+      timestamp: Timestamp.now(),
+      isRead: false,
+    });
+    return messageRef.id;
+  } catch (error) {
+    console.error("Error creating message:", error);
+    throw error;
+  }
+};
+
+// Fetch messages between two users
+const fetchMessagesBetweenUsers = (
+  user1Id: string,
+  user2Id: string,
+  callback: (messages: Message[]) => void
+) => {
+  try {
+    const db = getFirestore();
+    const messagesRef = collection(db, "messages");
+
+    // Query for messages where user1 is sender and user2 is receiver
+    const q1 = query(
+      messagesRef,
+      where("senderId", "==", user1Id),
+      where("receiverId", "==", user2Id),
+      orderBy("timestamp", "asc")
+    );
+
+    // Query for messages where user2 is sender and user1 is receiver
+    const q2 = query(
+      messagesRef,
+      where("senderId", "==", user2Id),
+      where("receiverId", "==", user1Id),
+      orderBy("timestamp", "asc")
+    );
+
+    const unsubscribe1 = onSnapshot(
+      q1,
+      snapshot1 => {
+        const unsubscribe2 = onSnapshot(
+          q2,
+          snapshot2 => {
+            const messages1 = snapshot1.docs.map(
+              (doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => ({
+                id: doc.id,
+                ...doc.data(),
+                timestamp: doc.data().timestamp?.toDate() || new Date(),
+              })
+            ) as Message[];
+
+            const messages2 = snapshot2.docs.map(
+              (doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => ({
+                id: doc.id,
+                ...doc.data(),
+                timestamp: doc.data().timestamp?.toDate() || new Date(),
+              })
+            ) as Message[];
+
+            // Combine and sort all messages by timestamp
+            const allMessages = [...messages1, ...messages2].sort(
+              (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
+            );
+
+            callback(allMessages);
+          },
+          error => {
+            console.error("Error in messages listener (q2):", error);
+            callback([]);
+          }
+        );
+
+        return () => {
+          unsubscribe2();
+        };
+      },
+      error => {
+        console.error("Error in messages listener (q1):", error);
+        callback([]);
+      }
+    );
+
+    return unsubscribe1;
+  } catch (error) {
+    console.error("Error setting up messages listener:", error);
+    throw error;
+  }
+};
+
+// Fetch all conversations for a user
+const fetchUserConversations = (
+  userId: string,
+  callback: (conversations: Conversation[]) => void
+) => {
+  try {
+    const db = getFirestore();
+    const messagesRef = collection(db, "messages");
+
+    // Get messages where user is sender
+    const sentMessagesQuery = query(
+      messagesRef,
+      where("senderId", "==", userId),
+      orderBy("timestamp", "desc")
+    );
+
+    // Get messages where user is receiver
+    const receivedMessagesQuery = query(
+      messagesRef,
+      where("receiverId", "==", userId),
+      orderBy("timestamp", "desc")
+    );
+
+    const unsubscribeSent = onSnapshot(
+      sentMessagesQuery,
+      sentSnapshot => {
+        const unsubscribeReceived = onSnapshot(
+          receivedMessagesQuery,
+          receivedSnapshot => {
+            const sentMessages = sentSnapshot.docs.map(
+              (doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => ({
+                id: doc.id,
+                ...doc.data(),
+                timestamp: doc.data().timestamp?.toDate() || new Date(),
+              })
+            ) as Message[];
+
+            const receivedMessages = receivedSnapshot.docs.map(
+              (doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => ({
+                id: doc.id,
+                ...doc.data(),
+                timestamp: doc.data().timestamp?.toDate() || new Date(),
+              })
+            ) as Message[];
+
+            // Group messages by conversation
+            const conversationMap = new Map<string, Message[]>();
+
+            // Add sent messages
+            sentMessages.forEach(message => {
+              const conversationId = message.receiverId;
+              if (!conversationMap.has(conversationId)) {
+                conversationMap.set(conversationId, []);
+              }
+              conversationMap.get(conversationId)!.push(message);
+            });
+
+            // Add received messages
+            receivedMessages.forEach(message => {
+              const conversationId = message.senderId;
+              if (!conversationMap.has(conversationId)) {
+                conversationMap.set(conversationId, []);
+              }
+              conversationMap.get(conversationId)!.push(message);
+            });
+
+            // Create conversation objects
+            const conversations: Conversation[] = Array.from(
+              conversationMap.entries()
+            ).map(([participantId, messages]) => {
+              // Sort messages by timestamp
+              const sortedMessages = messages.sort(
+                (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
+              );
+
+              const lastMessage = sortedMessages[sortedMessages.length - 1];
+              const unreadCount = messages.filter(
+                msg => msg.receiverId === userId && !msg.isRead
+              ).length;
+
+              return {
+                id: participantId,
+                participants: [userId, participantId],
+                lastMessage,
+                lastMessageTime: lastMessage?.timestamp,
+                unreadCount,
+              };
+            });
+
+            // Sort conversations by last message time
+            conversations.sort((a, b) => {
+              if (!a.lastMessageTime && !b.lastMessageTime) return 0;
+              if (!a.lastMessageTime) return 1;
+              if (!b.lastMessageTime) return -1;
+              return b.lastMessageTime.getTime() - a.lastMessageTime.getTime();
+            });
+
+            callback(conversations);
+          },
+          error => {
+            console.error("Error in received messages listener:", error);
+            callback([]);
+          }
+        );
+
+        return () => {
+          unsubscribeReceived();
+        };
+      },
+      error => {
+        console.error("Error in sent messages listener:", error);
+        callback([]);
+      }
+    );
+
+    return unsubscribeSent;
+  } catch (error) {
+    console.error("Error setting up conversations listener:", error);
+    throw error;
+  }
+};
+
+// Mark messages as read
+const markMessagesAsRead = async (messageIds: string[]) => {
+  try {
+    const db = getFirestore();
+    const updatePromises = messageIds.map(messageId => {
+      const messageRef = doc(db, "messages", messageId);
+      return updateDoc(messageRef, { isRead: true });
+    });
+
+    await Promise.all(updatePromises);
+  } catch (error) {
+    console.error("Error marking messages as read:", error);
+    throw error;
+  }
+};
+
+// Mark conversation as read
+const markConversationAsRead = async (userId: string, otherUserId: string) => {
+  try {
+    const db = getFirestore();
+    const messagesRef = collection(db, "messages");
+
+    // Get unread messages where user is receiver and other user is sender
+    const q = query(
+      messagesRef,
+      where("senderId", "==", otherUserId),
+      where("receiverId", "==", userId),
+      where("isRead", "==", false)
+    );
+
+    const snapshot = await getDocs(q);
+    const messageIds = snapshot.docs.map(doc => doc.id);
+
+    if (messageIds.length > 0) {
+      await markMessagesAsRead(messageIds);
+    }
+  } catch (error) {
+    console.error("Error marking conversation as read:", error);
+    throw error;
+  }
+};
+
+// Delete a message
+const deleteMessage = async (messageId: string) => {
+  try {
+    const db = getFirestore();
+    const messageRef = doc(db, "messages", messageId);
+    await deleteDoc(messageRef);
+  } catch (error) {
+    console.error("Error deleting message:", error);
+    throw error;
+  }
+};
+
+export {
+    createMessage, deleteMessage, fetchMessagesBetweenUsers,
+    fetchUserConversations, markConversationAsRead, markMessagesAsRead
+};

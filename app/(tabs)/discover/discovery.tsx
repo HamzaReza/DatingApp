@@ -15,7 +15,6 @@ import {
   alcoholPreferenceOptions,
   casualDatingAndMatrimonyOptions,
   heightOptions,
-  hobbiesOptions,
   interestMatchOptions,
   locationOptions,
   maritalStatusOptions,
@@ -163,10 +162,6 @@ export default function Discover() {
   const [interestMatchItems, setInterestMatchItems] =
     useState(interestMatchOptions);
   const [interestMatchValue, setInterestMatchValue] = useState("");
-
-  const [hobbiesOpen, setHobbiesOpen] = useState(false);
-  const [hobbiesItems, setHobbiesItems] = useState(hobbiesOptions);
-  const [hobbiesValue, setHobbiesValue] = useState("");
 
   const [alcoholPreferenceOpen, setAlcoholPreferenceOpen] = useState(false);
   const [alcoholPreferenceItems, setAlcoholPreferenceItems] = useState(

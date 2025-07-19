@@ -96,6 +96,7 @@ export default function Discover() {
     ? interests
     : interests.slice(0, 6);
     const [isLocationLoaded, setIsLocationLoaded] = useState(false);
+const [selectedUsers, setSelectedUsers] = useState<any[]>([]);
 
 
  useEffect(() => {
@@ -107,12 +108,14 @@ export default function Discover() {
     if (currentLoc) {
       setCurrentUserLocation(currentLoc); 
       const nearby = await getNearbyUsers(currentLoc);
+      console.log('nearby', nearby)
       setUsersList(nearby); 
     }
   };
 
  
   fetchNearby();
+  fetchUserLocation()
 
   const interval = setInterval(fetchNearby, 30000);
 

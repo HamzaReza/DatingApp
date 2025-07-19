@@ -4,6 +4,7 @@ import { Colors } from "@/constants/Colors";
 import { FontFamily } from "@/constants/FontFamily";
 import { FontSize } from "@/constants/FontSize";
 import { hp, wp } from "@/utils";
+import { CheckBox } from "@rneui/base";
 import React from "react";
 import { Image, StyleSheet, TouchableOpacity, useColorScheme, View } from "react-native";
 
@@ -15,6 +16,8 @@ type MessageItemProps = {
   isOnline: boolean;
   unread?: boolean;
   onPress?: () => void;
+  isSelected?: boolean; // Add this new prop
+  showCheckbox?: boolean; // Add this to control checkbox visibility
 };
 
 export const MessageItem: React.FC<MessageItemProps> = ({
@@ -25,42 +28,49 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   isOnline,
   unread,
   onPress,
-}) => 
-  {
-
-
-const colorScheme = useColorScheme();
+  isSelected = false,
+  showCheckbox = false,
+}) => {
+  const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
 
-  return(
-     <TouchableOpacity style={styles.messageItem} onPress={onPress}>
-    <View style={styles.messageImageContainer}>
-      <Image source={{ uri: image }} style={styles.messageImage} />
-      {isOnline && <View style={styles.onlineIndicator} />}
-    </View>
+  return (
+    <TouchableOpacity style={styles.messageItem} onPress={onPress}>
+      {showCheckbox && (
+        <CheckBox
+          checked={isSelected}
+          onPress={onPress}
+          containerStyle={styles.checkboxContainer}
+          checkedColor={Colors[theme].primary}
+        />
+      )}
+      <View style={styles.messageImageContainer}>
+        <Image source={{ uri: image }} style={styles.messageImage} />
+        {isOnline && <View style={styles.onlineIndicator} />}
+      </View>
 
-    <View style={styles.messageContent}>
-      <RnText style={styles.messageName}>{name}</RnText>
-      <RnText
-        style={[
-          styles.messageText,
-          unread && { fontFamily: FontFamily.bold },
-        ]}
-        numberOfLines={1}
-      >
-        {message}
-      </RnText>
-    </View>
+      <View style={styles.messageContent}>
+        <RnText style={styles.messageName}>{name}</RnText>
+        <RnText
+          style={[
+            styles.messageText,
+            unread && { fontFamily: FontFamily.bold },
+          ]}
+          numberOfLines={1}
+        >
+          {message}
+        </RnText>
+      </View>
 
-    <View style={styles.messageEnd}>
-         {unread && <View style={styles.unreadDot} />}
-      <RnText style={styles.messageTime}>{time}</RnText>
-     
-    </View>
-  </TouchableOpacity>
-  )
-}
+      <View style={styles.messageEnd}>
+        {unread && <View style={styles.unreadDot} />}
+        <RnText style={styles.messageTime}>{time}</RnText>
+      </View>
+    </TouchableOpacity>
+  );
+};
+
  
 
 
@@ -125,4 +135,12 @@ fontFamily:FontFamily.semiBold,
     marginLeft: wp(1),
     alignSelf: "center",
   },
+   checkboxContainer: {
+    padding: 0,
+    margin: 0,
+    marginRight: wp(1),
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+  },
+ 
 });

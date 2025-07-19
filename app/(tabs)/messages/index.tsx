@@ -1,10 +1,22 @@
 import createStyles from "@/app/tabStyles/messages.styles";
 import { MessageItem } from "@/components/MessageItem";
+import RnBottomSheet from "@/components/RnBottomSheet";
 import Container from "@/components/RnContainer";
 import RnText from "@/components/RnText";
 import RoundButton from "@/components/RoundButton";
 import { Colors } from "@/constants/Colors";
+import { sendGroupInvites } from "@/firebase/auth";
+import { encodeImagePath } from "@/utils";
+import getDistanceFromLatLonInMeters, {
+  getNearbyHangoutUsers,
+} from "@/utils/Distance";
 import { Ionicons } from "@expo/vector-icons";
+import { getAuth } from "@react-native-firebase/auth";
+import {
+  collection,
+  getDocs,
+  getFirestore,
+} from "@react-native-firebase/firestore";
 import { LinearGradient } from "expo-linear-gradient";
 import {
   Accuracy,
@@ -12,7 +24,7 @@ import {
   getForegroundPermissionsAsync,
 } from "expo-location";
 import { router } from "expo-router";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   FlatList,
   Image,
@@ -125,12 +137,68 @@ export default function Messages() {
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
 
+  const [isBottomSheetVisible, setIsBottomSheetVisible] = React.useState(false);
+  const [nearbyUsers, setNearbyUsers] = React.useState<Message[]>([]);
+  const [selectedUsers, setSelectedUsers] = useState([]);
+
   const handleBackPress = () => {
     router.back();
   };
 
-  const handleCreateGroup = () => {
-    router.push("/messages/connection/[id]", {});
+  useEffect(() => {
+    console.log(selectedUsers);
+  }, [selectedUsers]);
+
+  const handleCreateGroup = async () => {
+    const { status } = await getForegroundPermissionsAsync();
+    if (status !== "granted") return;
+
+    const location = await getCurrentPositionAsync({
+      accuracy: Accuracy.Highest,
+    });
+
+    const users = await fetchNearbyUsers(
+      location.coords.latitude,
+      location.coords.longitude
+    );
+
+    setNearbyUsers(users);
+    setIsBottomSheetVisible(true);
+  };
+
+  const fetchNearbyUsers = async (
+    currentLatitude: number,
+    currentLongitude: number
+  ) => {
+    const db = getFirestore();
+    const usersRef = collection(db, "users");
+    const snapshot = await getDocs(usersRef);
+
+    const nearbyUsers: any[] = [];
+
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      const userLocation = data.location; // Assume this is { latitude: number, longitude: number }
+
+      if (userLocation?.latitude && userLocation?.longitude) {
+        const distance = getDistanceFromLatLonInMeters(
+          currentLatitude,
+          currentLongitude,
+          userLocation.latitude,
+          userLocation.longitude
+        );
+
+        if (distance <= 10000) {
+          // 10 km = 10,000 meters
+          nearbyUsers.push({
+            id: doc.id,
+            ...data,
+          });
+        }
+      }
+    });
+
+    return nearbyUsers;
   };
 
   const handleRecentMatchPress = (matchId: string) => {
@@ -174,6 +242,35 @@ export default function Messages() {
       onPress={() => handleMessagePress(item.id)}
     />
   );
+
+  const handleSelectUser = (userId: string) => {
+    setSelectedUsers(prevSelected => {
+      if (prevSelected.includes(userId)) {
+        // If already selected, remove it
+        return prevSelected.filter(id => id !== userId);
+      } else {
+        // If not selected, add it
+        return [...prevSelected, userId];
+      }
+    });
+  };
+
+  const handleSendRequests = async () => {
+    try {
+      const invitedBy = getAuth().currentUser?.uid;
+      const groupId = `group_${Date.now()}`; // or generate based on logic
+   
+
+      await sendGroupInvites(invitedBy, selectedUsers);
+
+      setIsBottomSheetVisible(false);
+      setSelectedUsers([]);
+
+      console.log("✅ Group invite requests sent.");
+    } catch (err) {
+      console.error("❌ Error sending group invites:", err);
+    }
+  };
 
   return (
     <Container customStyle={styles.container}>
@@ -242,6 +339,46 @@ export default function Messages() {
           contentContainerStyle={styles.messagesList}
         />
       </View>
+      <RnBottomSheet
+        isVisible={isBottomSheetVisible}
+        onClose={() => setIsBottomSheetVisible(false)}
+        snapPoints={["50%"]}
+      >
+        <View style={styles.bottomSheetHeader}>
+          <RnText
+            style={{ fontSize: 18, fontWeight: "bold", marginBottom: 10 }}
+          >
+            Nearby Users
+          </RnText>
+          {selectedUsers.length > 0 && (
+            <TouchableOpacity
+              style={styles.createGroupButton}
+              onPress={handleSendRequests}
+            >
+              <RnText style={styles.createGroupText}>Request to join</RnText>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        <FlatList
+          data={nearbyUsers}
+          keyExtractor={item => item.id}
+          renderItem={({ item }) => (
+            <MessageItem
+              name={item.name}
+              message={item.bio || "Hi there!"} // Use bio or default message
+              time={""} // You might want to remove time in selection mode
+              image={encodeImagePath(item.photo)}
+              isOnline={item.isOnline}
+              unread={false} // Not relevant in selection mode
+              onPress={() => handleSelectUser(item.id)}
+              isSelected={selectedUsers.includes(item.id)}
+              showCheckbox={isBottomSheetVisible} // Only show checkbox in bottom sheet
+            />
+          )}
+          showsVerticalScrollIndicator={false}
+        />
+      </RnBottomSheet>
     </Container>
   );
 }

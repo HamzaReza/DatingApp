@@ -105,4 +105,15 @@ export default (theme: "dark" | "light") =>
       paddingTop: hp(4),
       paddingBottom: hp(2),
     },
+    bottomSheetHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+    },
+     checkboxContainer: {
+    padding: 0,
+    margin: 0,
+    marginRight: wp(1),
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+  },
   });

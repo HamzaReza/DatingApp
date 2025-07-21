@@ -18,6 +18,7 @@ import {
   Timestamp,
   updateDoc,
   where,
+  writeBatch,
 } from "@react-native-firebase/firestore";
 import {
   deleteObject,
@@ -540,6 +541,145 @@ export const getNearbyUsers = async (currentUserLocation: Location) => {
   return nearbyUsers;
 };
 
+export const sendGroupInvites = async (
+  invitedBy: string,
+  invitedUsers: string[]
+) => {
+  try {
+    const db = getFirestore();
+
+    // 1. First fetch all required user names
+    const userFetchPromises = [
+      getDoc(doc(db, "users", invitedBy)), // Get inviter info
+      ...invitedUsers.map(uid => getDoc(doc(db, "users", uid))), // Get all invited users
+    ];
+
+    const userSnapshots = await Promise.all(userFetchPromises);
+    const inviterData = userSnapshots[0].data();
+    const inviterName = inviterData?.name || "Someone";
+
+    // 2. Create the group document
+    const groupRef = doc(collection(db, "messages"));
+    const groupId = groupRef.id;
+    const invitedAt = Timestamp.now();
+
+    const inviteUserObjects = invitedUsers.map((uid, index) => {
+      const userData = userSnapshots[index + 1]?.data();
+      return {
+        uid,
+        name: userData?.name || "User",
+        status: "pending",
+        invitedAt,
+      };
+    });
+
+    await setDoc(groupRef, {
+      id: groupId,
+      invitedBy,
+      invitedByName: inviterName,
+      invitedAt,
+      type: "group",
+      users: inviteUserObjects,
+      createdAt: Timestamp.now(),
+    });
+
+    // 3. Save notifications with personalized messages
+    const notificationBatch = writeBatch(db);
+    const now = Timestamp.now();
+
+    for (let i = 0; i < invitedUsers.length; i++) {
+      const userId = invitedUsers[i];
+      const userData = userSnapshots[i + 1]?.data();
+      const userName = userData?.name || "User";
+
+      const notificationRef = doc(db, "notifications", userId);
+      const notificationDoc = await getDoc(notificationRef);
+
+      const newNotification = {
+        title: "Group chat",
+        subtitle: `${inviterName} has invited you for a hangout. Want to join?`,
+        type: "messages",
+        groupId,
+        createdAt: now,
+      };
+
+      if (notificationDoc.exists()) {
+        const existingNotifications = notificationDoc.data()?.items || [];
+        notificationBatch.update(notificationRef, {
+          items: [...existingNotifications, newNotification],
+        });
+      } else {
+        notificationBatch.set(notificationRef, {
+          items: [newNotification],
+        });
+      }
+    }
+
+    await notificationBatch.commit();
+    console.log("✅ Group created with personalized notifications");
+    return groupId;
+  } catch (error) {
+    console.error("❌ Error in group creation:", error);
+    throw new Error("Failed to create group and send invitations");
+  }
+};
+
+export const getUserNotifications = async (userId: string) => {
+  const db = getFirestore();
+  try {
+    const notificationRef = doc(db, "notifications", userId);
+    const snapshot = await getDoc(notificationRef);
+
+    if (snapshot.exists()) {
+      return snapshot.data().items || [];
+    }
+    return [];
+  } catch (error) {
+    console.error("Error fetching notifications:", error);
+    return [];
+  }
+};
+
+export const respondToGroupInvite = async (
+  groupId: string,
+  userId: string,
+  accept: boolean
+) => {
+  const db = getFirestore();
+  try {
+    // 1. Get the current group data
+    const groupRef = doc(db, "messages", groupId);
+    const groupSnap = await getDoc(groupRef);
+
+    if (!groupSnap.exists()) {
+      throw new Error("Group not found");
+    }
+
+    // 2. Find and update the specific user's status
+    const currentUsers = groupSnap.data().users || [];
+    const updatedUsers = currentUsers.map(user => {
+      if (user.uid === userId) {
+        return {
+          ...user, // Preserve all existing user data (including name)
+          status: accept ? "accepted" : "rejected",
+          respondedAt: new Date(),
+        };
+      }
+      return user;
+    });
+
+    // 3. Update the group document with the modified users array
+    await updateDoc(groupRef, {
+      users: updatedUsers,
+    });
+
+    return true;
+  } catch (error) {
+    console.error("Error responding to invite:", error);
+    throw error;
+  }
+};
+
 const handleStoryUpload = async (
   story: Story,
   pickStory: Promise<string[]>,
@@ -548,7 +688,6 @@ const handleStoryUpload = async (
   const result = await pickStory;
 
   if (!result || result.length === 0) return;
-
   const uploadedUrls = await uploadMultipleImages(result, "story");
 
   const now = new Date();
@@ -652,8 +791,229 @@ const fetchGenders = (callback: (genders: any[]) => void) => {
   }
 };
 
+// New functions for swipe profile functionality
+
+const getRandomUser = async (
+  currentUserId: string,
+  excludeUserIds: string[] = []
+) => {
+  try {
+    const db = getFirestore();
+    const usersRef = collection(db, "users");
+    const snapshot = await getDocs(usersRef);
+
+    const availableUsers = snapshot.docs
+      .map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => ({
+        id: doc.id,
+        ...doc.data(),
+      }))
+      .filter(
+        (user: any) =>
+          user.id !== currentUserId &&
+          !excludeUserIds.includes(user.id) &&
+          user.isProfileComplete === true
+      );
+
+    if (availableUsers.length === 0) {
+      return null;
+    }
+
+    // Get a random user
+    const randomIndex = Math.floor(Math.random() * availableUsers.length);
+    return availableUsers[randomIndex];
+  } catch (error) {
+    console.error("Error fetching random user:", error);
+    throw error;
+  }
+};
+
+const recordLike = async (currentUserId: string, likedUserId: string) => {
+  try {
+    const db = getFirestore();
+
+    // Add to current user's likes
+    const currentUserLikesRef = doc(
+      db,
+      "users",
+      currentUserId,
+      "likes",
+      likedUserId
+    );
+    await setDoc(currentUserLikesRef, {
+      likedAt: new Date(),
+      userId: likedUserId,
+    });
+
+    // Check if it's a match
+    const isMatch = await checkForMatch(currentUserId, likedUserId);
+
+    return { isMatch };
+  } catch (error) {
+    console.error("Error recording like:", error);
+    throw error;
+  }
+};
+
+const checkForMatch = async (currentUserId: string, likedUserId: string) => {
+  try {
+    const db = getFirestore();
+
+    // Check if the liked user has also liked the current user
+    const likedUserLikesRef = doc(
+      db,
+      "users",
+      likedUserId,
+      "likes",
+      currentUserId
+    );
+    const likedUserLikeDoc = await getDoc(likedUserLikesRef);
+
+    if (likedUserLikeDoc.exists()) {
+      // It's a match! Create a match record
+      const matchRef = doc(db, "matches", `${currentUserId}_${likedUserId}`);
+      await setDoc(matchRef, {
+        users: [currentUserId, likedUserId],
+        matchedAt: new Date(),
+        isActive: true,
+      });
+
+      return true;
+    }
+
+    return false;
+  } catch (error) {
+    console.error("Error checking for match:", error);
+    throw error;
+  }
+};
+
+const getNextUserForSwipe = async (
+  currentUserId: string,
+  excludeUserIds: string[] = []
+) => {
+  try {
+    const db = getFirestore();
+    const usersRef = collection(db, "users");
+    const snapshot = await getDocs(usersRef);
+
+    // Get users that haven't been liked by current user
+    const currentUserLikesRef = collection(db, "users", currentUserId, "likes");
+    const likesSnapshot = await getDocs(currentUserLikesRef);
+    const likedUserIds = likesSnapshot.docs.map((doc: any) => doc.id);
+
+    const availableUsers = snapshot.docs
+      .map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => ({
+        id: doc.id,
+        ...doc.data(),
+      }))
+      .filter(
+        (user: any) =>
+          user.id !== currentUserId &&
+          !excludeUserIds.includes(user.id) &&
+          !likedUserIds.includes(user.id) &&
+          user.isProfileComplete === true
+      );
+
+    if (availableUsers.length === 0) {
+      return null;
+    }
+
+    // Get a random user
+    const randomIndex = Math.floor(Math.random() * availableUsers.length);
+    return availableUsers[randomIndex];
+  } catch (error) {
+    console.error("Error fetching next user for swipe:", error);
+    throw error;
+  }
+};
+
+const fetchUserMatches = async (currentUserId: string) => {
+  try {
+    const db = getFirestore();
+
+    // Get all matches where current user is involved
+    const matchesRef = collection(db, "matches");
+    const matchesSnapshot = await getDocs(matchesRef);
+
+    const userMatches: any[] = [];
+
+    matchesSnapshot.forEach((doc: any) => {
+      const matchData = doc.data();
+      const users = matchData.users || [];
+
+      // Check if current user is in this match
+      if (users.includes(currentUserId) && matchData.isActive) {
+        // Get the other user's ID
+        const otherUserId = users.find((id: string) => id !== currentUserId);
+        if (otherUserId) {
+          userMatches.push({
+            matchId: doc.id,
+            otherUserId,
+            matchedAt: matchData.matchedAt,
+          });
+        }
+      }
+    });
+
+    // Fetch user data for all matched users
+    const matchesWithUserData = await Promise.all(
+      userMatches.map(async match => {
+        try {
+          const userDoc = await getDoc(doc(db, "users", match.otherUserId));
+          if (userDoc.exists()) {
+            const userData = userDoc.data() as any;
+
+            // Generate random distance and match percentage if not available
+            const distance = `${(Math.random() * 10 + 0.5).toFixed(1)} km away`;
+            const matchPercentage = Math.floor(Math.random() * 20 + 80); // 80-100%
+
+            // Handle location field properly
+            let locationString = "UNKNOWN";
+            if (userData.location) {
+              if (typeof userData.location === "string") {
+                locationString = userData.location;
+              } else if (userData.location.city) {
+                locationString = userData.location.city;
+              } else if (
+                userData.location.latitude &&
+                userData.location.longitude
+              ) {
+                locationString = "LOCATION";
+              }
+            }
+
+            return {
+              id: match.matchId,
+              name: userData.name || "Unknown",
+              age: userData.age || 25,
+              location: locationString,
+              distance,
+              image:
+                userData.photo ||
+                "https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=300",
+              matchPercentage,
+              matchedAt: match.matchedAt,
+            };
+          }
+          return null;
+        } catch (error) {
+          console.error("Error fetching user data for match:", error);
+          return null;
+        }
+      })
+    );
+
+    // Filter out null values and return
+    return matchesWithUserData.filter(match => match !== null);
+  } catch (error) {
+    console.error("Error fetching user matches:", error);
+    return [];
+  }
+};
+
 export {
   authenticateWithPhone,
+  checkForMatch,
   checkUserExistsForSignup,
   deleteImage,
   fetchAllUsers,
@@ -662,12 +1022,15 @@ export {
   fetchNextUsersStories,
   fetchStoriesForUser,
   fetchTags,
+  fetchUserMatches,
   getCurrentAuth,
+  getNextUserForSwipe,
+  getRandomUser,
   getUserByEmail,
-  getUserByPhoneNumber,
   getUserByUid,
   getUserLocation,
   handleStoryUpload,
+  recordLike,
   saveUserToDatabase,
   signInWithGoogleFirebase,
   updateUser,

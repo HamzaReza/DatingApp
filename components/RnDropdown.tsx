@@ -29,6 +29,7 @@ const RnDropdown: React.FC<RnDropdownProps> = ({
   dropDownContainerStyle,
   disabled,
   loading,
+  multiple,
 }) => {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
@@ -101,6 +102,7 @@ const RnDropdown: React.FC<RnDropdownProps> = ({
       setItems={setItems}
       setValue={setValue}
       loading={loading}
+      multiple={multiple}
     />
   );
 };

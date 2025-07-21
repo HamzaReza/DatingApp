@@ -29,6 +29,8 @@ export interface RnInputProps {
   leftIcon?: IconNode;
   rightIcon?: IconNode;
   noError?: boolean;
+  multiline?: boolean;
+  numberOfLines?: number;
 }
 
 export interface RnPhoneInputProps {
@@ -132,16 +134,26 @@ export interface RnWheelPickerProps {
 }
 
 export interface RnImagePickerProps {
-  setUri: (obj: {
-    uri: string;
-    path: string;
-    type: string;
-    name: string;
-  }) => void;
+  setUri: (
+    obj:
+      | {
+          uri: string;
+          path: string;
+          type: string;
+          name: string;
+        }
+      | {
+          uri: string;
+          path: string;
+          type: string;
+          name: string;
+        }[]
+  ) => void;
   visible: boolean;
   showPicker(): void;
   hidePicker(): void;
   children: ReactElement;
+  multiple?: boolean;
 }
 
 export interface ListItemType {
@@ -195,6 +207,7 @@ export interface RnDropdownProps {
   setValue: React.Dispatch<React.SetStateAction<any>>;
   loading?: boolean;
   dropdownText?: StyleProp<TextStyle>;
+  multiple?: boolean;
 }
 
 export interface RnBottomSheetProps {
@@ -249,4 +262,11 @@ export interface RnDateTimePickerProps {
   negativeButtonLabel?: string;
   is24Hour?: boolean;
   disabled?: boolean;
+}
+
+export interface SvgIconProps {
+  svgString: string;
+  width?: number;
+  height?: number;
+  color?: string;
 }

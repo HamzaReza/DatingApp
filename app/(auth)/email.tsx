@@ -4,8 +4,11 @@ import RnInput from "@/components/RnInput";
 import RnProgressBar from "@/components/RnProgressBar";
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
+import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { EmailValues } from "@/types";
+import { wp } from "@/utils";
+import { FontAwesome6 } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { Formik } from "formik";
 import React, { useState } from "react";
@@ -15,7 +18,7 @@ import * as Yup from "yup";
 const emailSchema = Yup.object().shape({
   email: Yup.string()
     .required("Email is required")
-    .test("email-format", "Please enter a valid email address", (value) => {
+    .test("email-format", "Please enter a valid email address", value => {
       if (!value) return false;
       const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
       return emailRegex.test(value);
@@ -33,7 +36,7 @@ export default function Email() {
     setIsLoading(true);
     try {
       router.push({
-        pathname: "/age",
+        pathname: "/about",
         params: { ...params, email: values.email.toLowerCase() },
       });
     } catch (error) {
@@ -44,9 +47,29 @@ export default function Email() {
   };
 
   return (
-    <ScrollContainer topBar={<RnProgressBar progress={4 / 11} />}>
+    <ScrollContainer
+      topBar={
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+          }}
+        >
+          <FontAwesome6
+            name="house"
+            size={24}
+            color={Colors[theme].primary}
+            style={{ marginLeft: wp(5) }}
+            onPress={() => router.dismissAll()}
+          />
+          <RnProgressBar progress={4 / 12} />
+        </View>
+      }
+    >
       <Formik
-        initialValues={{ email: (params.email as string) || "" }}
+        initialValues={{
+          email: (params.email as string) || (__DEV__ ? "test@test.com" : ""),
+        }}
         validationSchema={emailSchema}
         onSubmit={handleEmailSubmit}
         validateOnChange

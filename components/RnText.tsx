@@ -37,4 +37,4 @@ const RnText: React.FC<RnTextProps> = ({
   );
 };
 
-export default RnText;
+export default React.memo(RnText);

@@ -172,4 +172,13 @@ export default (theme: "light" | "dark") =>
     getLocationButtonText: {
       fontSize: FontSize.extraSmall,
     },
+    emptyContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    emptyText: {
+      fontFamily: FontFamily.semiBold,
+      color: Colors[theme].redText,
+    },
   });

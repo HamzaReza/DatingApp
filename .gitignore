@@ -54,3 +54,7 @@ app-example
 /android/app/build
 /ios/build
 /ios/Pods
+
+# Environment files
+.env
+*.env.*

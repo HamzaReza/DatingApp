@@ -27,6 +27,8 @@ const RnInput: React.FC<RnInputProps> = ({
   leftIcon,
   rightIcon,
   noError = false,
+  multiline,
+  numberOfLines,
 }) => {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
@@ -78,6 +80,8 @@ const RnInput: React.FC<RnInputProps> = ({
       placeholderTextColor={Colors[theme].placeholderText}
       leftIcon={leftIcon}
       rightIcon={rightIcon}
+      multiline={multiline}
+      numberOfLines={numberOfLines}
     />
   );
 };

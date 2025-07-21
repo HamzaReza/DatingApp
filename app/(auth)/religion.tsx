@@ -3,9 +3,12 @@ import RnButton from "@/components/RnButton";
 import RnProgressBar from "@/components/RnProgressBar";
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
+import { Colors } from "@/constants/Colors";
 import { getCurrentAuth, updateUser } from "@/firebase/auth";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { ReligionValues } from "@/types";
+import { wp } from "@/utils";
+import { FontAwesome6 } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { Formik } from "formik";
 import { useState } from "react";
@@ -88,7 +91,25 @@ export default function Religion() {
   };
 
   return (
-    <ScrollContainer topBar={<RnProgressBar progress={11 / 11} />}>
+    <ScrollContainer
+      topBar={
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+          }}
+        >
+          <FontAwesome6
+            name="house"
+            size={24}
+            color={Colors[theme].primary}
+            style={{ marginLeft: wp(5) }}
+            onPress={() => router.dismissAll()}
+          />
+          <RnProgressBar progress={12 / 12} />
+        </View>
+      }
+    >
       <Formik
         initialValues={{ religion: "" }}
         validationSchema={religionSchema}

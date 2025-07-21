@@ -185,7 +185,6 @@ export default function Messages() {
           style={[StyleSheet.absoluteFill]}
         >
           <View style={styles.headerContainer}>
-            <RoundButton noShadow />
             <RnText style={styles.headerTitle}>Messages</RnText>
             <RoundButton
               iconName="tv"

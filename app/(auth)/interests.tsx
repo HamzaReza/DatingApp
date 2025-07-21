@@ -3,35 +3,31 @@ import RnButton from "@/components/RnButton";
 import RnProgressBar from "@/components/RnProgressBar";
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
+import SvgIcon from "@/components/SvgIcon";
+import { Colors } from "@/constants/Colors";
+import { fetchTags } from "@/firebase/auth";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { InterestsValues } from "@/types";
+import { wp } from "@/utils";
+import { FontAwesome6 } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { Formik } from "formik";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, TextInput, View } from "react-native";
 import * as Yup from "yup";
 
 const interestsSchema = Yup.object().shape({
   interests: Yup.array()
     .min(1, "Please select at least one interest")
-    .max(3, "You can select up to 3 interests")
+    .max(7, "You can select up to 7 interests")
     .required("Please select at least one interest"),
 });
 
-const INTERESTS = [
-  { id: "reading", label: "Reading", icon: "📚" },
-  { id: "photography", label: "Photography", icon: "📸" },
-  { id: "gaming", label: "Gaming", icon: "🎮" },
-  { id: "music", label: "Music", icon: "🎵" },
-  { id: "travel", label: "Travel", icon: "✈️" },
-  { id: "painting", label: "Painting", icon: "🎨" },
-  { id: "politics", label: "Politics", icon: "👥" },
-  { id: "charity", label: "Charity", icon: "❤️" },
-  { id: "cooking", label: "Cooking", icon: "🍳" },
-  { id: "pets", label: "Pets", icon: "🐾" },
-  { id: "sports", label: "Sports", icon: "⚽" },
-  { id: "fashion", label: "Fashion", icon: "👔" },
-];
+type Tag = {
+  id: string;
+  label: string;
+  iconSvg: string;
+};
 
 export default function Interests() {
   const colorScheme = useColorScheme();
@@ -39,7 +35,20 @@ export default function Interests() {
   const styles = createStyles(theme);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [interests, setInterests] = useState<Tag[] | []>([]);
+  const [isLoadingTags, setIsLoadingTags] = useState(true);
   const params = useLocalSearchParams();
+
+  useEffect(() => {
+    const unsubscribe = fetchTags(tagsArray => {
+      setInterests(tagsArray);
+      setIsLoadingTags(false);
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   const handleInterestsSubmit = async (values: InterestsValues) => {
     if (!values.interests.length) return;
@@ -56,26 +65,39 @@ export default function Interests() {
     }
   };
 
-  const filteredInterests = INTERESTS.filter((interest) =>
+  const filteredInterests = interests.filter(interest =>
     interest.label.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const renderIcon = (icon: string, isSelected: boolean) => {
+    if (!icon) return null;
+
+    return (
+      <SvgIcon
+        svgString={icon}
+        width={16}
+        height={16}
+        color={isSelected ? Colors[theme].background : Colors[theme].redText}
+      />
+    );
+  };
+
   const renderInterestTag = (
-    interest: (typeof INTERESTS)[0],
+    interest: Tag,
     selectedInterests: string[],
     setFieldValue: (field: string, value: any) => void
   ) => {
-    const isSelected = selectedInterests.includes(interest.id);
-    const canSelect = selectedInterests.length < 3 || isSelected;
+    const isSelected = selectedInterests.includes(interest.label);
+    const canSelect = selectedInterests.length < 7 || isSelected;
 
     const handlePress = () => {
       if (isSelected) {
         setFieldValue(
           "interests",
-          selectedInterests.filter((id) => id !== interest.id)
+          selectedInterests.filter(label => label !== interest.label)
         );
       } else if (canSelect) {
-        setFieldValue("interests", [...selectedInterests, interest.id]);
+        setFieldValue("interests", [...selectedInterests, interest.label]);
       }
     };
 
@@ -89,7 +111,7 @@ export default function Interests() {
         ]}
         disabled={!canSelect && !isSelected}
       >
-        <RnText>{interest.icon}</RnText>
+        {renderIcon(interest.iconSvg, isSelected)}
         <RnText
           style={[
             styles.tagText,
@@ -103,7 +125,25 @@ export default function Interests() {
   };
 
   return (
-    <ScrollContainer topBar={<RnProgressBar progress={8 / 11} />}>
+    <ScrollContainer
+      topBar={
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+          }}
+        >
+          <FontAwesome6
+            name="house"
+            size={24}
+            color={Colors[theme].primary}
+            style={{ marginLeft: wp(5) }}
+            onPress={() => router.dismissAll()}
+          />
+          <RnProgressBar progress={9 / 12} />
+        </View>
+      }
+    >
       <Formik
         initialValues={{ interests: [] }}
         validationSchema={interestsSchema}
@@ -111,7 +151,7 @@ export default function Interests() {
       >
         {({ values, setFieldValue, handleSubmit, errors }) => (
           <View style={styles.innerContainer}>
-            <RnText style={styles.title}>Select Up To 3 Interest</RnText>
+            <RnText style={styles.title}>Select Up To 7 Interest</RnText>
             <RnText style={styles.subtitle}>
               Tell us what piques your curiosity and passions
             </RnText>
@@ -126,8 +166,12 @@ export default function Interests() {
             </View>
 
             <View style={styles.interestsContainer}>
-              {filteredInterests.map((interest) =>
-                renderInterestTag(interest, values.interests, setFieldValue)
+              {isLoadingTags ? (
+                <RnText style={styles.subtitle}>Loading interests...</RnText>
+              ) : (
+                filteredInterests.map(interest =>
+                  renderInterestTag(interest, values.interests, setFieldValue)
+                )
               )}
             </View>
 

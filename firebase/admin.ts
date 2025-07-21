@@ -4,7 +4,9 @@ import {
   FirebaseFirestoreTypes,
   getFirestore,
   onSnapshot,
+  query,
   Timestamp,
+  where,
 } from "@react-native-firebase/firestore";
 
 const createEvent = async (event: {
@@ -179,9 +181,11 @@ const fetchCreators = (callback: (creators: any[]) => void) => {
 const fetchUsers = (callback: (users: any[]) => void) => {
   try {
     const db = getFirestore();
+    const usersRef = collection(db, "users");
+    const usersQuery = query(usersRef, where("isProfileComplete", "==", true));
 
     const unsubscribe = onSnapshot(
-      collection(db, "users"),
+      usersQuery,
       snapshot => {
         const usersData = snapshot.docs.map(
           (doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {

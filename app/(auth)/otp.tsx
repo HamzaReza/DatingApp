@@ -5,6 +5,7 @@ import RnProgressBar from "@/components/RnProgressBar";
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
 import showToaster from "@/components/RnToast";
+import { Colors } from "@/constants/Colors";
 import {
   authenticateWithPhone,
   getUserByUid,
@@ -14,6 +15,8 @@ import {
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { setConfirmation, setToken, setUser } from "@/redux/slices/userSlice";
 import { RootState } from "@/redux/store";
+import { wp } from "@/utils";
+import { FontAwesome6 } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { getAuth } from "@react-native-firebase/auth";
 import { router, useLocalSearchParams } from "expo-router";
@@ -35,45 +38,57 @@ export default function OtpScreen() {
   const { confirmation } = useSelector((state: RootState) => state.user);
   const dispatch = useDispatch();
   const styles = createStyles(theme);
-  const { phone } = useLocalSearchParams();
+  const { phone, login } = useLocalSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const phoneNumber = phone;
 
   const handleVerify = async (values: { otp: string }) => {
     setIsLoading(true);
     try {
-      await verifyCode(confirmation, values.otp).then(async () => {
-        const auth = getAuth();
-        const user = auth.currentUser;
+      await verifyCode(confirmation, values.otp)
+        .then(async () => {
+          const auth = getAuth();
+          const user = auth.currentUser;
 
-        if (user) {
-          const existingUser = await getUserByUid(user.uid);
+          if (user) {
+            const existingUser = await getUserByUid(user.uid);
 
-          if (existingUser) {
-            if (existingUser.isProfileComplete) {
-              if (existingUser.status === "pending") {
-                showToaster({ type: "error", message: "Waiting for approval" });
+            if (existingUser) {
+              if (existingUser.isProfileComplete) {
+                if (existingUser.status === "pending") {
+                  showToaster({
+                    type: "error",
+                    message: "Waiting for approval",
+                  });
+                } else if (existingUser.status === "rejected") {
+                  showToaster({
+                    type: "error",
+                    message: "Account blocked. Contact support",
+                  });
+                } else {
+                  AsyncStorage.clear();
+                  router.dismissAll();
+                  router.push("/main/home");
+                  dispatch(setToken(true));
+                  dispatch(setUser(existingUser));
+                }
               } else {
                 AsyncStorage.clear();
-                router.dismissAll();
-                router.push("/main/home");
-                dispatch(setToken(true));
-                dispatch(setUser(existingUser));
+                router.replace("/name");
               }
             } else {
-              AsyncStorage.clear();
-              router.replace("/name");
+              await saveUserToDatabase(user.uid, {
+                phoneNumber: phoneNumber as string,
+              }).then(() => {
+                AsyncStorage.clear();
+                router.replace("/name");
+              });
             }
-          } else {
-            await saveUserToDatabase(user.uid, {
-              phoneNumber: phoneNumber as string,
-            }).then(() => {
-              AsyncStorage.clear();
-              router.replace("/name");
-            });
           }
-        }
-      });
+        })
+        .catch(error => {
+          console.error("Verification error:", error);
+        });
     } catch (error) {
       console.error("Verification error:", error);
     } finally {
@@ -87,9 +102,27 @@ export default function OtpScreen() {
   };
 
   return (
-    <ScrollContainer topBar={<RnProgressBar progress={2 / 11} />}>
+    <ScrollContainer
+      topBar={
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+          }}
+        >
+          <FontAwesome6
+            name="house"
+            size={24}
+            color={Colors[theme].primary}
+            style={{ marginLeft: wp(5) }}
+            onPress={() => router.dismissAll()}
+          />
+          {!login && <RnProgressBar progress={2 / 12} />}
+        </View>
+      }
+    >
       <Formik
-        initialValues={{ otp: "" }}
+        initialValues={{ otp: __DEV__ ? "123456" : "" }}
         validationSchema={otpSchema}
         onSubmit={handleVerify}
         validateOnChange

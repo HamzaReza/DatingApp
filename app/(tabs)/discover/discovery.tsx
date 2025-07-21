@@ -15,23 +15,22 @@ import {
   alcoholPreferenceOptions,
   casualDatingAndMatrimonyOptions,
   heightOptions,
-  hobbiesOptions,
   interestMatchOptions,
   locationOptions,
   maritalStatusOptions,
   relationshipIntentOptions,
   smokingPreferenceOptions,
 } from "@/constants/FilterOptions";
-import { fetchAllUsers, getNearbyUsers, getUserLocation } from "@/firebase/auth";
+import { fetchAllUsers, fetchTags } from "@/firebase/auth";
 import {
   setDeviceLocation,
   setLocationPermissionGranted,
 } from "@/redux/slices/userSlice";
 import { RootState } from "@/redux/store";
 import { encodeImagePath, hp } from "@/utils";
+import getDistanceFromLatLonInMeters from "@/utils/Distance";
 import { requestLocationPermission } from "@/utils/Permission";
 import { Ionicons } from "@expo/vector-icons";
-import { getAuth } from "@react-native-firebase/auth";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Location from "expo-location";
 import { router } from "expo-router";
@@ -39,17 +38,12 @@ import React, { useEffect, useState } from "react";
 import {
   FlatList,
   Image,
-  Platform,
   TouchableOpacity,
   useColorScheme,
   View,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import MapView, {
-  Marker,
-  PROVIDER_DEFAULT,
-  PROVIDER_GOOGLE,
-} from "react-native-maps";
+import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
 import { useDispatch, useSelector } from "react-redux";
 
 type UsersList = {
@@ -62,25 +56,16 @@ type UsersList = {
   uid?: string;
   interests?: string;
   location?: {
-    _latitude: number;
-    _longitude: number;
+    latitude: number;
+    longitude: number;
   };
 };
 
-const interests = [
-  { id: "reading", label: "Reading", icon: "📚" },
-  { id: "photography", label: "Photography", icon: "📸" },
-  { id: "gaming", label: "Gaming", icon: "🎮" },
-  { id: "music", label: "Music", icon: "🎵" },
-  { id: "travel", label: "Travel", icon: "✈️" },
-  { id: "painting", label: "Painting", icon: "🎨" },
-  { id: "politics", label: "Politics", icon: "👥" },
-  { id: "charity", label: "Charity", icon: "❤️" },
-  { id: "cooking", label: "Cooking", icon: "🍳" },
-  { id: "pets", label: "Pets", icon: "🐾" },
-  { id: "sports", label: "Sports", icon: "⚽" },
-  { id: "fashion", label: "Fashion", icon: "👔" },
-];
+type Tag = {
+  id: string;
+  label: string;
+  iconSvg: string;
+};
 
 export default function Discover() {
   const colorScheme = useColorScheme();
@@ -91,76 +76,69 @@ export default function Discover() {
   const [filteredUsers, setFilteredUsers] = useState<UsersList[]>([]);
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [showAllInterests, setShowAllInterests] = useState(false);
-  const [currentUserLocation,setCurrentUserLocation] = useState({})
-  const displayedInterests = showAllInterests
-    ? interests
-    : interests.slice(0, 6);
-    const [isLocationLoaded, setIsLocationLoaded] = useState(false);
+  const [interests, setInterests] = useState<Tag[] | []>([]);
+  const [isLoadingTags, setIsLoadingTags] = useState(true);
 
+  useEffect(() => {
+    const unsubscribe = fetchTags(tagsArray => {
+      setInterests(tagsArray);
+      setIsLoadingTags(false);
+    });
 
- useEffect(() => {
-  const fetchNearby = async () => {
-    const userId = getAuth().currentUser?.uid;
-    if (!userId) return;
-
-    const currentLoc = await getUserLocation(userId); 
-    if (currentLoc) {
-      setCurrentUserLocation(currentLoc); 
-      const nearby = await getNearbyUsers(currentLoc);
-      setUsersList(nearby); 
-    }
-  };
-
- 
-  fetchNearby();
-
-  const interval = setInterval(fetchNearby, 30000);
-
-  return () => clearInterval(interval); 
-}, []);
-
-const fetchUserLocation = async () => {
-    const userId = getAuth().currentUser?.uid;
-    if (userId) {
-      const userLocation = await getUserLocation(userId);  
-      setCurrentUserLocation(userLocation)
-      setIsLocationLoaded(true)
-    }
-  };
-
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     getUsers();
-  }, [selectedInterests]);
+  }, []);
+
+  const displayedInterests = showAllInterests
+    ? interests
+    : interests.slice(0, 6);
 
   const getUsers = async () => {
     try {
-      const users = (await fetchAllUsers()) as UsersList[];
+      const users: UsersList[] = await fetchAllUsers();
 
-      setUsersList(users);
-
-      const filtered = users.filter(user =>
-        user.interests
-          ?.split(",")
-          .some((interest: string) => selectedInterests.includes(interest))
+      const usersWithoutCurrentUser = users.filter(
+        user => user.id !== currentUser?.uid
       );
 
-      setFilteredUsers(filtered);
+      setUsersList(usersWithoutCurrentUser);
+      setFilteredUsers(usersWithoutCurrentUser);
     } catch (err) {
       console.error("Failed to fetch users:", err);
     }
   };
 
+  useEffect(() => {
+    if (usersList.length === 0) return;
 
-  const { deviceLocation, locationPermissionGranted } = useSelector(
-    (state: RootState) => state.user
-  );
+    if (selectedInterests.length === 0) {
+      setFilteredUsers(usersList);
+      return;
+    }
 
+    const filtered = usersList.filter(user => {
+      const userInterests = user.interests?.split(",").map(i => i.trim()) || [];
 
-  const [locationDropdownOpen, setLocationDropdownOpen] = useState(false);
-  const [locationDropdownItems, setLocationDropdownItems] =
-    useState(locationOptions);
-  const [locationDropdownValue, setLocationDropdownValue] = useState("germany");
+      const hasAllSelectedInterests = selectedInterests.every(
+        (selectedInterest: string) => userInterests.includes(selectedInterest)
+      );
+
+      return hasAllSelectedInterests;
+    });
+
+    setFilteredUsers(filtered);
+  }, [selectedInterests, usersList]);
+
+  const {
+    deviceLocation,
+    locationPermissionGranted,
+    user: currentUser,
+  } = useSelector((state: RootState) => state.user);
 
   const [filterModal, setFilterModal] = useState(false);
 
@@ -184,10 +162,6 @@ const fetchUserLocation = async () => {
   const [interestMatchItems, setInterestMatchItems] =
     useState(interestMatchOptions);
   const [interestMatchValue, setInterestMatchValue] = useState("");
-
-  const [hobbiesOpen, setHobbiesOpen] = useState(false);
-  const [hobbiesItems, setHobbiesItems] = useState(hobbiesOptions);
-  const [hobbiesValue, setHobbiesValue] = useState("");
 
   const [alcoholPreferenceOpen, setAlcoholPreferenceOpen] = useState(false);
   const [alcoholPreferenceItems, setAlcoholPreferenceItems] = useState(
@@ -214,15 +188,15 @@ const fetchUserLocation = async () => {
   const [casualDatingAndMatrimonyValue, setCasualDatingAndMatrimonyValue] =
     useState("");
 
-  const handleInterestPress = (interestId: string) => {
-    setSelectedInterests(prev =>
-      prev.includes(interestId)
-        ? prev.filter(id => id !== interestId)
-        : [...prev, interestId]
-    );
+  const handleInterestPress = (label: string) => {
+    setSelectedInterests(prev => {
+      const newSelection = prev.includes(label)
+        ? prev.filter(id => id !== label)
+        : [...prev, label];
+      return newSelection;
+    });
   };
 
-  // Get user's current location
   const getCurrentLocation = async () => {
     try {
       const permissionGranted = await requestLocationPermission();
@@ -240,23 +214,9 @@ const fetchUserLocation = async () => {
     }
   };
 
-
   return (
     <ScrollContainer>
       <View style={styles.header}>
-        <View>
-          <RnDropdown
-            open={locationDropdownOpen}
-            items={locationDropdownItems}
-            value={locationDropdownValue}
-            setOpen={setLocationDropdownOpen}
-            setItems={setLocationDropdownItems}
-            setValue={setLocationDropdownValue}
-            placeholder="Location"
-            style={styles.locationDropdown}
-            dropdownText={styles.locationDropdownText}
-          />
-        </View>
         <RnText style={styles.title}>Discover</RnText>
 
         <View style={styles.headerActions}>
@@ -281,34 +241,48 @@ const fetchUserLocation = async () => {
         </View>
       </View>
 
-      {/* New Users Section */}
       <View style={styles.section}>
         <FlatList
-          data={usersList}
+          data={filteredUsers}
           keyExtractor={item => item.id}
-          renderItem={({ item }) => (
-            <UserCard
-              id={item.id}
-              name={item.name || ""}
-              age={item.age || 0}
-              location={
-                item.location
-                  ? `${item.location._latitude}, ${item.location._longitude}`
-                  : ""
-              }
-              distance={item.distance || ""}
-              image={encodeImagePath(item.photo || "")}
-              isNew={item.isNew}
-              onPress={() => router.push(`/discover/${item.uid || item.id}`)}
-            />
-          )}
+          renderItem={({ item }) => {
+            let calculatedDistance: number | undefined;
+            if (
+              deviceLocation?.coords &&
+              item.location?.latitude &&
+              item.location?.longitude
+            ) {
+              calculatedDistance = getDistanceFromLatLonInMeters(
+                deviceLocation.coords.latitude,
+                deviceLocation.coords.longitude,
+                item.location.latitude,
+                item.location.longitude
+              );
+            }
+
+            return (
+              <UserCard
+                id={item.id}
+                name={item.name || ""}
+                age={item.age || 0}
+                image={encodeImagePath(item.photo || "")}
+                isNew={item.isNew}
+                distance={calculatedDistance}
+                onPress={() => router.push(`/discover/${item.uid || item.id}`)}
+              />
+            );
+          }}
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.usersList}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <RnText style={styles.emptyText}>No users found</RnText>
+            </View>
+          }
         />
       </View>
 
-      {/* Interests Section */}
       <View style={styles.section}>
         <View style={styles.subHeadContainer}>
           <RnText style={styles.sectionTitle}>Interests</RnText>
@@ -321,30 +295,26 @@ const fetchUserLocation = async () => {
         </View>
 
         <View style={styles.interestsContainer}>
-          {interests.map(interest => (
-            <InterestTag
-              key={interest.id}
-              title={interest.label}
-              icon={interest.icon}
-              isSelected={selectedInterests.includes(interest.id)}
-              onPress={() => handleInterestPress(interest.id)}
-            />
-          ))}
-        </View>
-        <View style={styles.interestsContainer}>
-          {displayedInterests.map(interest => (
-            <InterestTag
-              key={interest.id}
-              title={interest.label}
-              icon={interest.icon}
-              isSelected={selectedInterests.includes(interest.id)}
-              onPress={() => handleInterestPress(interest.id)}
-            />
-          ))}
+          {isLoadingTags ? (
+            <RnText style={styles.sectionSubtitle}>Loading interests...</RnText>
+          ) : (
+            displayedInterests.map(interest => (
+              <InterestTag
+                key={interest.id}
+                title={interest.label}
+                icon={interest.iconSvg}
+                isSelected={selectedInterests.includes(
+                  interest.label.toLowerCase()
+                )}
+                onPress={() =>
+                  handleInterestPress(interest.label.toLowerCase())
+                }
+              />
+            ))
+          )}
         </View>
       </View>
 
-      {/* Around Me Section */}
       <View style={[styles.section, { marginBottom: hp(12) }]}>
         <View style={styles.subHeadContainer}>
           <RnText style={styles.sectionTitle}>Around me</RnText>
@@ -353,70 +323,64 @@ const fetchUserLocation = async () => {
           People
           {selectedInterests.length > 0
             ? ` with interest in ${interests
-                .filter(item => selectedInterests.includes(item.id))
+                .filter(item =>
+                  selectedInterests.includes(item.label.toLowerCase())
+                )
                 .map(item => item.label)
                 .join(", ")}`
             : ""}{" "}
           around you
         </RnText>
 
-      {locationPermissionGranted && isLocationLoaded ? (
-<MapView
-  style={styles.map}
-  initialRegion={{
-    latitude: currentUserLocation.latitude,
-    longitude: currentUserLocation.longitude,
-    latitudeDelta: 0.01,
-    longitudeDelta: 0.01,
-  }}
-  provider={Platform.OS === "android" ? PROVIDER_GOOGLE : PROVIDER_DEFAULT}
-  showsUserLocation={true}
-  showsMyLocationButton={true}
->
-  {usersList.map((user, index) => {
-    const lat = parseFloat(user.location?.latitude || user.location?._latitude);
-    const lng = parseFloat(user.location?.longitude || user.location?._longitude);
+        {locationPermissionGranted ? (
+          <MapView
+            style={styles.map}
+            initialRegion={{
+              latitude: deviceLocation?.coords.latitude || 37.7749,
+              longitude: deviceLocation?.coords.longitude || -122.4194,
+              latitudeDelta: 0.01,
+              longitudeDelta: 0.01,
+            }}
+            provider={PROVIDER_GOOGLE}
+            showsUserLocation={locationPermissionGranted}
+            showsMyLocationButton={locationPermissionGranted}
+          >
+            {usersList.map((user, index) => {
+              const lat = user.location?.latitude;
+              const lng = user.location?.longitude;
 
-    if (!lat || !lng || user.uid === getAuth().currentUser?.uid) return null;
+              if (!lat || !lng) return null;
 
-    return (
-      <Marker
-        key={user.id || index}
-        coordinate={{ latitude: lat, longitude: lng }}
-        title={user.name}
-      >
-        <Image
-          source={{ uri: encodeImagePath(user.photo || "") }}
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: 20,
-            borderWidth: 2,
-            borderColor: "#fff",
-          }}
-          resizeMode="cover"
-        />
-      </Marker>
-    );
-  })}
-</MapView>
-
-) : (
-  <View
-    style={[
-      styles.map,
-      styles.getLocationContainer,
-      { justifyContent: "center" },
-    ]}
-  >
-    <RnButton
-      title="Get Location"
-      onPress={() => getCurrentLocation()}
-      style={[styles.getLocationButton, styles.getLocationButtonText]}
-    />
-  </View>
-)}
-
+              return (
+                <Marker
+                  key={user.id || index}
+                  coordinate={{ latitude: lat, longitude: lng }}
+                  title={user.name}
+                >
+                  <Image
+                    source={{ uri: encodeImagePath(user.photo || "") }}
+                    style={{ width: 40, height: 40, borderRadius: 20 }}
+                    resizeMode="cover"
+                  />
+                </Marker>
+              );
+            })}
+          </MapView>
+        ) : (
+          <View
+            style={[
+              styles.map,
+              styles.getLocationContainer,
+              { justifyContent: "center" },
+            ]}
+          >
+            <RnButton
+              title="Get Location"
+              onPress={() => getCurrentLocation()}
+              style={[styles.getLocationButton, styles.getLocationButtonText]}
+            />
+          </View>
+        )}
       </View>
 
       <RnModal show={filterModal} backButton={() => setFilterModal(false)}>
@@ -545,20 +509,6 @@ const fetchUserLocation = async () => {
               style={styles.filterInput}
               zIndex={5000}
               zIndexInverse={4000}
-            />
-
-            <RnText style={styles.modalOptionText}>Hobbies</RnText>
-            <RnDropdown
-              open={hobbiesOpen}
-              items={hobbiesItems}
-              value={hobbiesValue}
-              setOpen={setHobbiesOpen}
-              setItems={setHobbiesItems}
-              setValue={setHobbiesValue}
-              placeholder="Select hobbies"
-              style={styles.filterInput}
-              zIndex={4000}
-              zIndexInverse={5000}
             />
 
             <RnText style={styles.modalOptionText}>Alcohol Preference</RnText>

@@ -79,6 +79,8 @@ export default function RootLayout() {
         text1Style={styles.headingText}
         text2Style={styles.messageText}
         style={styles.successToast}
+        text1NumberOfLines={3}
+        text2NumberOfLines={3}
       />
     ),
     error: (props: ToastProps) => (
@@ -87,6 +89,8 @@ export default function RootLayout() {
         text1Style={styles.headingText}
         text2Style={styles.messageText}
         style={styles.errorToast}
+        text1NumberOfLines={3}
+        text2NumberOfLines={3}
       />
     ),
     info: (props: ToastProps) => (
@@ -95,6 +99,8 @@ export default function RootLayout() {
         text1Style={styles.headingText}
         text2Style={styles.messageText}
         style={styles.infoToast}
+        text1NumberOfLines={3}
+        text2NumberOfLines={3}
       />
     ),
   };

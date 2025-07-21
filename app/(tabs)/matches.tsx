@@ -79,7 +79,6 @@ export default function Matches() {
     <ScrollContainer>
       {/* Header */}
       <View style={styles.headerContainer}>
-        <RoundButton noShadow />
         <RnText style={styles.headerTitle}>Matches</RnText>
         <RoundButton
           iconName="more-vert"

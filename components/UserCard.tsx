@@ -17,25 +17,31 @@ interface UserCardProps {
   id: string;
   name: string;
   age: number;
-  location: string;
-  distance: string;
   image: string;
   isNew?: boolean;
+  distance?: number;
   onPress?: () => void;
 }
 
 const UserCard: React.FC<UserCardProps> = ({
   name,
   age,
-  location,
-  distance,
   image,
   isNew = false,
+  distance,
   onPress,
 }) => {
-  const colorScheme = useColorScheme(); 
+  const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
+
+  const formatDistance = (distanceInMeters: number) => {
+    if (distanceInMeters < 1000) {
+      return `${Math.round(distanceInMeters)} m`;
+    } else {
+      return `${(distanceInMeters / 1000).toFixed(1)} km`;
+    }
+  };
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress}>
@@ -49,16 +55,16 @@ const UserCard: React.FC<UserCardProps> = ({
       )}
 
       <View style={styles.content}>
-        <View style={styles.nameCon}>
-          <RnText style={styles.distance}>{distance}</RnText>
-        </View>
+        {distance !== undefined && (
+          <View style={styles.nameCon}>
+            <RnText style={styles.distance}>{formatDistance(distance)}</RnText>
+          </View>
+        )}
 
         <RnText style={styles.name}>
           {name}, {age}
         </RnText>
-        <View style={styles.locationContainer}>
-          {/* <RnText style={styles.location}>{location}</RnText> */}
-        </View>
+        <View style={styles.locationContainer}></View>
       </View>
     </TouchableOpacity>
   );

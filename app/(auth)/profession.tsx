@@ -3,8 +3,11 @@ import RnButton from "@/components/RnButton";
 import RnProgressBar from "@/components/RnProgressBar";
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
+import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { ProfessionValues } from "@/types";
+import { wp } from "@/utils";
+import { FontAwesome6 } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { Formik } from "formik";
 import { useState } from "react";
@@ -40,7 +43,6 @@ export default function Profession() {
     if (!values.profession) return;
     setIsLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
       router.push({
         pathname: "/religion",
         params: { ...params, profession: values.profession },
@@ -76,7 +78,25 @@ export default function Profession() {
   };
 
   return (
-    <ScrollContainer topBar={<RnProgressBar progress={10 / 11} />}>
+    <ScrollContainer
+      topBar={
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+          }}
+        >
+          <FontAwesome6
+            name="house"
+            size={24}
+            color={Colors[theme].primary}
+            style={{ marginLeft: wp(5) }}
+            onPress={() => router.dismissAll()}
+          />
+          <RnProgressBar progress={11 / 12} />
+        </View>
+      }
+    >
       <Formik
         initialValues={{ profession: "" }}
         validationSchema={professionSchema}
@@ -90,7 +110,7 @@ export default function Profession() {
             </RnText>
 
             <View style={styles.optionsContainer}>
-              {PROFESSIONS.map((option) =>
+              {PROFESSIONS.map(option =>
                 renderOption(option, values.profession, setFieldValue)
               )}
             </View>

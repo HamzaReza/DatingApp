@@ -10,9 +10,7 @@ import { Colors } from "@/constants/Colors";
 import {
   fetchAllUserStories,
   fetchStoriesForUser,
-  updateUser,
   handleStoryUpload,
-  uploadMultipleImages,
 } from "@/firebase/auth";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import {
@@ -24,17 +22,7 @@ import { RootState } from "@/redux/store";
 import { encodeImagePath, hp, wp } from "@/utils";
 import { requestLocationPermission } from "@/utils/Permission";
 import { getAuth } from "@react-native-firebase/auth";
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  getFirestore,
-  query,
-  setDoc,
-  updateDoc,
-  where,
-} from "@react-native-firebase/firestore";
+import { doc, getFirestore, setDoc } from "@react-native-firebase/firestore";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import { router } from "expo-router";
@@ -228,9 +216,12 @@ export default function Home() {
             onPress={() => router.push("/main/notification")}
             showDot={hasNotification}
           />
-          <TouchableOpacity style={{}}>
+          <TouchableOpacity
+            style={{}}
+            onPress={() => router.push(`/discover/${user?.uid}`)}
+          >
             <RnAvatar
-              source={encodeImagePath(user.photo)}
+              source={encodeImagePath(user?.photo)}
               avatarHeight={wp(9)}
             />
           </TouchableOpacity>
@@ -247,7 +238,9 @@ export default function Home() {
               username={item.username || "user"}
               isOwn={item.isOwn}
               onPress={() => handleStoryPress(item)}
-              ownUploadOnPress={() => handleStoryUpload(item,pickStory(),user)}
+              ownUploadOnPress={() =>
+                handleStoryUpload(item, pickStory(), user)
+              }
             />
           )}
           horizontal

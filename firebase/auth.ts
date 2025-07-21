@@ -744,6 +744,53 @@ const handleStoryUpload = async (
   }
 };
 
+const fetchTags = (callback: (tags: any[]) => void) => {
+  try {
+    const db = getFirestore();
+    const tagsRef = collection(db, "tags");
+
+    const unsubscribe = onSnapshot(
+      tagsRef,
+      snapshot => {
+        const firstDoc = snapshot.docs[0];
+        const data = firstDoc.data();
+        callback(data.tags || []);
+      },
+      error => {
+        console.error("❌ Error in tags listener:", error);
+      }
+    );
+    return unsubscribe;
+  } catch (error) {
+    console.error("❌ Error fetching tags:", error);
+    throw error;
+  }
+};
+
+const fetchGenders = (callback: (genders: any[]) => void) => {
+  try {
+    const db = getFirestore();
+    const gendersRef = collection(db, "genders");
+
+    const unsubscribe = onSnapshot(
+      gendersRef,
+      snapshot => {
+        const firstDoc = snapshot.docs[0];
+        const data = firstDoc.data();
+        callback(data.genders || []);
+      },
+      error => {
+        console.error("❌ Error in genders listener:", error);
+      }
+    );
+
+    return unsubscribe;
+  } catch (error) {
+    console.error("❌ Error fetching genders:", error);
+    throw error;
+  }
+};
+
 // New functions for swipe profile functionality
 
 const getRandomUser = async (
@@ -961,53 +1008,6 @@ const fetchUserMatches = async (currentUserId: string) => {
   } catch (error) {
     console.error("Error fetching user matches:", error);
     return [];
-  }
-};
-
-const fetchTags = (callback: (tags: any[]) => void) => {
-  try {
-    const db = getFirestore();
-    const tagsRef = collection(db, "tags");
-
-    const unsubscribe = onSnapshot(
-      tagsRef,
-      snapshot => {
-        const firstDoc = snapshot.docs[0];
-        const data = firstDoc.data();
-        callback(data.tags || []);
-      },
-      error => {
-        console.error("❌ Error in tags listener:", error);
-      }
-    );
-    return unsubscribe;
-  } catch (error) {
-    console.error("❌ Error fetching tags:", error);
-    throw error;
-  }
-};
-
-const fetchGenders = (callback: (genders: any[]) => void) => {
-  try {
-    const db = getFirestore();
-    const gendersRef = collection(db, "genders");
-
-    const unsubscribe = onSnapshot(
-      gendersRef,
-      snapshot => {
-        const firstDoc = snapshot.docs[0];
-        const data = firstDoc.data();
-        callback(data.genders || []);
-      },
-      error => {
-        console.error("❌ Error in genders listener:", error);
-      }
-    );
-
-    return unsubscribe;
-  } catch (error) {
-    console.error("❌ Error fetching genders:", error);
-    throw error;
   }
 };
 

@@ -961,7 +961,7 @@ const fetchUserMatches = async (currentUserId: string) => {
         try {
           const userDoc = await getDoc(doc(db, "users", match.otherUserId));
           if (userDoc.exists()) {
-            const userData = userDoc.data();
+            const userData = userDoc.data() as any;
 
             // Generate random distance and match percentage if not available
             const distance = `${(Math.random() * 10 + 0.5).toFixed(1)} km away`;
@@ -1014,6 +1014,7 @@ const fetchUserMatches = async (currentUserId: string) => {
 export {
   authenticateWithPhone,
   checkForMatch,
+  checkUserExistsForSignup,
   deleteImage,
   fetchAllUsers,
   fetchAllUserStories,

@@ -98,10 +98,6 @@ export default function Discover() {
     ? interests
     : interests.slice(0, 6);
 
-  const displayedInterests = showAllInterests
-    ? interests
-    : interests.slice(0, 6);
-
   const getUsers = async () => {
     try {
       const users: UsersList[] = await fetchAllUsers();

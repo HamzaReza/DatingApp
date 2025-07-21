@@ -624,6 +624,41 @@ const fetchTags = (callback: (tags: any[]) => void) => {
     return unsubscribe;
   } catch (error) {
     console.error("❌ Error fetching tags:", error);
+  }
+};
+
+// New functions for swipe profile functionality
+
+const getRandomUser = async (
+  currentUserId: string,
+  excludeUserIds: string[] = []
+) => {
+  try {
+    const db = getFirestore();
+    const usersRef = collection(db, "users");
+    const snapshot = await getDocs(usersRef);
+
+    const availableUsers = snapshot.docs
+      .map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => ({
+        id: doc.id,
+        ...doc.data(),
+      }))
+      .filter(
+        (user: any) =>
+          user.id !== currentUserId &&
+          !excludeUserIds.includes(user.id) &&
+          user.isProfileComplete === true
+      );
+
+    if (availableUsers.length === 0) {
+      return null;
+    }
+
+    // Get a random user
+    const randomIndex = Math.floor(Math.random() * availableUsers.length);
+    return availableUsers[randomIndex];
+  } catch (error) {
+    console.error("Error fetching random user:", error);
     throw error;
   }
 };
@@ -648,12 +683,112 @@ const fetchGenders = (callback: (genders: any[]) => void) => {
     return unsubscribe;
   } catch (error) {
     console.error("❌ Error fetching genders:", error);
+  }
+};
+
+const recordLike = async (currentUserId: string, likedUserId: string) => {
+  try {
+    const db = getFirestore();
+
+    // Add to current user's likes
+    const currentUserLikesRef = doc(
+      db,
+      "users",
+      currentUserId,
+      "likes",
+      likedUserId
+    );
+    await setDoc(currentUserLikesRef, {
+      likedAt: new Date(),
+      userId: likedUserId,
+    });
+
+    // Check if it's a match
+    const isMatch = await checkForMatch(currentUserId, likedUserId);
+
+    return { isMatch };
+  } catch (error) {
+    console.error("Error recording like:", error);
+    throw error;
+  }
+};
+
+const checkForMatch = async (currentUserId: string, likedUserId: string) => {
+  try {
+    const db = getFirestore();
+
+    // Check if the liked user has also liked the current user
+    const likedUserLikesRef = doc(
+      db,
+      "users",
+      likedUserId,
+      "likes",
+      currentUserId
+    );
+    const likedUserLikeDoc = await getDoc(likedUserLikesRef);
+
+    if (likedUserLikeDoc.exists()) {
+      // It's a match! Create a match record
+      const matchRef = doc(db, "matches", `${currentUserId}_${likedUserId}`);
+      await setDoc(matchRef, {
+        users: [currentUserId, likedUserId],
+        matchedAt: new Date(),
+        isActive: true,
+      });
+
+      return true;
+    }
+
+    return false;
+  } catch (error) {
+    console.error("Error checking for match:", error);
+    throw error;
+  }
+};
+
+const getNextUserForSwipe = async (
+  currentUserId: string,
+  excludeUserIds: string[] = []
+) => {
+  try {
+    const db = getFirestore();
+    const usersRef = collection(db, "users");
+    const snapshot = await getDocs(usersRef);
+
+    // Get users that haven't been liked by current user
+    const currentUserLikesRef = collection(db, "users", currentUserId, "likes");
+    const likesSnapshot = await getDocs(currentUserLikesRef);
+    const likedUserIds = likesSnapshot.docs.map((doc: any) => doc.id);
+
+    const availableUsers = snapshot.docs
+      .map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => ({
+        id: doc.id,
+        ...doc.data(),
+      }))
+      .filter(
+        (user: any) =>
+          user.id !== currentUserId &&
+          !excludeUserIds.includes(user.id) &&
+          !likedUserIds.includes(user.id) &&
+          user.isProfileComplete === true
+      );
+
+    if (availableUsers.length === 0) {
+      return null;
+    }
+
+    // Get a random user
+    const randomIndex = Math.floor(Math.random() * availableUsers.length);
+    return availableUsers[randomIndex];
+  } catch (error) {
+    console.error("Error fetching next user for swipe:", error);
     throw error;
   }
 };
 
 export {
   authenticateWithPhone,
+  checkForMatch,
   checkUserExistsForSignup,
   deleteImage,
   fetchAllUsers,
@@ -663,11 +798,13 @@ export {
   fetchStoriesForUser,
   fetchTags,
   getCurrentAuth,
-  getUserByEmail,
+  getNextUserForSwipe,
+  getRandomUser,
   getUserByPhoneNumber,
   getUserByUid,
   getUserLocation,
   handleStoryUpload,
+  recordLike,
   saveUserToDatabase,
   signInWithGoogleFirebase,
   updateUser,

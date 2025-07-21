@@ -10,6 +10,12 @@ const IMAGE_HEIGHT = hp(60);
 
 export default (theme: "dark" | "light") =>
   StyleSheet.create({
+    loadingContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: Colors[theme].background,
+    },
     header: {
       flex: 1,
       flexDirection: "row",
@@ -132,7 +138,7 @@ export default (theme: "dark" | "light") =>
     },
     profession: {
       fontSize: FontSize.small,
-      color: Colors[theme].blackText,
+      textTransform: "uppercase",
     },
     section: {
       paddingHorizontal: wp(4),
@@ -229,10 +235,7 @@ export default (theme: "dark" | "light") =>
 
     //modal
     modalBackground: {
-      height: hp(100),
       backgroundColor: Colors[theme].whiteText,
-      justifyContent: "center",
-      // alignItems: "center",
     },
     closeButton: {
       backgroundColor: Colors[theme].whiteText,
@@ -257,7 +260,7 @@ export default (theme: "dark" | "light") =>
     },
     modalMainImage: {
       width: wp(100),
-      height: hp(100),
+      height: "auto",
       borderRadius: Borders.radius3,
     },
     thumbnailList: {
@@ -277,5 +280,14 @@ export default (theme: "dark" | "light") =>
     },
     selectedThumbnail: {
       borderColor: Colors[theme].pink,
+    },
+    editModalContainer: {
+      backgroundColor: Colors[theme].background,
+      padding: wp(4),
+      borderRadius: Borders.radius2,
+    },
+    editProfileButton: {
+      width: wp(70),
+      marginTop: hp(3),
     },
   });

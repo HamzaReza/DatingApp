@@ -19,6 +19,7 @@ const RnImagePicker: React.FC<RnImagePickerProps> = ({
   visible,
   showPicker,
   hidePicker,
+  multiple = false,
   children,
 }) => {
   const colorScheme = useColorScheme();
@@ -34,20 +35,31 @@ const RnImagePicker: React.FC<RnImagePickerProps> = ({
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: "images",
-        allowsEditing: true,
+        mediaTypes: multiple ? ["images", "videos"] : "images",
+        allowsMultipleSelection: multiple,
+        allowsEditing: multiple ? false : true,
         aspect: [1, 1],
         quality: 0.8,
       });
 
       if (!result.canceled) {
-        const image = result.assets[0];
-        setUri({
-          uri: image.uri,
-          path: image.uri,
-          type: `image/${image.uri.split(".").pop()}`,
-          name: image.uri.split("/").pop() || "",
-        });
+        if (multiple) {
+          const images = result.assets.map(asset => ({
+            uri: asset.uri,
+            path: asset.uri,
+            type: `image/${asset.uri.split(".").pop()}`,
+            name: asset.uri.split("/").pop() || "",
+          }));
+          setUri(images);
+        } else {
+          const image = result.assets[0];
+          setUri({
+            uri: image.uri,
+            path: image.uri,
+            type: `image/${image.uri.split(".").pop()}`,
+            name: image.uri.split("/").pop() || "",
+          });
+        }
         hidePicker();
       }
     } catch (error) {

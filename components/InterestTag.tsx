@@ -81,6 +81,7 @@ const createStyles = (theme: "dark" | "light") =>
     },
     selectedTag: {
       backgroundColor: Colors[theme].redText,
+      borderWidth: 0,
     },
     iconContainer: {
       marginRight: wp(1),
@@ -95,6 +96,7 @@ const createStyles = (theme: "dark" | "light") =>
       fontSize: FontSize.regular,
       color: Colors[theme].redText,
       fontFamily: FontFamily.semiBold,
+      textTransform: "capitalize",
     },
     selectedText: {
       color: Colors[theme].background,

@@ -179,6 +179,7 @@ const saveUserToDatabase = async (userId: string, userData: any) => {
 };
 
 const updateUser = async (userId: string, updateData: any) => {
+  console.log("🚀 ~ auth.ts:182 ~ updateUser ~ updateData:", updateData);
   try {
     const db = getFirestore();
 

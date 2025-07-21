@@ -2,7 +2,7 @@ import { Borders } from "@/constants/Borders";
 import { Colors } from "@/constants/Colors";
 import { hp, wp } from "@/utils";
 import { MaterialIcons } from "@expo/vector-icons";
-import { Tabs } from "expo-router";
+import { router, Tabs } from "expo-router";
 import { Pressable, StyleSheet, useColorScheme, View } from "react-native";
 
 export default function TabLayout() {
@@ -44,15 +44,20 @@ export default function TabLayout() {
         name="main"
         options={{
           title: "Home",
-          tabBarButton: (props) => {
+          tabBarButton: props => {
             const { ref, ...rest } = props;
             return (
-              <Pressable {...rest} android_ripple={null} style={props.style}>
+              <Pressable
+                {...rest}
+                android_ripple={null}
+                style={props.style}
+                onPress={() => router.replace("/main/home")}
+              >
                 {props.children}
               </Pressable>
             );
           },
-          tabBarIcon: ({ focused, size }) => (
+          tabBarIcon: ({ focused }) => (
             <View
               style={[
                 styles.iconContainer,
@@ -70,21 +75,27 @@ export default function TabLayout() {
               />
             </View>
           ),
+          popToTopOnBlur: true,
         }}
       />
       <Tabs.Screen
         name="discover"
         options={{
           title: "Discover",
-          tabBarButton: (props) => {
+          tabBarButton: props => {
             const { ref, ...rest } = props;
             return (
-              <Pressable {...rest} android_ripple={null} style={props.style}>
+              <Pressable
+                {...rest}
+                android_ripple={null}
+                style={props.style}
+                onPress={() => router.replace("/discover/discovery")}
+              >
                 {props.children}
               </Pressable>
             );
           },
-          tabBarIcon: ({ focused, size }) => (
+          tabBarIcon: ({ focused }) => (
             <View
               style={[
                 styles.iconContainer,
@@ -102,21 +113,27 @@ export default function TabLayout() {
               />
             </View>
           ),
+          popToTopOnBlur: true,
         }}
       />
       <Tabs.Screen
         name="swipeProfile"
         options={{
           title: "swipeProfile",
-          tabBarButton: (props) => {
+          tabBarButton: props => {
             const { ref, ...rest } = props;
             return (
-              <Pressable {...rest} android_ripple={null} style={props.style}>
+              <Pressable
+                {...rest}
+                android_ripple={null}
+                style={props.style}
+                onPress={() => router.replace("/swipeProfile")}
+              >
                 {props.children}
               </Pressable>
             );
           },
-          tabBarIcon: ({ focused, size }) => (
+          tabBarIcon: ({ focused }) => (
             <View
               style={[
                 styles.iconContainer,
@@ -134,21 +151,27 @@ export default function TabLayout() {
               />
             </View>
           ),
+          popToTopOnBlur: true,
         }}
       />
       <Tabs.Screen
         name="matches"
         options={{
           title: "Matches",
-          tabBarButton: (props) => {
+          tabBarButton: props => {
             const { ref, ...rest } = props;
             return (
-              <Pressable {...rest} android_ripple={null} style={props.style}>
+              <Pressable
+                {...rest}
+                android_ripple={null}
+                style={props.style}
+                onPress={() => router.replace("/matches")}
+              >
                 {props.children}
               </Pressable>
             );
           },
-          tabBarIcon: ({ focused, size }) => (
+          tabBarIcon: ({ focused }) => (
             <View
               style={[
                 styles.iconContainer,
@@ -166,21 +189,27 @@ export default function TabLayout() {
               />
             </View>
           ),
+          popToTopOnBlur: true,
         }}
       />
       <Tabs.Screen
         name="messages"
         options={{
           title: "Messages",
-          tabBarButton: (props) => {
+          tabBarButton: props => {
             const { ref, ...rest } = props;
             return (
-              <Pressable {...rest} android_ripple={null} style={props.style}>
+              <Pressable
+                {...rest}
+                android_ripple={null}
+                style={props.style}
+                onPress={() => router.replace("/messages")}
+              >
                 {props.children}
               </Pressable>
             );
           },
-          tabBarIcon: ({ focused, size }) => (
+          tabBarIcon: ({ focused }) => (
             <View
               style={[
                 styles.iconContainer,
@@ -198,6 +227,7 @@ export default function TabLayout() {
               />
             </View>
           ),
+          popToTopOnBlur: true,
         }}
       />
     </Tabs>

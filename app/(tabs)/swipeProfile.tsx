@@ -77,8 +77,8 @@ export default function SwipeProfile() {
       setLikedUserIds(prev => [...prev, profileData.id]);
 
       if (isMatch) {
-        // It's a match! Navigate to messages tab
-        router.push("/messages");
+        // It's a match! Navigate to matches tab
+        router.push("/(tabs)/matches");
         return;
       }
 
@@ -125,8 +125,8 @@ export default function SwipeProfile() {
       setLikedUserIds(prev => [...prev, profileData.id]);
 
       if (isMatch) {
-        // It's a match! Navigate to messages tab
-        router.push("/messages");
+        // It's a match! Navigate to matches tab
+        router.push("/(tabs)/matches");
         return;
       }
 

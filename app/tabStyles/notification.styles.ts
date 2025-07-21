@@ -83,4 +83,39 @@ export default (theme: "dark" | "light") =>
       borderRadius: Borders.circle,
       backgroundColor: Colors[theme].redText,
     },
+
+    //
+
+    buttonContainer: {
+  flexDirection: 'row',
+  marginTop: 8,
+  gap: 8,
+},
+actionButton: {
+  paddingVertical: 6,
+  paddingHorizontal: 12,
+  borderRadius: 20,
+  flex: 1,
+},
+acceptButton: {
+  backgroundColor: Colors[theme].primary,
+},
+rejectButton: {
+  backgroundColor: Colors[theme].tabIconDefault,
+},
+buttonText: {
+  color: Colors[theme].whiteText,
+  textAlign: 'center',
+  fontSize: 14,
+},
+acceptedText: {
+  color: Colors[theme].primary,
+  marginTop: 4,
+  fontSize: 14,
+},
+rejectedText: {
+  color: Colors[theme].tabIconDefault,
+  marginTop: 4,
+  fontSize: 14,
+},
   });

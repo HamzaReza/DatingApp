@@ -32,6 +32,7 @@ import {
   isErrorWithCode,
   isSuccessResponse,
 } from "@react-native-google-signin/google-signin";
+import { tags } from "react-native-svg/lib/typescript/xmlTags";
 
 interface Location {
   latitude: number;
@@ -541,58 +542,65 @@ export const getNearbyUsers = async (currentUserLocation: Location) => {
   return nearbyUsers;
 };
 
-export const sendGroupInvites = async (
+
+export const sendGroupInvitesByTags = async (
   invitedBy: string,
-  invitedUsers: string[]
+  selectedTags: string[],
+  maxParticipants: number
 ) => {
   try {
-    const db = getFirestore();
+    console.log('selectedTags', selectedTags)
+   const db = getFirestore();
+    const usersSnapshot = await getDocs(collection(db, "users"));
+    
+   
+    const matchingUsers = usersSnapshot.docs
+      .filter(userDoc => {
+        const userTags = userDoc.data().interests?.split(',') || [];
+        return selectedTags.some(tag => userTags.includes(tag));
+      })
+      .slice(0, maxParticipants) 
+      .map(userDoc => ({
+        uid: userDoc.id,
+        name: userDoc.data().name || "User"
+      }));
 
-    // 1. First fetch all required user names
-    const userFetchPromises = [
-      getDoc(doc(db, "users", invitedBy)), // Get inviter info
-      ...invitedUsers.map(uid => getDoc(doc(db, "users", uid))), // Get all invited users
-    ];
+    if (matchingUsers.length === 0) {
+      throw new Error("No users found matching the selected tags");
+    }
 
-    const userSnapshots = await Promise.all(userFetchPromises);
-    const inviterData = userSnapshots[0].data();
-    const inviterName = inviterData?.name || "Someone";
+    const inviterDoc = await getDoc(doc(db, "users", invitedBy));
+    const inviterName = inviterDoc.data()?.name || "Someone";
 
-    // 2. Create the group document
+
     const groupRef = doc(collection(db, "messages"));
     const groupId = groupRef.id;
     const invitedAt = Timestamp.now();
 
-    const inviteUserObjects = invitedUsers.map((uid, index) => {
-      const userData = userSnapshots[index + 1]?.data();
-      return {
-        uid,
-        name: userData?.name || "User",
-        status: "pending",
-        invitedAt,
-      };
-    });
-
     await setDoc(groupRef, {
+      noOfInvitors: matchingUsers.length,
+      maxParticipants,
       id: groupId,
       invitedBy,
       invitedByName: inviterName,
       invitedAt,
       type: "group",
-      users: inviteUserObjects,
+      tags: selectedTags,
+      users: matchingUsers.map(user => ({
+        uid: user.uid,
+        name: user.name,
+        status: "pending",
+        invitedAt
+      })),
       createdAt: Timestamp.now(),
     });
 
-    // 3. Save notifications with personalized messages
+
     const notificationBatch = writeBatch(db);
     const now = Timestamp.now();
 
-    for (let i = 0; i < invitedUsers.length; i++) {
-      const userId = invitedUsers[i];
-      const userData = userSnapshots[i + 1]?.data();
-      const userName = userData?.name || "User";
-
-      const notificationRef = doc(db, "notifications", userId);
+    for (const user of matchingUsers) {
+      const notificationRef = doc(db, "notifications", user.uid);
       const notificationDoc = await getDoc(notificationRef);
 
       const newNotification = {
@@ -601,12 +609,13 @@ export const sendGroupInvites = async (
         type: "messages",
         groupId,
         createdAt: now,
+        tags: selectedTags,
+        maxParticipants: maxParticipants,
       };
 
       if (notificationDoc.exists()) {
-        const existingNotifications = notificationDoc.data()?.items || [];
         notificationBatch.update(notificationRef, {
-          items: [...existingNotifications, newNotification],
+          items: [...(notificationDoc.data()?.items || []), newNotification],
         });
       } else {
         notificationBatch.set(notificationRef, {
@@ -616,11 +625,11 @@ export const sendGroupInvites = async (
     }
 
     await notificationBatch.commit();
-    console.log("✅ Group created with personalized notifications");
     return groupId;
+
   } catch (error) {
-    console.error("❌ Error in group creation:", error);
-    throw new Error("Failed to create group and send invitations");
+    console.error("error", error);
+    throw error;
   }
 };
 
@@ -645,9 +654,12 @@ export const respondToGroupInvite = async (
   userId: string,
   accept: boolean
 ) => {
+
+
+console.log('hello',groupId)
+
   const db = getFirestore();
   try {
-    // 1. Get the current group data
     const groupRef = doc(db, "messages", groupId);
     const groupSnap = await getDoc(groupRef);
 
@@ -655,12 +667,21 @@ export const respondToGroupInvite = async (
       throw new Error("Group not found");
     }
 
-    // 2. Find and update the specific user's status
-    const currentUsers = groupSnap.data().users || [];
+    const groupData = groupSnap.data();
+    const maxParticipants = groupData.maxParticipants || 0;
+    console.log(maxParticipants,'max')
+    const currentUsers = groupData.users || [];
+
+    const acceptedCount = currentUsers.filter(user => user.status === "accepted").length;
+
+    if (accept && acceptedCount >= maxParticipants) {
+      throw new Error("This group has already reached its participant limit.");
+    }
+
     const updatedUsers = currentUsers.map(user => {
       if (user.uid === userId) {
         return {
-          ...user, // Preserve all existing user data (including name)
+          ...user,
           status: accept ? "accepted" : "rejected",
           respondedAt: new Date(),
         };
@@ -668,7 +689,6 @@ export const respondToGroupInvite = async (
       return user;
     });
 
-    // 3. Update the group document with the modified users array
     await updateDoc(groupRef, {
       users: updatedUsers,
     });
@@ -679,6 +699,7 @@ export const respondToGroupInvite = async (
     throw error;
   }
 };
+
 
 const handleStoryUpload = async (
   story: Story,

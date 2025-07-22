@@ -1,11 +1,17 @@
 import createStyles from "@/app/tabStyles/messages.styles";
 import { MessageItem } from "@/components/MessageItem";
 import RnBottomSheet from "@/components/RnBottomSheet";
+import RnButton from "@/components/RnButton";
 import Container from "@/components/RnContainer";
+import RnDropdown from "@/components/RnDropdown";
 import RnText from "@/components/RnText";
 import RoundButton from "@/components/RoundButton";
 import { Colors } from "@/constants/Colors";
-import { sendGroupInvites } from "@/firebase/auth";
+import {
+  fetchTags,
+  sendGroupInvites,
+  sendGroupInvitesByTags,
+} from "@/firebase/auth";
 import { encodeImagePath } from "@/utils";
 import getDistanceFromLatLonInMeters, {
   getNearbyHangoutUsers,
@@ -132,6 +138,18 @@ const messages: Message[] = [
   },
 ];
 
+interface Tag {
+  iconSvg: string;
+  id: number;
+  label: string;
+}
+
+interface DropdownItem {
+  label: string;
+  value: number;
+  iconSvg?: string;
+}
+
 export default function Messages() {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
@@ -141,6 +159,17 @@ export default function Messages() {
   const [nearbyUsers, setNearbyUsers] = React.useState<Message[]>([]);
   const [selectedUsers, setSelectedUsers] = useState([]);
 
+  const [tagsOpen, setTagsOpen] = useState(false);
+  const [selectedTags, setSelectedTags] = useState<any[]>([]);
+  const [tagsItems, setTagsItems] = useState<DropdownItem[]>([]);
+  const [isLoadingTags, setIsLoadingTags] = useState(true);
+  const [countOpen, setCountOpen] = useState(false);
+  const [participantCount, setParticipantCount] = useState(5);
+  const countItems = [2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => ({
+    label: `${num} people`,
+    value: num,
+  }));
+
   const handleBackPress = () => {
     router.back();
   };
@@ -149,61 +178,30 @@ export default function Messages() {
     console.log(selectedUsers);
   }, [selectedUsers]);
 
+  useEffect(() => {
+    const unsubscribe = fetchTags(tags => {
+     
+      const formattedTags = tags.map(tag => ({
+        label: tag.label,
+        value: tag,
+        iconSvg: tag.iconSvg,
+      }));
+
+      setTagsItems(formattedTags);
+      setIsLoadingTags(false);
+    });
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, []);
+
   const handleCreateGroup = async () => {
-    const { status } = await getForegroundPermissionsAsync();
-    if (status !== "granted") return;
-
-    const location = await getCurrentPositionAsync({
-      accuracy: Accuracy.Highest,
-    });
-
-    const users = await fetchNearbyUsers(
-      location.coords.latitude,
-      location.coords.longitude
-    );
-
-    setNearbyUsers(users);
     setIsBottomSheetVisible(true);
-  };
-
-  const fetchNearbyUsers = async (
-    currentLatitude: number,
-    currentLongitude: number
-  ) => {
-    const db = getFirestore();
-    const usersRef = collection(db, "users");
-    const snapshot = await getDocs(usersRef);
-
-    const nearbyUsers: any[] = [];
-
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      const userLocation = data.location; // Assume this is { latitude: number, longitude: number }
-
-      if (userLocation?.latitude && userLocation?.longitude) {
-        const distance = getDistanceFromLatLonInMeters(
-          currentLatitude,
-          currentLongitude,
-          userLocation.latitude,
-          userLocation.longitude
-        );
-
-        if (distance <= 10000) {
-          // 10 km = 10,000 meters
-          nearbyUsers.push({
-            id: doc.id,
-            ...data,
-          });
-        }
-      }
-    });
-
-    return nearbyUsers;
   };
 
   const handleRecentMatchPress = (matchId: string) => {
     if (matchId === "1") {
-      // Handle likes screen
       console.log("Open likes");
     } else {
       router.push(`/messages/chat/${matchId}`);
@@ -212,6 +210,19 @@ export default function Messages() {
 
   const handleMessagePress = (messageId: string) => {
     router.push(`/messages/chat/${messageId}`);
+  };
+
+  const handleCreateHangout = async () => {
+    try {
+      const currentUserId = getAuth().currentUser?.uid;
+      const tagLabels = selectedTags.map(tag => tag.label);
+
+      await sendGroupInvitesByTags(currentUserId, tagLabels, participantCount);
+      setIsBottomSheetVisible(false);
+      alert("Invites sent successfully");
+    } catch (error) {
+      alert(error.message || "Failed to send invites");
+    }
   };
 
   const renderRecentMatch = ({ item }: { item: RecentMatch }) => (
@@ -242,35 +253,6 @@ export default function Messages() {
       onPress={() => handleMessagePress(item.id)}
     />
   );
-
-  const handleSelectUser = (userId: string) => {
-    setSelectedUsers(prevSelected => {
-      if (prevSelected.includes(userId)) {
-        // If already selected, remove it
-        return prevSelected.filter(id => id !== userId);
-      } else {
-        // If not selected, add it
-        return [...prevSelected, userId];
-      }
-    });
-  };
-
-  const handleSendRequests = async () => {
-    try {
-      const invitedBy = getAuth().currentUser?.uid;
-      const groupId = `group_${Date.now()}`; // or generate based on logic
-   
-
-      await sendGroupInvites(invitedBy, selectedUsers);
-
-      setIsBottomSheetVisible(false);
-      setSelectedUsers([]);
-
-      console.log("✅ Group invite requests sent.");
-    } catch (err) {
-      console.error("❌ Error sending group invites:", err);
-    }
-  };
 
   return (
     <Container customStyle={styles.container}>
@@ -343,40 +325,47 @@ export default function Messages() {
         onClose={() => setIsBottomSheetVisible(false)}
         snapPoints={["50%"]}
       >
-        <View style={styles.bottomSheetHeader}>
-          <RnText
-            style={{ fontSize: 18, fontWeight: "bold", marginBottom: 10 }}
-          >
-            Nearby Users
-          </RnText>
-          {selectedUsers.length > 0 && (
-            <TouchableOpacity
-              style={styles.createGroupButton}
-              onPress={handleSendRequests}
-            >
-              <RnText style={styles.createGroupText}>Request to join</RnText>
-            </TouchableOpacity>
-          )}
-        </View>
+        <View style={styles.bottomSheetContent}>
+          <RnText style={styles.bottomSheetTitle}>Create a hangout</RnText>
 
-        <FlatList
-          data={nearbyUsers}
-          keyExtractor={item => item.id}
-          renderItem={({ item }) => (
-            <MessageItem
-              name={item.name}
-              message={item.bio || "Hi there!"} // Use bio or default message
-              time={""} // You might want to remove time in selection mode
-              image={encodeImagePath(item.photo)}
-              isOnline={item.isOnline}
-              unread={false} // Not relevant in selection mode
-              onPress={() => handleSelectUser(item.id)}
-              isSelected={selectedUsers.includes(item.id)}
-              showCheckbox={isBottomSheetVisible} // Only show checkbox in bottom sheet
+          {/* Tags Dropdown */}
+          <View style={styles.dropdownWrapper}>
+            <RnText style={styles.dropdownLabel}>Select Tags:</RnText>
+            <RnDropdown
+              open={tagsOpen}
+              setOpen={setTagsOpen}
+              value={selectedTags}
+              setValue={setSelectedTags}
+              items={tagsItems}
+              setItems={setTagsItems}
+              placeholder="Select tags..."
+              multiple={true}
+              min={1}
+              zIndex={3000}
+              zIndexInverse={1000}
             />
-          )}
-          showsVerticalScrollIndicator={false}
-        />
+          </View>
+
+          {/* Participant Count Dropdown */}
+          <View style={styles.dropdownWrapper}>
+            <RnText style={styles.dropdownLabel}>Max Participants:</RnText>
+            <RnDropdown
+              open={countOpen}
+              setOpen={setCountOpen}
+              value={participantCount}
+              setValue={setParticipantCount}
+              items={countItems}
+              placeholder="Select count..."
+              zIndex={2000}
+              zIndexInverse={2000}
+            />
+          </View>
+
+          {/* Create Button */}
+          <RnButton style={styles.createButton} onPress={handleCreateHangout}>
+            <RnText style={styles.createButtonText}>Create Hangout</RnText>
+          </RnButton>
+        </View>
       </RnBottomSheet>
     </Container>
   );

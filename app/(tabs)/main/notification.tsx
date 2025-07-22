@@ -66,100 +66,101 @@ export default function NotificationScreen() {
   const currentUser = getAuth().currentUser;
 
 
-  useEffect(()=>{
-console.log('hi',notifications)
-  },[notifications])
 
- useEffect(() => {
-  const fetchNotifications = async () => {
-    if (currentUser) {
-      try {
-        const notifs = await getUserNotifications(currentUser.uid);
-        console.log('Raw notifications from Firestore:', notifs);
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      if (currentUser) {
+        try {
+          const notifs = await getUserNotifications(currentUser.uid);
+      
+
+          const formattedNotifications = notifs.map(notif => {
+           
+            const defaultImage = "https://example.com/default-user.png";
+
+            return {
+              id: notif.groupId || `notif-${Date.now()}`,
+              title: notif.title || "New Notification",
+              description:
+                notif.subtitle ||
+                notif.message ||
+                "You have a new notification",
+              time: formatTime(notif.createdAt?.toDate?.() || new Date()),
+              image: notif.inviterImage || notif.senderImage || defaultImage,
+              read: notif.read || false,
+              type: notif.type === "messages" ? "group_invite" : notif.type, // Normalize type
+              groupId: notif.groupId,
+              status: notif.status || "pending", // Default status
+            };
+          });
+
         
-        const formattedNotifications = notifs.map(notif => {
-          // Ensure we have proper fallbacks for all required fields
-          const defaultImage = "https://example.com/default-user.png"; // Add your default image
-          
-          return {
-            id: notif.groupId || `notif-${Date.now()}`,
-            title: notif.title || "New Notification",
-            description: notif.subtitle || notif.message || "You have a new notification",
-            time: formatTime(notif.createdAt?.toDate?.() || new Date()),
-            image: notif.inviterImage || notif.senderImage || defaultImage,
-            read: notif.read || false,
-            type: notif.type === "messages" ? "group_invite" : notif.type, // Normalize type
-            groupId: notif.groupId,
-            status: notif.status || "pending" // Default status
-          };
-        });
-
-        console.log('Formatted notifications:', formattedNotifications);
-        setNotifications(formattedNotifications);
-      } catch (error) {
-        console.error('Error fetching notifications:', error);
+          setNotifications(formattedNotifications);
+        } catch (error) {
+          console.error("Error fetching notifications:", error);
+        }
       }
-    }
-  };
-  
-  fetchNotifications();
-}, [currentUser]);
+    };
 
-   const formatTime = (date?: Date) => {
+    fetchNotifications();
+  }, [currentUser]);
+
+  const formatTime = (date?: Date) => {
     if (!date) return "Just now";
     const now = new Date();
     const diff = now.getTime() - date.getTime();
     const minutes = Math.floor(diff / 60000);
-    
+
     if (minutes < 1) return "Just now";
     if (minutes < 60) return `${minutes}m ago`;
-    if (minutes < 1440) return `${Math.floor(minutes/60)}h ago`;
-    return `${Math.floor(minutes/1440)}d ago`;
+    if (minutes < 1440) return `${Math.floor(minutes / 60)}h ago`;
+    return `${Math.floor(minutes / 1440)}d ago`;
   };
 
-   const handleResponse = async (groupId: string, accept: boolean) => {
-  try {
-    if (!currentUser) return;
-    
-    await respondToGroupInvite(groupId, currentUser.uid, accept);
-    
-    // Update local state
-    setNotifications(prev => prev.map(notif => 
-      notif.groupId === groupId 
-        ? { ...notif, status: accept ? "accepted" : "rejected" }
-        : notif
-    ));
-    
-    Alert.alert(
-      accept ? "Invite Accepted" : "Invite Declined",
-      accept 
-        ? "You can now chat with the group" 
-        : "The invite has been declined"
-    );
-  } catch (error) {
-    Alert.alert("Error", "Failed to process your response");
-  }
-};
+  const handleResponse = async (groupId: string, accept: boolean) => {
+    try {
+      if (!currentUser) return;
 
-    const renderItem = ({ item }: { item: NotificationItem }) => (
+      await respondToGroupInvite(groupId, currentUser.uid, accept);
+
+      // Update local state
+      setNotifications(prev =>
+        prev.map(notif =>
+          notif.groupId === groupId
+            ? { ...notif, status: accept ? "accepted" : "rejected" }
+            : notif
+        )
+      );
+
+      Alert.alert(
+        accept ? "Invite Accepted" : "Invite Declined",
+        accept
+          ? "You can now chat with the group"
+          : "The invite has been declined"
+      );
+    } catch (error: any) {
+      Alert.alert("Error", error.message || "Failed to process your response");
+    }
+  };
+
+  const renderItem = ({ item }: { item: NotificationItem }) => (
+
+
     <TouchableOpacity style={[styles.card, item.read && styles.cardRead]}>
-      <Image 
-        source={{ uri: item.image }} 
-        style={styles.avatar} 
-      />
+      <Image source={{ uri: item.image }} style={styles.avatar} />
       <View style={styles.content}>
         <RnText style={styles.title}>{item.title}</RnText>
         <RnText style={styles.description}>{item.description}</RnText>
-        
-        {item.type === "group_invite" && item.status === "pending" && (
+
+        {item.type === "group_invite" && item.status === "pending"  && (
           <View style={styles.buttonContainer}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.actionButton, styles.acceptButton]}
               onPress={() => handleResponse(item.groupId!, true)}
             >
               <RnText style={styles.buttonText}>Accept</RnText>
             </TouchableOpacity>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[styles.actionButton, styles.rejectButton]}
               onPress={() => handleResponse(item.groupId!, false)}
             >
@@ -167,15 +168,15 @@ console.log('hi',notifications)
             </TouchableOpacity>
           </View>
         )}
-        
+
         {item.type === "group_invite" && item.status === "accepted" && (
           <RnText style={styles.acceptedText}>✓ Accepted</RnText>
         )}
-        
+
         {item.type === "group_invite" && item.status === "rejected" && (
           <RnText style={styles.rejectedText}>✗ Declined</RnText>
         )}
-        
+
         <RnText style={styles.time}>{item.time}</RnText>
       </View>
       {!item.read && <View style={styles.unreadDot} />}
@@ -197,7 +198,7 @@ console.log('hi',notifications)
       </View>
       <FlatList
         data={notifications}
-        keyExtractor={(item) => item.id}
+        keyExtractor={item => item.id}
         renderItem={renderItem}
         showsVerticalScrollIndicator={false}
       />

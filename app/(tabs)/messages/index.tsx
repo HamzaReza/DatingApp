@@ -7,22 +7,9 @@ import RnDropdown from "@/components/RnDropdown";
 import RnText from "@/components/RnText";
 import RoundButton from "@/components/RoundButton";
 import { Colors } from "@/constants/Colors";
-import {
-  fetchTags,
-  sendGroupInvites,
-  sendGroupInvitesByTags,
-} from "@/firebase/auth";
-import { encodeImagePath } from "@/utils";
-import getDistanceFromLatLonInMeters, {
-  getNearbyHangoutUsers,
-} from "@/utils/Distance";
+import { fetchTags, sendGroupInvitesByTags } from "@/firebase/auth";
 import { Ionicons } from "@expo/vector-icons";
 import { getAuth } from "@react-native-firebase/auth";
-import {
-  collection,
-  getDocs,
-  getFirestore,
-} from "@react-native-firebase/firestore";
 import { LinearGradient } from "expo-linear-gradient";
 import {
   Accuracy,
@@ -139,15 +126,13 @@ const messages: Message[] = [
 ];
 
 interface Tag {
-  iconSvg: string;
-  id: number;
   label: string;
+  value: string;
 }
 
 interface DropdownItem {
   label: string;
   value: number;
-  iconSvg?: string;
 }
 
 export default function Messages() {
@@ -156,38 +141,24 @@ export default function Messages() {
   const styles = createStyles(theme);
 
   const [isBottomSheetVisible, setIsBottomSheetVisible] = React.useState(false);
-  const [nearbyUsers, setNearbyUsers] = React.useState<Message[]>([]);
-  const [selectedUsers, setSelectedUsers] = useState([]);
 
   const [tagsOpen, setTagsOpen] = useState(false);
   const [selectedTags, setSelectedTags] = useState<any[]>([]);
-  const [tagsItems, setTagsItems] = useState<DropdownItem[]>([]);
+  const [tagsItems, setTagsItems] = useState<Tag[]>([]);
   const [isLoadingTags, setIsLoadingTags] = useState(true);
   const [countOpen, setCountOpen] = useState(false);
   const [participantCount, setParticipantCount] = useState(5);
-  const countItems = [2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => ({
-    label: `${num} people`,
-    value: num,
-  }));
-
-  const handleBackPress = () => {
-    router.back();
-  };
-
-  useEffect(() => {
-    console.log(selectedUsers);
-  }, [selectedUsers]);
+  const [countItems, setCountItems] = useState<DropdownItem[]>([
+    { label: "2", value: 2 },
+    { label: "3", value: 3 },
+    { label: "4", value: 4 },
+  ]);
 
   useEffect(() => {
     const unsubscribe = fetchTags(tags => {
-     
-      const formattedTags = tags.map(tag => ({
-        label: tag.label,
-        value: tag,
-        iconSvg: tag.iconSvg,
-      }));
-
-      setTagsItems(formattedTags);
+      setTagsItems(
+        tags.map((tag: Tag) => ({ label: tag.label, value: tag.label }))
+      );
       setIsLoadingTags(false);
     });
 
@@ -214,13 +185,13 @@ export default function Messages() {
 
   const handleCreateHangout = async () => {
     try {
-      const currentUserId = getAuth().currentUser?.uid;
+      const currentUserId = getAuth().currentUser?.uid as string;
       const tagLabels = selectedTags.map(tag => tag.label);
 
       await sendGroupInvitesByTags(currentUserId, tagLabels, participantCount);
       setIsBottomSheetVisible(false);
       alert("Invites sent successfully");
-    } catch (error) {
+    } catch (error: any) {
       alert(error.message || "Failed to send invites");
     }
   };
@@ -341,8 +312,9 @@ export default function Messages() {
               placeholder="Select tags..."
               multiple={true}
               min={1}
-              zIndex={3000}
+              zIndex={2000}
               zIndexInverse={1000}
+              loading={isLoadingTags}
             />
           </View>
 
@@ -355,16 +327,19 @@ export default function Messages() {
               value={participantCount}
               setValue={setParticipantCount}
               items={countItems}
+              setItems={setCountItems}
               placeholder="Select count..."
-              zIndex={2000}
+              zIndex={1000}
               zIndexInverse={2000}
             />
           </View>
 
           {/* Create Button */}
-          <RnButton style={styles.createButton} onPress={handleCreateHangout}>
-            <RnText style={styles.createButtonText}>Create Hangout</RnText>
-          </RnButton>
+          <RnButton
+            style={[styles.createButton, styles.createButtonText]}
+            onPress={handleCreateHangout}
+            title="Create Hangout"
+          />
         </View>
       </RnBottomSheet>
     </Container>

@@ -109,41 +109,37 @@ export default (theme: "dark" | "light") =>
       flexDirection: "row",
       justifyContent: "space-between",
     },
-     checkboxContainer: {
-    padding: 0,
-    margin: 0,
-    marginRight: wp(1),
-    backgroundColor: 'transparent',
-    borderWidth: 0,
-  },
+    checkboxContainer: {
+      padding: 0,
+      margin: 0,
+      marginRight: wp(1),
+      backgroundColor: "transparent",
+      borderWidth: 0,
+    },
     bottomSheetContent: {
-    padding: wp(4),
-  },
-  bottomSheetTitle: {
-    fontSize: FontSize.large,
-    fontWeight: "bold",
-    marginBottom: hp(2),
-    color: Colors[theme].blackText,
-  },
-  dropdownWrapper: {
-    marginBottom: hp(2),
-  },
-  dropdownLabel: {
-    fontSize: FontSize.small,
-    marginBottom: hp(1),
-    color: Colors[theme].blackText,
-  },
-  createButton: {
-    backgroundColor: Colors[theme].primary,
-    padding: hp(1.5),
-    borderRadius: Borders.radius1,
-    alignItems: 'center',
-    marginTop: hp(2),
-    justifyContent: 'center',
-  },
-  createButtonText: {
-    color: Colors[theme].whiteText,
-    fontSize: FontSize.medium,
-    fontWeight: 'bold',
-  },
+      padding: wp(4),
+    },
+    bottomSheetTitle: {
+      fontSize: FontSize.large,
+      fontFamily: FontFamily.bold,
+      marginBottom: hp(2),
+      color: Colors[theme].blackText,
+    },
+    dropdownWrapper: {
+      marginBottom: hp(2),
+    },
+    dropdownLabel: {
+      fontSize: FontSize.small,
+      marginBottom: hp(1),
+      color: Colors[theme].blackText,
+    },
+    createButton: {
+      borderRadius: Borders.radius1,
+      marginTop: hp(2),
+    },
+    createButtonText: {
+      color: Colors[theme].whiteText,
+      fontSize: FontSize.medium,
+      fontFamily: FontFamily.bold,
+    },
   });

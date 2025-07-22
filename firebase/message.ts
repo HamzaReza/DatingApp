@@ -22,7 +22,7 @@ export interface Message {
   content: string;
   timestamp: Date;
   isRead: boolean;
-  messageType: 'text' | 'image' | 'audio';
+  messageType: "text" | "image" | "audio";
   mediaUrl?: string;
 }
 
@@ -39,7 +39,7 @@ const createMessage = async (messageData: {
   senderId: string;
   receiverId: string;
   content: string;
-  messageType?: 'text' | 'image' | 'audio';
+  messageType?: "text" | "image" | "audio";
   mediaUrl?: string;
 }) => {
   try {
@@ -48,7 +48,7 @@ const createMessage = async (messageData: {
       senderId: messageData.senderId,
       receiverId: messageData.receiverId,
       content: messageData.content,
-      messageType: messageData.messageType || 'text',
+      messageType: messageData.messageType || "text",
       mediaUrl: messageData.mediaUrl,
       timestamp: Timestamp.now(),
       isRead: false,
@@ -315,6 +315,10 @@ const deleteMessage = async (messageId: string) => {
 };
 
 export {
-    createMessage, deleteMessage, fetchMessagesBetweenUsers,
-    fetchUserConversations, markConversationAsRead, markMessagesAsRead
+  createMessage,
+  deleteMessage,
+  fetchMessagesBetweenUsers,
+  fetchUserConversations,
+  markConversationAsRead,
+  markMessagesAsRead,
 };

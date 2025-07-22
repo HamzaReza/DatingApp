@@ -8,30 +8,30 @@
 
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
-		3239BC08BD1F4D7C9E0EE4D7 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = EA284B09C60541E288904B37 /* GoogleService-Info.plist */; };
+		202515C16A8C4BBEBEF3A0FF /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = D772A5867142416D994A1E31 /* GoogleService-Info.plist */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		57FDBA8E582E7D0DE72D8705 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EDBBC4E79F2141A93D36C3F /* ExpoModulesProvider.swift */; };
-		700FEEA6AE2EC59F6F1829FA /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = F43B1EB014A8A7AB1DBD1451 /* PrivacyInfo.xcprivacy */; };
+		52EF2B19D70DD2EF39D59FEA /* Pods_SocialDating.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5CE330E5D93AC30FEB364D71 /* Pods_SocialDating.framework */; };
+		A28FE9DAACAC619E79883D42 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EC2BC74549DABB2CA93957C /* ExpoModulesProvider.swift */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
-		E5781B8D32548A06FF8E70B6 /* Pods_SocialDating.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0001C7D6156693242E02E71F /* Pods_SocialDating.framework */; };
+		D59C092F698BB4250C178B25 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 512E41C93720A7A393B8AB55 /* PrivacyInfo.xcprivacy */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		0001C7D6156693242E02E71F /* Pods_SocialDating.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_SocialDating.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07F961A680F5B00A75B9A /* SocialDating.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SocialDating.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = SocialDating/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = SocialDating/Info.plist; sourceTree = "<group>"; };
-		8EDBBC4E79F2141A93D36C3F /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-SocialDating/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		3EC2BC74549DABB2CA93957C /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-SocialDating/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		4074569F5D8173219A4CC728 /* Pods-SocialDating.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SocialDating.release.xcconfig"; path = "Target Support Files/Pods-SocialDating/Pods-SocialDating.release.xcconfig"; sourceTree = "<group>"; };
+		512E41C93720A7A393B8AB55 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = SocialDating/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		5CE330E5D93AC30FEB364D71 /* Pods_SocialDating.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_SocialDating.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		68B06F3F6180BCF625F1940E /* Pods-SocialDating.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SocialDating.debug.xcconfig"; path = "Target Support Files/Pods-SocialDating/Pods-SocialDating.debug.xcconfig"; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = SocialDating/SplashScreen.storyboard; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		EA284B09C60541E288904B37 /* GoogleService-Info.plist */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "SocialDating/GoogleService-Info.plist"; sourceTree = "<group>"; };
+		D772A5867142416D994A1E31 /* GoogleService-Info.plist */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 4; includeInIndex = 0; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "SocialDating/GoogleService-Info.plist"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
-		EE9A3FD700CAEFF388F67995 /* Pods-SocialDating.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SocialDating.debug.xcconfig"; path = "Target Support Files/Pods-SocialDating/Pods-SocialDating.debug.xcconfig"; sourceTree = "<group>"; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = SocialDating/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* SocialDating-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "SocialDating-Bridging-Header.h"; path = "SocialDating/SocialDating-Bridging-Header.h"; sourceTree = "<group>"; };
-		F43B1EB014A8A7AB1DBD1451 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = SocialDating/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		FAC7DC8120970103D84E0967 /* Pods-SocialDating.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SocialDating.release.xcconfig"; path = "Target Support Files/Pods-SocialDating/Pods-SocialDating.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -39,7 +39,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E5781B8D32548A06FF8E70B6 /* Pods_SocialDating.framework in Frameworks */,
+				52EF2B19D70DD2EF39D59FEA /* Pods_SocialDating.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -55,8 +55,8 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				EA284B09C60541E288904B37 /* GoogleService-Info.plist */,
-				F43B1EB014A8A7AB1DBD1451 /* PrivacyInfo.xcprivacy */,
+				D772A5867142416D994A1E31 /* GoogleService-Info.plist */,
+				512E41C93720A7A393B8AB55 /* PrivacyInfo.xcprivacy */,
 			);
 			name = SocialDating;
 			sourceTree = "<group>";
@@ -65,25 +65,15 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				0001C7D6156693242E02E71F /* Pods_SocialDating.framework */,
+				5CE330E5D93AC30FEB364D71 /* Pods_SocialDating.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		65BDCC64C15EBB3AD8401FAB /* Pods */ = {
+		755001429C4B8742C013E288 /* ExpoModulesProviders */ = {
 			isa = PBXGroup;
 			children = (
-				EE9A3FD700CAEFF388F67995 /* Pods-SocialDating.debug.xcconfig */,
-				FAC7DC8120970103D84E0967 /* Pods-SocialDating.release.xcconfig */,
-			);
-			name = Pods;
-			path = Pods;
-			sourceTree = "<group>";
-		};
-		7CE10D42081E6F43FB74611A /* ExpoModulesProviders */ = {
-			isa = PBXGroup;
-			children = (
-				F236939F25A0A409C4B82189 /* SocialDating */,
+				FEE57205B3A66D6A71A22A3D /* SocialDating */,
 			);
 			name = ExpoModulesProviders;
 			sourceTree = "<group>";
@@ -102,8 +92,8 @@
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				65BDCC64C15EBB3AD8401FAB /* Pods */,
-				7CE10D42081E6F43FB74611A /* ExpoModulesProviders */,
+				9BBB61F58DC012B0586C881A /* Pods */,
+				755001429C4B8742C013E288 /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -118,6 +108,16 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		9BBB61F58DC012B0586C881A /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				68B06F3F6180BCF625F1940E /* Pods-SocialDating.debug.xcconfig */,
+				4074569F5D8173219A4CC728 /* Pods-SocialDating.release.xcconfig */,
+			);
+			name = Pods;
+			path = Pods;
+			sourceTree = "<group>";
+		};
 		BB2F792B24A3F905000567C9 /* Supporting */ = {
 			isa = PBXGroup;
 			children = (
@@ -127,10 +127,10 @@
 			path = SocialDating/Supporting;
 			sourceTree = "<group>";
 		};
-		F236939F25A0A409C4B82189 /* SocialDating */ = {
+		FEE57205B3A66D6A71A22A3D /* SocialDating */ = {
 			isa = PBXGroup;
 			children = (
-				8EDBBC4E79F2141A93D36C3F /* ExpoModulesProvider.swift */,
+				3EC2BC74549DABB2CA93957C /* ExpoModulesProvider.swift */,
 			);
 			name = SocialDating;
 			sourceTree = "<group>";
@@ -143,14 +143,14 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "SocialDating" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				8F96D0E7A9E0B6726AE1B6E7 /* [Expo] Configure project */,
+				42528F7F88D00011080EDCB4 /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				8EED3AF5490BE938836CBE06 /* [CP] Embed Pods Frameworks */,
-				BC77089BE107F636380B4375 /* [CP-User] [RNFB] Core Configuration */,
+				C04A3B4A659F2DC99EF342F6 /* [CP] Embed Pods Frameworks */,
+				C989D2B48FD8CBA16965F396 /* [CP-User] [RNFB] Core Configuration */,
 			);
 			buildRules = (
 			);
@@ -200,8 +200,8 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				3239BC08BD1F4D7C9E0EE4D7 /* GoogleService-Info.plist in Resources */,
-				700FEEA6AE2EC59F6F1829FA /* PrivacyInfo.xcprivacy in Resources */,
+				202515C16A8C4BBEBEF3A0FF /* GoogleService-Info.plist in Resources */,
+				D59C092F698BB4250C178B25 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -244,6 +244,25 @@
 			shellPath = /bin/sh;
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
+		};
+		42528F7F88D00011080EDCB4 /* [Expo] Configure project */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "[Expo] Configure project";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-SocialDating/expo-configure-project.sh\"\n";
 		};
 		800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -343,7 +362,7 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-SocialDating/Pods-SocialDating-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		8EED3AF5490BE938836CBE06 /* [CP] Embed Pods Frameworks */ = {
+		C04A3B4A659F2DC99EF342F6 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -361,26 +380,7 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-SocialDating/Pods-SocialDating-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		8F96D0E7A9E0B6726AE1B6E7 /* [Expo] Configure project */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			name = "[Expo] Configure project";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-SocialDating/expo-configure-project.sh\"\n";
-		};
-		BC77089BE107F636380B4375 /* [CP-User] [RNFB] Core Configuration */ = {
+		C989D2B48FD8CBA16965F396 /* [CP-User] [RNFB] Core Configuration */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -401,7 +401,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				57FDBA8E582E7D0DE72D8705 /* ExpoModulesProvider.swift in Sources */,
+				A28FE9DAACAC619E79883D42 /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -410,7 +410,7 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = EE9A3FD700CAEFF388F67995 /* Pods-SocialDating.debug.xcconfig */;
+			baseConfigurationReference = 68B06F3F6180BCF625F1940E /* Pods-SocialDating.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -446,7 +446,7 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = FAC7DC8120970103D84E0967 /* Pods-SocialDating.release.xcconfig */;
+			baseConfigurationReference = 4074569F5D8173219A4CC728 /* Pods-SocialDating.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;

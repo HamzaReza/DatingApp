@@ -1,4 +1,5 @@
 import { BottomSheetHandleProps } from "@gorhom/bottom-sheet";
+import { BackdropPressBehavior } from "@gorhom/bottom-sheet/lib/typescript/components/bottomSheetBackdrop/types";
 import { IconNode, TextProps, ViewProps } from "@rneui/base";
 import { ReactElement, ReactNode } from "react";
 import {
@@ -237,6 +238,7 @@ export interface RnBottomSheetProps {
   style?: StyleProp<ViewStyle>;
   scroll?: boolean;
   snapPoints?: string[];
+  pressBehavior?: BackdropPressBehavior;
 }
 
 export interface RnDateTimePickerProps {

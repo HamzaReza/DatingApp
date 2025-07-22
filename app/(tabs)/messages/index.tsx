@@ -186,9 +186,11 @@ export default function Messages() {
   const handleCreateHangout = async () => {
     try {
       const currentUserId = getAuth().currentUser?.uid as string;
-      const tagLabels = selectedTags.map(tag => tag.label);
-
-      await sendGroupInvitesByTags(currentUserId, tagLabels, participantCount);
+      await sendGroupInvitesByTags(
+        currentUserId,
+        selectedTags,
+        participantCount
+      );
       setIsBottomSheetVisible(false);
       alert("Invites sent successfully");
     } catch (error: any) {

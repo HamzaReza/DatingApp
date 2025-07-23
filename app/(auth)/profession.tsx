@@ -17,19 +17,26 @@ import * as Yup from "yup";
 const professionSchema = Yup.object().shape({
   profession: Yup.string()
     .oneOf(
-      ["it", "healthcare", "engineer", "business", "teacher", "artist"],
+      [
+        "IT & Software",
+        "Doctor / Healthcare",
+        "Engineer",
+        "Business Owner",
+        "Teacher / Professor",
+        "Artist / Designer",
+      ],
       "Please select a valid option"
     )
     .required("Please select an option"),
 });
 
 const PROFESSIONS = [
-  { value: "it", label: "IT & Software" },
-  { value: "healthcare", label: "Doctor / Healthcare" },
-  { value: "engineer", label: "Engineer" },
-  { value: "business", label: "Business Owner" },
-  { value: "teacher", label: "Teacher / Professor" },
-  { value: "artist", label: "Artist / Designer" },
+  { value: "IT & Software", label: "IT & Software" },
+  { value: "Doctor / Healthcare", label: "Doctor / Healthcare" },
+  { value: "Engineer", label: "Engineer" },
+  { value: "Business Owner", label: "Business Owner" },
+  { value: "Teacher / Professor", label: "Teacher / Professor" },
+  { value: "Artist / Designer", label: "Artist / Designer" },
 ] as const;
 
 export default function Profession() {

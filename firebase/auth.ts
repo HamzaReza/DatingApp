@@ -32,7 +32,6 @@ import {
   isErrorWithCode,
   isSuccessResponse,
 } from "@react-native-google-signin/google-signin";
-import { tags } from "react-native-svg/lib/typescript/xmlTags";
 
 interface Location {
   latitude: number;
@@ -555,6 +554,7 @@ export const sendGroupInvitesByTags = async (
   eventDate: any
 ) => {
   try {
+
     const db = getFirestore();
 
     const inviterDoc = await getDoc(doc(db, "users", invitedBy));
@@ -566,6 +566,7 @@ export const sendGroupInvitesByTags = async (
 
     const inviterLat = inviterData.location.latitude;
     const inviterLon = inviterData.location.longitude;
+
 
     const usersSnapshot = await getDocs(collection(db, "users"));
 
@@ -605,6 +606,7 @@ export const sendGroupInvitesByTags = async (
           !isNaN(userAge) && userAge >= minAge && userAge <= maxAge;
 
         return hasMatchingTag && genderMatch && ageMatch;
+
       })
       .slice(0, maxParticipants)
       .map(userDoc => ({
@@ -616,7 +618,9 @@ export const sendGroupInvitesByTags = async (
       throw new Error("No users found matching the selected criteria");
     }
 
+
     const inviterName = inviterData?.name || "Someone";
+
     const groupRef = doc(collection(db, "messages"));
     const groupId = groupRef.id;
     const invitedAt = Timestamp.now();
@@ -641,6 +645,7 @@ export const sendGroupInvitesByTags = async (
       image: imageUrl,
       type: "group",
       tags: selectedTags,
+
       groupName,
       groupDescription,
       minAge,
@@ -694,7 +699,9 @@ export const sendGroupInvitesByTags = async (
     }
 
     await notificationBatch.commit();
+
     return { success: true };
+
   } catch (error) {
     console.error("Error sending group invites:", error);
     return { success: false, error: error.message };
@@ -721,7 +728,9 @@ export const respondToGroupInvite = async (
   userId: string,
   accept: boolean
 ) => {
+
   console.log("hello", groupId, accept);
+
 
   const db = getFirestore();
   try {
@@ -1096,6 +1105,32 @@ const fetchUserMatches = async (currentUserId: string) => {
   }
 };
 
+const fetchQuestionnaires = (callback: (questionnaires: any[]) => void) => {
+  try {
+    const db = getFirestore();
+    const questionnairesRef = collection(db, "questionnaire");
+
+    const unsubscribe = onSnapshot(
+      questionnairesRef,
+      snapshot => {
+        // Flatten all questionnaire arrays from all docs
+        const questionnaires = snapshot.docs.flatMap(
+          (doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) =>
+            doc.data() || []
+        );
+        callback(questionnaires);
+      },
+      error => {
+        console.error("Error in questionnaires listener:", error);
+      }
+    );
+    return unsubscribe;
+  } catch (error) {
+    console.error("Error setting up questionnaires listener:", error);
+    throw error;
+  }
+};
+
 export {
   authenticateWithPhone,
   checkForMatch,
@@ -1105,6 +1140,7 @@ export {
   fetchAllUserStories,
   fetchGenders,
   fetchNextUsersStories,
+  fetchQuestionnaires,
   fetchStoriesForUser,
   fetchTags,
   fetchUserMatches,

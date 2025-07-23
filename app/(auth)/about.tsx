@@ -93,7 +93,7 @@ export default function About() {
                 multiline
                 numberOfLines={5}
                 inputContainerStyle={{ height: hp(10) }}
-                style={{ height: hp(10) }}
+                style={{ height: hp(10), textAlignVertical: "top" }}
               />
               <RnButton
                 title="Continue"

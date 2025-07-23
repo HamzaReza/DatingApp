@@ -32,7 +32,6 @@ import {
   isErrorWithCode,
   isSuccessResponse,
 } from "@react-native-google-signin/google-signin";
-import { tags } from "react-native-svg/lib/typescript/xmlTags";
 
 interface Location {
   latitude: number;
@@ -542,27 +541,25 @@ export const getNearbyUsers = async (currentUserLocation: Location) => {
   return nearbyUsers;
 };
 
-
 export const sendGroupInvitesByTags = async (
   invitedBy: string,
   selectedTags: string[],
   maxParticipants: number
 ) => {
   try {
-    console.log('selectedTags', selectedTags)
-   const db = getFirestore();
+    console.log("selectedTags", selectedTags);
+    const db = getFirestore();
     const usersSnapshot = await getDocs(collection(db, "users"));
-    
-   
+
     const matchingUsers = usersSnapshot.docs
       .filter(userDoc => {
-        const userTags = userDoc.data().interests?.split(',') || [];
+        const userTags = userDoc.data().interests?.split(",") || [];
         return selectedTags.some(tag => userTags.includes(tag));
       })
-      .slice(0, maxParticipants) 
+      .slice(0, maxParticipants)
       .map(userDoc => ({
         uid: userDoc.id,
-        name: userDoc.data().name || "User"
+        name: userDoc.data().name || "User",
       }));
 
     if (matchingUsers.length === 0) {
@@ -571,7 +568,6 @@ export const sendGroupInvitesByTags = async (
 
     const inviterDoc = await getDoc(doc(db, "users", invitedBy));
     const inviterName = inviterDoc.data()?.name || "Someone";
-
 
     const groupRef = doc(collection(db, "messages"));
     const groupId = groupRef.id;
@@ -590,11 +586,10 @@ export const sendGroupInvitesByTags = async (
         uid: user.uid,
         name: user.name,
         status: "pending",
-        invitedAt
+        invitedAt,
       })),
       createdAt: Timestamp.now(),
     });
-
 
     const notificationBatch = writeBatch(db);
     const now = Timestamp.now();
@@ -626,7 +621,6 @@ export const sendGroupInvitesByTags = async (
 
     await notificationBatch.commit();
     return groupId;
-
   } catch (error) {
     console.error("error", error);
     throw error;
@@ -654,9 +648,7 @@ export const respondToGroupInvite = async (
   userId: string,
   accept: boolean
 ) => {
-
-
-console.log('hello',groupId)
+  console.log("hello", groupId);
 
   const db = getFirestore();
   try {
@@ -669,10 +661,12 @@ console.log('hello',groupId)
 
     const groupData = groupSnap.data();
     const maxParticipants = groupData.maxParticipants || 0;
-    console.log(maxParticipants,'max')
+    console.log(maxParticipants, "max");
     const currentUsers = groupData.users || [];
 
-    const acceptedCount = currentUsers.filter(user => user.status === "accepted").length;
+    const acceptedCount = currentUsers.filter(
+      user => user.status === "accepted"
+    ).length;
 
     if (accept && acceptedCount >= maxParticipants) {
       throw new Error("This group has already reached its participant limit.");
@@ -699,7 +693,6 @@ console.log('hello',groupId)
     throw error;
   }
 };
-
 
 const handleStoryUpload = async (
   story: Story,
@@ -1032,6 +1025,32 @@ const fetchUserMatches = async (currentUserId: string) => {
   }
 };
 
+const fetchQuestionnaires = (callback: (questionnaires: any[]) => void) => {
+  try {
+    const db = getFirestore();
+    const questionnairesRef = collection(db, "questionnaire");
+
+    const unsubscribe = onSnapshot(
+      questionnairesRef,
+      snapshot => {
+        // Flatten all questionnaire arrays from all docs
+        const questionnaires = snapshot.docs.flatMap(
+          (doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) =>
+            doc.data() || []
+        );
+        callback(questionnaires);
+      },
+      error => {
+        console.error("Error in questionnaires listener:", error);
+      }
+    );
+    return unsubscribe;
+  } catch (error) {
+    console.error("Error setting up questionnaires listener:", error);
+    throw error;
+  }
+};
+
 export {
   authenticateWithPhone,
   checkForMatch,
@@ -1041,6 +1060,7 @@ export {
   fetchAllUserStories,
   fetchGenders,
   fetchNextUsersStories,
+  fetchQuestionnaires,
   fetchStoriesForUser,
   fetchTags,
   fetchUserMatches,

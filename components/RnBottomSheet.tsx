@@ -37,6 +37,7 @@ const RnBottomSheet: React.FC<RnBottomSheetProps> = ({
   style,
   scroll,
   snapPoints,
+  pressBehavior,
 }) => {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
@@ -103,9 +104,10 @@ const RnBottomSheet: React.FC<RnBottomSheetProps> = ({
         disappearsOnIndex={-1}
         appearsOnIndex={0}
         opacity={0.8}
+        pressBehavior={pressBehavior ?? "close"}
       />
     ),
-    []
+    [pressBehavior]
   );
 
   return (

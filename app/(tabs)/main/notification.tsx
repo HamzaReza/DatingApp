@@ -65,17 +65,13 @@ export default function NotificationScreen() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const currentUser = getAuth().currentUser;
 
-
-
   useEffect(() => {
     const fetchNotifications = async () => {
       if (currentUser) {
         try {
           const notifs = await getUserNotifications(currentUser.uid);
-      
 
           const formattedNotifications = notifs.map(notif => {
-           
             const defaultImage = "https://example.com/default-user.png";
 
             return {
@@ -94,7 +90,6 @@ export default function NotificationScreen() {
             };
           });
 
-        
           setNotifications(formattedNotifications);
         } catch (error) {
           console.error("Error fetching notifications:", error);
@@ -143,28 +138,24 @@ export default function NotificationScreen() {
     }
   };
 
+  const handleNotificationPress = (groupId: string) => {
+    router.push(`/mainScreens/hangoutDetails?groupId=${groupId}`);
+  };
+
   const renderItem = ({ item }: { item: NotificationItem }) => (
-
-
     <TouchableOpacity style={[styles.card, item.read && styles.cardRead]}>
       <Image source={{ uri: item.image }} style={styles.avatar} />
       <View style={styles.content}>
         <RnText style={styles.title}>{item.title}</RnText>
         <RnText style={styles.description}>{item.description}</RnText>
 
-        {item.type === "group_invite" && item.status === "pending"  && (
+        {item.type === "group_invite" && item.status === "pending" && (
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={[styles.actionButton, styles.acceptButton]}
-              onPress={() => handleResponse(item.groupId!, true)}
+              onPress={() => handleNotificationPress(item.id)}
             >
-              <RnText style={styles.buttonText}>Accept</RnText>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.rejectButton]}
-              onPress={() => handleResponse(item.groupId!, false)}
-            >
-              <RnText style={styles.buttonText}>Reject</RnText>
+              <RnText style={styles.buttonText}>View Details</RnText>
             </TouchableOpacity>
           </View>
         )}
@@ -184,7 +175,7 @@ export default function NotificationScreen() {
   );
 
   return (
-    <Container>
+    <Container customStyle={{ marginBottom: 100 }}>
       <View style={styles.header}>
         <RoundButton
           iconName="chevron-left"

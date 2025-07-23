@@ -3,11 +3,20 @@ import { MessageItem } from "@/components/MessageItem";
 import RnBottomSheet from "@/components/RnBottomSheet";
 import RnButton from "@/components/RnButton";
 import Container from "@/components/RnContainer";
+import RnDateTimePicker from "@/components/RnDateTimePicker";
 import RnDropdown from "@/components/RnDropdown";
+import RnImagePicker from "@/components/RnImagePicker";
+import RnInput from "@/components/RnInput";
 import RnText from "@/components/RnText";
 import RoundButton from "@/components/RoundButton";
 import { Colors } from "@/constants/Colors";
-import { fetchTags, sendGroupInvitesByTags } from "@/firebase/auth";
+import {
+  fetchTags,
+  sendGroupInvitesByTags,
+  uploadImage,
+} from "@/firebase/auth";
+import { fetchUserGroups } from "@/firebase/message";
+import { wp } from "@/utils";
 import { Ionicons } from "@expo/vector-icons";
 import { getAuth } from "@react-native-firebase/auth";
 import { LinearGradient } from "expo-linear-gradient";
@@ -36,6 +45,7 @@ type RecentMatch = {
 
 type Message = {
   id: string;
+  groupName?: string; // Optional for recent matches
   name: string;
   message: string;
   time: string;
@@ -153,6 +163,37 @@ export default function Messages() {
     { label: "3", value: 3 },
     { label: "4", value: 4 },
   ]);
+  const [groupList, setGroupList] = useState<any[]>([]);
+  const [showImagePicker, setShowImagePicker] = useState(false);
+  const [pickedImageUri, setPickedImageUri] = useState<string | null>(null);
+  const [groupName, setGroupName] = useState("");
+  const [genderOpen, setGenderOpen] = useState(false);
+  const [selectedGender, setSelectedGender] = useState(null);
+  const [genderItems, setGenderItems] = useState([
+    { label: "Male", value: "male" },
+    { label: "Female", value: "female" },
+    { label: "Non-Binary", value: "non-binary" },
+    { label: "Mixed", value: "mixed" },
+  ]);
+  const [minAge, setMinAge] = useState("");
+  const [maxAge, setMaxAge] = useState("");
+  const [eventDate, setEventDate] = useState<Date | undefined>(undefined);
+  const [groupDescription, setGroupDescription] = useState("");
+
+  useEffect(() => {
+    console.log(groupName, "groupName");
+  }, [groupName]);
+
+  useEffect(() => {
+    const loadGroups = async () => {
+      const currentUserId = getAuth().currentUser?.uid as string;
+      console.log("currentUserId", currentUserId);
+      const groups = await fetchUserGroups(currentUserId);
+      setGroupList(groups);
+    };
+
+    loadGroups();
+  }, []);
 
   useEffect(() => {
     const unsubscribe = fetchTags(tags => {
@@ -189,7 +230,14 @@ export default function Messages() {
       await sendGroupInvitesByTags(
         currentUserId,
         selectedTags,
-        participantCount
+        participantCount,
+        pickedImageUri as string,
+        groupName,
+        groupDescription,
+        selectedGender,
+        minAge,
+        maxAge,
+        eventDate
       );
       setIsBottomSheetVisible(false);
       alert("Invites sent successfully");
@@ -217,7 +265,7 @@ export default function Messages() {
 
   const renderMessage = ({ item }: { item: Message }) => (
     <MessageItem
-      name={item.name}
+      name={item.groupName ?? item.name}
       message={item.message}
       time={item.time}
       image={item.image}
@@ -286,7 +334,7 @@ export default function Messages() {
       {/* Messages List */}
       <View style={styles.messagesContainer}>
         <FlatList
-          data={messages}
+          data={groupList}
           keyExtractor={item => item.id}
           renderItem={renderMessage}
           showsVerticalScrollIndicator={false}
@@ -296,13 +344,33 @@ export default function Messages() {
       <RnBottomSheet
         isVisible={isBottomSheetVisible}
         onClose={() => setIsBottomSheetVisible(false)}
-        snapPoints={["50%"]}
+        snapPoints={["90%"]}
       >
         <View style={styles.bottomSheetContent}>
           <RnText style={styles.bottomSheetTitle}>Create a hangout</RnText>
 
-          {/* Tags Dropdown */}
-          <View style={styles.dropdownWrapper}>
+          <View style={styles.inputWrapper}>
+            <RnText style={styles.inputLabel}>Group Name:</RnText>
+            <RnInput
+              placeholder="Enter group name"
+              maxLength={30}
+              value={groupName}
+              onChangeText={setGroupName}
+              style={styles.inputStyle}
+            />
+          </View>
+
+          <View style={styles.inputWrapper}>
+            <RnText style={styles.inputLabel}>Group Description:</RnText>
+            <RnInput
+              placeholder="Enter group name"
+              maxLength={30}
+              value={groupDescription}
+              onChangeText={setGroupDescription}
+              style={styles.inputStyle}
+            />
+          </View>
+          <View style={[styles.dropdownWrapper, { width: wp(84) }]}>
             <RnText style={styles.dropdownLabel}>Select Tags:</RnText>
             <RnDropdown
               open={tagsOpen}
@@ -320,20 +388,101 @@ export default function Messages() {
             />
           </View>
 
+          {/* <View style={styles.rowContainer}> */}
+
+          <View style={styles.rowContainer}>
+            <View style={styles.dropdownWrapper}>
+              <RnText style={styles.dropdownLabel}>Group Gender:</RnText>
+              <RnDropdown
+                open={genderOpen}
+                setOpen={setGenderOpen}
+                value={selectedGender}
+                setValue={setSelectedGender}
+                items={genderItems}
+                setItems={setGenderItems}
+                placeholder="Select gender..."
+                zIndex={900}
+                zIndexInverse={800}
+              />
+            </View>
+
+            <View style={styles.dropdownWrapper}>
+              <RnText style={styles.dropdownLabel}>Max Participants:</RnText>
+              <RnDropdown
+                open={countOpen}
+                setOpen={setCountOpen}
+                value={participantCount}
+                setValue={setParticipantCount}
+                items={countItems}
+                setItems={setCountItems}
+                placeholder="Select count..."
+                zIndex={1000}
+                zIndexInverse={2000}
+              />
+            </View>
+          </View>
+
           {/* Participant Count Dropdown */}
-          <View style={styles.dropdownWrapper}>
-            <RnText style={styles.dropdownLabel}>Max Participants:</RnText>
-            <RnDropdown
-              open={countOpen}
-              setOpen={setCountOpen}
-              value={participantCount}
-              setValue={setParticipantCount}
-              items={countItems}
-              setItems={setCountItems}
-              placeholder="Select count..."
-              zIndex={1000}
-              zIndexInverse={2000}
-            />
+
+          {/* Tags Dropdown */}
+
+          <View style={""}></View>
+
+          <View style={styles.inputWrapper}>
+            <RnText style={styles.inputLabel}>Age Group:</RnText>
+            <View
+              style={{ flexDirection: "row", justifyContent: "space-between" }}
+            >
+              <View style={{ width: wp(40) }}>
+                <RnInput
+                  placeholder="Min"
+                  keyboardType="numeric"
+                  value={minAge}
+                  onChangeText={setMinAge}
+                  style={{ width: wp(40) }}
+                />
+              </View>
+              <View />
+              <View style={{ width: wp(40) }}>
+                <RnInput
+                  placeholder="Max"
+                  keyboardType="numeric"
+                  value={maxAge}
+                  onChangeText={setMaxAge}
+                  style={{ width: wp(40) }}
+                />
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.rowContainer}>
+            <View>
+              <RnText style={styles.inputLabel}>Group Image:</RnText>
+              <RnImagePicker
+                visible={showImagePicker}
+                showPicker={() => setShowImagePicker(true)}
+                hidePicker={() => setShowImagePicker(false)}
+                setUri={(uri: any) => {
+                  setPickedImageUri(uri.uri); // You can now use this anywhere
+                }}
+              >
+                <TouchableOpacity
+                  onPress={() => setShowImagePicker(true)}
+                  style={styles.addImageButton}
+                >
+                  <RnText>Select Image</RnText>
+                </TouchableOpacity>
+              </RnImagePicker>
+            </View>
+            <View style={{ marginTop: wp(3) }}>
+              <RnDateTimePicker
+                value={eventDate}
+                onChange={(_, date) => setEventDate(date)}
+                label="Event Date"
+                placeholder="event date"
+                mode="date"
+              />
+            </View>
           </View>
 
           {/* Create Button */}

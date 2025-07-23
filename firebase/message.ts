@@ -1,9 +1,12 @@
+import { User } from "@/app/(tabs)/messages/types";
 import {
   addDoc,
+  arrayUnion,
   collection,
   deleteDoc,
   doc,
   FirebaseFirestoreTypes,
+  getDoc,
   getDocs,
   getFirestore,
   onSnapshot,
@@ -24,6 +27,40 @@ export interface Message {
   isRead: boolean;
   messageType: "text" | "image" | "audio";
   mediaUrl?: string;
+}
+
+export interface GroupMessage {
+  id: string;
+  senderId: string;
+  groupId: string;
+  content: string;
+  timestamp: Date;
+  isRead: { [userId: string]: boolean };
+  messageType: "text" | "image" | "audio";
+  mediaUrl?: string;
+}
+
+export interface GroupUser {
+  uid: string;
+  name: string;
+  status: "pending" | "accepted" | "rejected";
+  invitedAt: Timestamp | Date;
+}
+
+export interface Group {
+  messages: never[];
+  id: string;
+  groupName: string;
+  image?: string;
+  invitedBy: string;
+  invitedByName: string;
+  invitedAt: Timestamp | Date;
+  maxParticipants: number;
+  noOfInvitors: number;
+  tags: string[];
+  type: "group";
+  users: GroupUser[];
+  createdAt: Timestamp | Date;
 }
 
 export interface Conversation {
@@ -291,7 +328,7 @@ const markConversationAsRead = async (userId: string, otherUserId: string) => {
     );
 
     const snapshot = await getDocs(q);
-    const messageIds = snapshot.docs.map(doc => doc.id);
+    const messageIds = snapshot.docs.map((doc: any) => doc.id);
 
     if (messageIds.length > 0) {
       await markMessagesAsRead(messageIds);
@@ -314,6 +351,110 @@ const deleteMessage = async (messageId: string) => {
   }
 };
 
+// Functions for hangout and message management
+export const fetchUserGroups = async (userId: string) => {
+  const db = getFirestore();
+  const groupsRef = collection(db, "messages");
+  const q = query(groupsRef, where("type", "==", "group"));
+  const snapshot = await getDocs(q);
+
+  const userGroups = snapshot.docs
+    .map((doc: any) => ({ id: doc.id, ...doc.data() }))
+    .filter((group: any) => {
+      const matchedUser = group.users?.find((u: any) => u.uid === userId);
+      return matchedUser && matchedUser.status === "accepted";
+    });
+
+  return userGroups;
+};
+
+export const sendGroupMessage = async (messageData: {
+  senderId: string;
+  groupId: string;
+  content: string;
+  messageType?: "text" | "image" | "audio";
+  mediaUrl?: string;
+}): Promise<void> => {
+  try {
+    const db = getFirestore();
+    const groupRef = doc(db, "messages", messageData.groupId);
+
+    const newMessage: GroupMessage = {
+      id: Timestamp.now().toMillis().toString(),
+      senderId: messageData.senderId,
+      content: messageData.content,
+      timestamp: new Date(),
+      isRead: false,
+      messageType: messageData.messageType || "text",
+      ...(messageData.mediaUrl && { mediaUrl: messageData.mediaUrl }),
+    };
+
+    await updateDoc(groupRef, {
+      messages: arrayUnion(newMessage),
+      lastMessage: newMessage,
+      lastMessageTime: Timestamp.now(),
+    });
+  } catch (error) {
+    console.error("Error sending group message:", error);
+    throw error;
+  }
+};
+
+export const setupGroupMessagesListener = (
+  groupId: string,
+  callback: (group: Group) => void
+): (() => void) => {
+  const db = getFirestore();
+  const groupRef = doc(db, "messages", groupId);
+
+  return onSnapshot(groupRef, async doc => {
+    if (doc.exists()) {
+      const groupData = doc.data() as Group;
+
+      // Enhance messages with user data
+      const enhancedMessages = await Promise.all(
+        (groupData.messages || []).map(async msg => {
+          const user = await getUser(msg.senderId);
+          return {
+            ...msg,
+            timestamp: msg.timestamp?.toDate() || new Date(),
+            senderName: user?.name || "Unknown",
+            senderImage: user?.photo || null,
+          };
+        })
+      );
+
+      callback({
+        ...groupData,
+        id: doc.id,
+        messages: enhancedMessages,
+      });
+    }
+  });
+};
+
+const userCache = new Map<string, User>();
+
+export const getUser = async (userId: string): Promise<User | null> => {
+  if (userCache.has(userId)) {
+    return userCache.get(userId)!;
+  }
+
+  try {
+    const db = getFirestore();
+    const userDoc = await getDoc(doc(db, "users", userId));
+
+    if (userDoc.exists()) {
+      const userData = userDoc.data() as User;
+      userCache.set(userId, userData);
+      return userData;
+    }
+    return null;
+  } catch (error) {
+    console.error("Error fetching user:", error);
+    return null;
+  }
+};
 export {
   createMessage,
   deleteMessage,

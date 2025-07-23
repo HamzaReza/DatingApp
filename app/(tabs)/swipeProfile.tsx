@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import createStyles from "@/app/tabStyles/swipeProfile.styles";
 import Container from "@/components/RnContainer";
 import RnText from "@/components/RnText";
@@ -10,8 +11,10 @@ import {
 } from "@/firebase/auth";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { RootState } from "@/redux/store";
+import { encodeImagePath } from "@/utils";
+import getDistanceFromLatLonInMeters from "@/utils/Distance";
 import { calculateMatchScore } from "@/utils/MatchScore";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -37,12 +40,10 @@ export default function SwipeProfile() {
     try {
       setLoading(true);
 
-      // Get current user from Redux or Firebase auth
       const currentUserData = reduxUser || (await getCurrentAuth()).currentUser;
       setCurrentUser(currentUserData);
 
       if (currentUserData?.uid) {
-        // Fetch first random user
         const randomUser = await getRandomUser(
           currentUserData.uid,
           likedUserIds
@@ -79,19 +80,15 @@ export default function SwipeProfile() {
     try {
       if (!currentUser?.uid || !profileData?.id) return;
 
-      // Record the like
       const { isMatch } = await recordLike(currentUser.uid, profileData.id);
 
-      // Add to liked users list
       setLikedUserIds(prev => [...prev, profileData.id]);
 
       if (isMatch) {
-        // It's a match! Navigate to matches tab
         router.push("/(tabs)/matches");
         return;
       }
 
-      // Get next user
       const nextUser = await getNextUserForSwipe(currentUser.uid, [
         ...likedUserIds,
         profileData.id,
@@ -108,7 +105,6 @@ export default function SwipeProfile() {
     try {
       if (!currentUser?.uid || !profileData?.id) return;
 
-      // Add to liked users list (to avoid showing again)
       setLikedUserIds(prev => [...prev, profileData.id]);
 
       // Get next user
@@ -133,19 +129,15 @@ export default function SwipeProfile() {
     try {
       if (!currentUser?.uid || !profileData?.id) return;
 
-      // Record the like (super like is treated as a regular like for now)
       const { isMatch } = await recordLike(currentUser.uid, profileData.id);
 
-      // Add to liked users list
       setLikedUserIds(prev => [...prev, profileData.id]);
 
       if (isMatch) {
-        // It's a match! Navigate to matches tab
         router.push("/(tabs)/matches");
         return;
       }
 
-      // Get next user
       const nextUser = await getNextUserForSwipe(currentUser.uid, [
         ...likedUserIds,
         profileData.id,
@@ -156,10 +148,6 @@ export default function SwipeProfile() {
     } catch (error) {
       console.error("Error handling super like:", error);
     }
-  };
-
-  const handleTabPress = (tabName: string) => {
-    console.log(`${tabName} tab pressed`);
   };
 
   if (loading) {
@@ -193,14 +181,37 @@ export default function SwipeProfile() {
     );
   }
 
+  const distance = getDistanceFromLatLonInMeters(
+    profileData.location.latitude,
+    profileData.location.longitude,
+    currentUser?.location?.latitude,
+    currentUser?.location?.longitude
+  );
+
+  const formatDistance = (distanceInMeters: number) => {
+    if (distanceInMeters < 1000) {
+      return `${Math.round(distanceInMeters)} m`;
+    } else {
+      return `${(distanceInMeters / 1000).toFixed(1)} km`;
+    }
+  };
+
+  const religionIcon =
+    profileData?.religion === "islam"
+      ? "mosque"
+      : profileData?.religion === "hinduism"
+      ? "temple-hindu"
+      : profileData?.religion === "christianity"
+      ? "church"
+      : profileData?.religion === "judaism"
+      ? "synagogue"
+      : "mosque";
+
   return (
     <Container customStyle={styles.container}>
-      {/* Background Image */}
       <Image
         source={{
-          uri:
-            profileData.photo ||
-            "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=400",
+          uri: encodeImagePath(profileData.photo),
         }}
         style={styles.backgroundImage}
       />
@@ -265,37 +276,19 @@ export default function SwipeProfile() {
                   color={Colors.light.redText}
                 />
                 <RnText style={styles.distanceText}>
-                  {profileData.distance || "Nearby"}
+                  {formatDistance(distance)}
                 </RnText>
               </View>
 
               <View style={styles.tag}>
-                <Ionicons
-                  name="lock-closed"
+                <MaterialIcons
+                  name={religionIcon}
                   size={14}
                   color={Colors.light.redText}
                 />
-                <RnText style={styles.privateText}>Private Photos</RnText>
-              </View>
-            </View>
-
-            <View style={styles.tagRow}>
-              <View style={styles.tag}>
-                <Ionicons
-                  name="checkmark-circle"
-                  size={14}
-                  color={Colors.light.greenText}
-                />
-                <RnText style={styles.activeText}>Active today</RnText>
-              </View>
-
-              <View style={styles.tag}>
-                <Ionicons
-                  name="refresh"
-                  size={14}
-                  color={Colors.light.redText}
-                />
-                <RnText style={styles.practicingText}>Practicing</RnText>
+                <RnText style={styles.practicingText}>
+                  {profileData?.religion}
+                </RnText>
               </View>
             </View>
 
@@ -345,7 +338,7 @@ export default function SwipeProfile() {
                       profileScore: profileData.profileScore,
                     }
                   )}
-                  % Trust score
+                  % Match score
                 </RnText>
               </View>
             </View>

@@ -16,8 +16,8 @@ import getDistanceFromLatLonInMeters from "@/utils/Distance";
 import { calculateMatchScore } from "@/utils/MatchScore";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { router, useFocusEffect } from "expo-router";
+import React, { useState } from "react";
 import { ActivityIndicator, Image, TouchableOpacity, View } from "react-native";
 import { useSelector } from "react-redux";
 
@@ -32,9 +32,11 @@ export default function SwipeProfile() {
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
 
-  useEffect(() => {
-    initializeSwipeProfile();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      initializeSwipeProfile();
+    }, [])
+  );
 
   const initializeSwipeProfile = async () => {
     try {
@@ -59,8 +61,8 @@ export default function SwipeProfile() {
     }
   };
 
-  const handleBackPress = () => {
-    router.back();
+  const handleUserPress = () => {
+    router.push(`/(tabs)/discover/${profileData?.uid}`);
   };
 
   const handleRefreshPress = async () => {
@@ -118,11 +120,6 @@ export default function SwipeProfile() {
     } catch (error) {
       console.error("Error handling dislike:", error);
     }
-  };
-
-  const handleHeartPress = () => {
-    // Same as like
-    handleLikePress();
   };
 
   const handleSuperLikePress = async () => {
@@ -235,7 +232,7 @@ export default function SwipeProfile() {
         <View style={styles.topBar}>
           <TouchableOpacity
             style={styles.topBarButton}
-            onPress={handleBackPress}
+            onPress={handleUserPress}
           >
             <Ionicons name="person" size={24} color={Colors.light.redText} />
           </TouchableOpacity>
@@ -243,14 +240,6 @@ export default function SwipeProfile() {
           <TouchableOpacity style={styles.topBarButton}>
             <Ionicons
               name="chatbubble"
-              size={24}
-              color={Colors.light.redText}
-            />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.topBarButton}>
-            <Ionicons
-              name="notifications"
               size={24}
               color={Colors.light.redText}
             />
@@ -363,7 +352,7 @@ export default function SwipeProfile() {
 
           <TouchableOpacity
             style={[styles.actionButton, styles.likeButton]}
-            onPress={handleHeartPress}
+            onPress={handleLikePress}
           >
             <Ionicons name="heart" size={32} color={Colors.light.whiteText} />
           </TouchableOpacity>

@@ -26,10 +26,11 @@ export default function MessagesLayout() {
           freezeOnBlur: true,
         }}
       />
-      <Stack.Screen name="connection/[id]" 
-      options={{
-        tabBarStyle: { display: "none" }, // Hide tab bar in this screen
-      }}
+      <Stack.Screen
+        name="connection/[id]"
+        options={{
+          tabBarStyle: { display: "none" }, // Hide tab bar in this screen
+        }}
       />
     </Stack>
   );

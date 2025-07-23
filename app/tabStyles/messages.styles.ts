@@ -72,7 +72,7 @@ export default (theme: "dark" | "light") =>
       right: 0,
       bottom: 0,
       backgroundColor: "rgba(255,88,98,0.4)",
-      borderRadius: Borders.radius2,
+      borderRadius: Borders.radius1,
       justifyContent: "center",
       alignItems: "center",
     },
@@ -127,6 +127,7 @@ export default (theme: "dark" | "light") =>
     },
     dropdownWrapper: {
       marginBottom: hp(2),
+      width: wp(40),
     },
     dropdownLabel: {
       fontSize: FontSize.small,
@@ -142,4 +143,40 @@ export default (theme: "dark" | "light") =>
       fontSize: FontSize.medium,
       fontFamily: FontFamily.bold,
     },
+    inputWrapper: {
+      marginBottom: 0,
+      height: hp(12),
+    },
+    inputLabel: {
+      fontSize: FontSize.small,
+      marginBottom: hp(1),
+      color: Colors[theme].blackText,
+    },
+    inputStyle: {
+      fontSize: FontSize.small,
+      color: Colors[theme].blackText,
+      marginBottom: 0,
+    },
+    avatar: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      marginRight: 8,
+    },
+    addImageButton: {
+      width: wp(40),
+      height: wp(12),
+      borderRadius: Borders.radius2,
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: "transparent",
+      borderWidth: 1,
+      borderColor: Colors[theme].primary,
+    },
+    rowContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    wrapper: {},
   });

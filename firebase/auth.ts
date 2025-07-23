@@ -542,40 +542,94 @@ export const getNearbyUsers = async (currentUserLocation: Location) => {
   return nearbyUsers;
 };
 
-
 export const sendGroupInvitesByTags = async (
   invitedBy: string,
   selectedTags: string[],
-  maxParticipants: number
+  maxParticipants: number,
+  image: string,
+  groupName: string,
+  groupDescription: string,
+  selectedGender: "male" | "female" | "non-binary" | "mixed",
+  minAge: number,
+  maxAge: number,
+  eventDate: any
 ) => {
   try {
-    console.log('selectedTags', selectedTags)
-   const db = getFirestore();
+    const db = getFirestore();
+
+    const inviterDoc = await getDoc(doc(db, "users", invitedBy));
+    const inviterData = inviterDoc.data();
+
+    if (!inviterData?.location?.latitude || !inviterData?.location?.longitude) {
+      throw new Error("Inviter's location not available");
+    }
+
+    const inviterLat = inviterData.location.latitude;
+    const inviterLon = inviterData.location.longitude;
+
     const usersSnapshot = await getDocs(collection(db, "users"));
-    
-   
+
     const matchingUsers = usersSnapshot.docs
       .filter(userDoc => {
-        const userTags = userDoc.data().interests?.split(',') || [];
-        return selectedTags.some(tag => userTags.includes(tag));
+        const data = userDoc.data();
+
+        // Skip inviter (already added later)
+        if (userDoc.id === invitedBy) return false;
+
+        // Location filter (within 12 km)
+        const userLat = data.location?.latitude;
+        const userLon = data.location?.longitude;
+
+        if (userLat == null || userLon == null) return false;
+
+        const distance = getDistanceFromLatLonInMeters(
+          inviterLat,
+          inviterLon,
+          userLat,
+          userLon
+        );
+        if (distance > 12000) return false;
+
+        // Tag filter
+        const userTags = data.interests?.split(",") || [];
+        const hasMatchingTag = selectedTags.some(tag => userTags.includes(tag));
+
+        // Gender filter
+        const userGender = data.gender?.toLowerCase();
+        const genderMatch =
+          selectedGender === "mixed" || userGender === selectedGender;
+
+        // Age filter
+        const userAge = parseInt(data.age, 10);
+        const ageMatch =
+          !isNaN(userAge) && userAge >= minAge && userAge <= maxAge;
+
+        return hasMatchingTag && genderMatch && ageMatch;
       })
-      .slice(0, maxParticipants) 
+      .slice(0, maxParticipants)
       .map(userDoc => ({
         uid: userDoc.id,
-        name: userDoc.data().name || "User"
+        name: userDoc.data().name || "User",
       }));
 
     if (matchingUsers.length === 0) {
-      throw new Error("No users found matching the selected tags");
+      throw new Error("No users found matching the selected criteria");
     }
 
-    const inviterDoc = await getDoc(doc(db, "users", invitedBy));
-    const inviterName = inviterDoc.data()?.name || "Someone";
-
-
+    const inviterName = inviterData?.name || "Someone";
     const groupRef = doc(collection(db, "messages"));
     const groupId = groupRef.id;
     const invitedAt = Timestamp.now();
+
+    let imageUrl = null;
+    if (image) {
+      imageUrl = await uploadImage(
+        image,
+        "groupImages",
+        groupId,
+        "inviteImage"
+      );
+    }
 
     await setDoc(groupRef, {
       noOfInvitors: matchingUsers.length,
@@ -584,18 +638,33 @@ export const sendGroupInvitesByTags = async (
       invitedBy,
       invitedByName: inviterName,
       invitedAt,
+      image: imageUrl,
       type: "group",
       tags: selectedTags,
-      users: matchingUsers.map(user => ({
-        uid: user.uid,
-        name: user.name,
-        status: "pending",
-        invitedAt
-      })),
+      groupName,
+      groupDescription,
+      minAge,
+      maxAge,
+      eventDate,
+      genderFilter: selectedGender,
+      users: [
+        {
+          uid: invitedBy,
+          name: inviterName,
+          status: "accepted",
+          invitedAt,
+        },
+        ...matchingUsers.map(user => ({
+          uid: user.uid,
+          name: user.name,
+          status: "pending",
+          invitedAt,
+        })),
+      ],
       createdAt: Timestamp.now(),
     });
 
-
+    // Send notifications
     const notificationBatch = writeBatch(db);
     const now = Timestamp.now();
 
@@ -604,13 +673,13 @@ export const sendGroupInvitesByTags = async (
       const notificationDoc = await getDoc(notificationRef);
 
       const newNotification = {
-        title: "Group chat",
+        title: groupName,
         subtitle: `${inviterName} has invited you for a hangout. Want to join?`,
         type: "messages",
         groupId,
         createdAt: now,
         tags: selectedTags,
-        maxParticipants: maxParticipants,
+        maxParticipants,
       };
 
       if (notificationDoc.exists()) {
@@ -625,14 +694,12 @@ export const sendGroupInvitesByTags = async (
     }
 
     await notificationBatch.commit();
-    return groupId;
-
+    return { success: true };
   } catch (error) {
-    console.error("error", error);
-    throw error;
+    console.error("Error sending group invites:", error);
+    return { success: false, error: error.message };
   }
 };
-
 export const getUserNotifications = async (userId: string) => {
   const db = getFirestore();
   try {
@@ -654,9 +721,7 @@ export const respondToGroupInvite = async (
   userId: string,
   accept: boolean
 ) => {
-
-
-console.log('hello',groupId)
+  console.log("hello", groupId, accept);
 
   const db = getFirestore();
   try {
@@ -669,10 +734,12 @@ console.log('hello',groupId)
 
     const groupData = groupSnap.data();
     const maxParticipants = groupData.maxParticipants || 0;
-    console.log(maxParticipants,'max')
+    console.log(maxParticipants, "max");
     const currentUsers = groupData.users || [];
 
-    const acceptedCount = currentUsers.filter(user => user.status === "accepted").length;
+    const acceptedCount = currentUsers.filter(
+      user => user.status === "accepted"
+    ).length;
 
     if (accept && acceptedCount >= maxParticipants) {
       throw new Error("This group has already reached its participant limit.");
@@ -699,7 +766,6 @@ console.log('hello',groupId)
     throw error;
   }
 };
-
 
 const handleStoryUpload = async (
   story: Story,
@@ -811,8 +877,6 @@ const fetchGenders = (callback: (genders: any[]) => void) => {
     throw error;
   }
 };
-
-// New functions for swipe profile functionality
 
 const getRandomUser = async (
   currentUserId: string,

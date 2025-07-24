@@ -180,7 +180,6 @@ const saveUserToDatabase = async (userId: string, userData: any) => {
 };
 
 const updateUser = async (userId: string, updateData: any) => {
-  console.log("🚀 ~ auth.ts:182 ~ updateUser ~ updateData:", updateData);
   try {
     const db = getFirestore();
 
@@ -776,11 +775,7 @@ export const respondToGroupInvite = async (
   }
 };
 
-const handleStoryUpload = async (
-  story: Story,
-  pickStory: Promise<string[]>,
-  user: User
-) => {
+const handleStoryUpload = async (pickStory: Promise<string[]>, user: User) => {
   const result = await pickStory;
 
   if (!result || result.length === 0) return;

@@ -7,7 +7,9 @@ import {
   getCurrentAuth,
   getNextUserForSwipe,
   getRandomUser,
+  getUserByUid,
   recordLike,
+  updateUser,
 } from "@/firebase/auth";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { RootState } from "@/redux/store";
@@ -65,6 +67,32 @@ export default function SwipeProfile() {
     router.push(`/(tabs)/discover/${profileData?.uid}`);
   };
 
+  const updateTrustScore = async (userId: string) => {
+    try {
+      const currentUserData = await getUserByUid(userId);
+
+      if (currentUserData) {
+        let newTrustScore: number;
+
+        if (
+          currentUserData.trustScore !== undefined &&
+          currentUserData.trustScore !== null
+        ) {
+          // If trustScore exists, subtract 1 but don't go below 0
+          newTrustScore = Math.max(0, currentUserData.trustScore - 1);
+        } else {
+          // If trustScore doesn't exist, start with 100 - 1 = 99
+          newTrustScore = 99;
+        }
+
+        // Update user with new trust score
+        await updateUser(userId, { trustScore: newTrustScore });
+      }
+    } catch (error) {
+      console.error("Error updating trust score:", error);
+    }
+  };
+
   const handleRefreshPress = async () => {
     try {
       if (!currentUser?.uid) return;
@@ -83,6 +111,9 @@ export default function SwipeProfile() {
       if (!currentUser?.uid || !profileData?.id) return;
 
       const { isMatch } = await recordLike(currentUser.uid, profileData.id);
+
+      // Update trust score
+      await updateTrustScore(currentUser.uid);
 
       setLikedUserIds(prev => [...prev, profileData.id]);
 
@@ -127,6 +158,9 @@ export default function SwipeProfile() {
       if (!currentUser?.uid || !profileData?.id) return;
 
       const { isMatch } = await recordLike(currentUser.uid, profileData.id);
+
+      // Update trust score
+      await updateTrustScore(currentUser.uid);
 
       setLikedUserIds(prev => [...prev, profileData.id]);
 
@@ -281,55 +315,38 @@ export default function SwipeProfile() {
               </View>
             </View>
 
-            {profileData.country && (
-              <View style={styles.tagRow}>
-                <View style={styles.tag}>
-                  <Ionicons
-                    name="flag"
-                    size={14}
-                    color={Colors.light.redText}
-                  />
-                  <RnText style={styles.countryText}>
-                    {profileData.country}
-                  </RnText>
-                </View>
+            <View style={styles.tag}>
+              <Ionicons
+                name="shield-checkmark"
+                size={14}
+                color={Colors.light.redText}
+              />
+              <RnText style={styles.trustText}>
+                {calculateMatchScore(
+                  {
+                    userId: currentUser.uid,
+                    intent: currentUser.lookingFor,
+                    profileScore: currentUser.profileScore,
+                  },
+                  {
+                    userId: profileData.uid,
+                    intent: profileData.lookingFor,
+                    profileScore: profileData.profileScore,
+                  }
+                )}
+                % Match score
+              </RnText>
+            </View>
 
-                <View style={styles.tag}>
-                  <Ionicons
-                    name="people"
-                    size={14}
-                    color={Colors.light.redText}
-                  />
-                  <RnText style={styles.matchText}>
-                    %{profileData.matchScore || 85}
-                  </RnText>
-                </View>
-              </View>
-            )}
-
-            <View style={styles.tagRow}>
-              <View style={styles.tag}>
-                <Ionicons
-                  name="shield-checkmark"
-                  size={14}
-                  color={Colors.light.redText}
-                />
-                <RnText style={styles.trustText}>
-                  {calculateMatchScore(
-                    {
-                      userId: currentUser.uid,
-                      intent: currentUser.lookingFor,
-                      profileScore: currentUser.profileScore,
-                    },
-                    {
-                      userId: profileData.uid,
-                      intent: profileData.lookingFor,
-                      profileScore: profileData.profileScore,
-                    }
-                  )}
-                  % Match score
-                </RnText>
-              </View>
+            <View style={styles.tag}>
+              <Ionicons
+                name="shield-checkmark"
+                size={14}
+                color={Colors.light.redText}
+              />
+              <RnText style={styles.trustText}>
+                {profileData.trustScore || 100}% Trust score
+              </RnText>
             </View>
           </View>
         </View>

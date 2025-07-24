@@ -21,12 +21,15 @@ import { RootState } from "@/redux/store";
 import { encodeImagePath, hp, wp } from "@/utils";
 import getDistanceFromLatLonInMeters from "@/utils/Distance";
 import { Ionicons } from "@expo/vector-icons";
+import { getAuth } from "@react-native-firebase/auth";
+import { doc, getDoc, getFirestore } from "@react-native-firebase/firestore";
 import { reverseGeocodeAsync } from "expo-location";
 import { router, useLocalSearchParams } from "expo-router";
 import { Formik, FormikProps } from "formik";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Animated,
   FlatList,
   Image,
@@ -74,8 +77,10 @@ export default function Profile() {
   const [galleryVisible, setGalleryVisible] = useState(false);
 
   const formikRef = useRef<FormikProps<any>>(null);
+  const currentUserId = getAuth().currentUser?.uid;
 
   useEffect(() => {
+    console.log("id", id);
     getUserDetails();
     if (user?.uid !== id) {
       setShowActionButtons(true);
@@ -106,6 +111,7 @@ export default function Profile() {
   }, []);
 
   useEffect(() => {
+    console.log("hello");
     setDropdownValue(
       (profileData?.interests?.split(",") || [])
         .map((i: string) => i.trim())
@@ -189,33 +195,61 @@ export default function Profile() {
     }
   };
 
-  const handleSendPress = () => {
-    console.log("Send message");
-  };
-
-  const handleImageUpload = async (
-    uri: {
-      uri: string;
-      path: string;
-      type: string;
-      name: string;
-    }[]
+  const handleSendPress = async (
+    currentUserId: string,
+    profileViewingUserId: string
   ) => {
-    let imageUris: string[] = [];
-    uri.map(img => imageUris.push(img.uri));
-    let galleryUrl = await uploadMultipleImages(
-      imageUris,
-      "user",
-      user.uid,
-      "gallery"
-    );
-    await updateUser(user.uid, {
-      gallery: [...(profileData?.gallery || []), ...galleryUrl],
-    });
-    await getUserDetails();
+    console.log("hi");
+
+    try {
+      console.log("hi");
+      const db = getFirestore();
+
+      // Check both possible match document ID formats
+      const possibleMatchIds = [
+        `${currentUserId}_${profileViewingUserId}`,
+        `${profileViewingUserId}_${currentUserId}`,
+      ];
+
+      // Check if either match document exists
+      let matchFound = false;
+      let matchId = "";
+
+      for (const id of possibleMatchIds) {
+        const matchRef = doc(db, "matches", id);
+        const matchDoc = await getDoc(matchRef);
+
+        if (matchDoc.exists()) {
+          matchFound = true;
+          matchId = id;
+          break;
+        }
+      }
+
+      if (matchFound) {
+        // Navigate to chat with the match ID
+        router.push({
+          pathname: "/(tabs)/messages/chat/[id]",
+          params: {
+            matchId: matchId,
+            otherUserId: profileViewingUserId,
+            chatType: "single",
+          },
+        });
+      } else {
+        // Show error that you need to match first
+        Alert.alert(
+          "No Match Yet",
+          "You need to match with this user before chatting"
+        );
+      }
+    } catch (error) {
+      console.error("Error checking match:", error);
+      Alert.alert("Error", "Could not check match status");
+    }
   };
 
-  // Image transform animations
+  // // Image transform animations
   const imageTranslateY = scrollY.interpolate({
     inputRange: [0, IMAGE_HEIGHT],
     outputRange: [0, -IMAGE_HEIGHT / 2],
@@ -371,13 +405,20 @@ export default function Profile() {
             {user.uid !== id && (
               <TouchableOpacity
                 style={styles.sendButton}
-                onPress={handleSendPress}
+                onPress={() => {
+                  console.log("Button pressed!"); // Test if this logs
+                  handleSendPress(currentUserId, id);
+                }}
               >
                 <RoundButton
                   iconName="send"
                   iconSize={24}
                   iconColor={Colors[theme].primary}
                   backgroundColour={Colors[theme].background}
+                  onPress={() => {
+                    console.log("Button pressed!"); // Test if this logs
+                    handleSendPress(currentUserId, id);
+                  }}
                 />
               </TouchableOpacity>
             )}

@@ -145,7 +145,7 @@ export default (theme: "dark" | "light") =>
     userName: {
       fontSize: FontSize.medium,
       color: Colors[theme].blackText,
-      fontWeight: "500",
+      fontFamily: FontFamily.bold,
     },
     statusBadge: {
       flexDirection: "row",

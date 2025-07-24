@@ -87,44 +87,6 @@ export default function Matches() {
     setShowMatchModal(false);
     setSelectedMatch(null);
   };
-
-  const modalStyles = StyleSheet.create({
-    modalContainer: {
-      backgroundColor: Colors[theme].background,
-      borderRadius: 20,
-      padding: 20,
-      alignItems: "center",
-      marginHorizontal: 20,
-    },
-    title: {
-      fontSize: 24,
-      fontWeight: "bold",
-      color: Colors[theme].redText,
-      marginBottom: 10,
-      textAlign: "center",
-    },
-    subtitle: {
-      fontSize: 16,
-      color: Colors[theme].blackText,
-      marginBottom: 30,
-      textAlign: "center",
-      lineHeight: 22,
-    },
-    messageButton: {
-      backgroundColor: Colors[theme].pink,
-      paddingHorizontal: 30,
-      paddingVertical: 12,
-      borderRadius: 25,
-      minWidth: 120,
-    },
-    messageButtonText: {
-      color: Colors[theme].whiteText,
-      fontSize: 16,
-      fontWeight: "600",
-      textAlign: "center",
-    },
-  });
-
   return (
     <ScrollContainer>
       {/* Header */}
@@ -222,26 +184,6 @@ export default function Matches() {
           />
         </View>
       </View>
-
-      {/* Match Modal */}
-      <RnModal
-        show={showMatchModal}
-        backButton={handleCloseModal}
-        backDrop={handleCloseModal}
-      >
-        <View style={modalStyles.modalContainer}>
-          <RnText style={modalStyles.title}>It's a match</RnText>
-          <RnText style={modalStyles.subtitle}>
-            Start a conversation now with each other
-          </RnText>
-          <TouchableOpacity
-            style={modalStyles.messageButton}
-            onPress={handleMessagePress}
-          >
-            <RnText style={modalStyles.messageButtonText}>Message</RnText>
-          </TouchableOpacity>
-        </View>
-      </RnModal>
     </ScrollContainer>
   );
 }

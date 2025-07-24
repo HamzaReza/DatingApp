@@ -22,10 +22,10 @@ export default function MessagesLayout() {
           },
           animationDuration: 300,
           gestureEnabled: true,
-
-          freezeOnBlur: true,
+          tabBarStyle: { display: "none" }, // ✅ use this directly here
         }}
       />
+
       <Stack.Screen
         name="connection/[id]"
         options={{

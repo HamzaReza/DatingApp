@@ -10,7 +10,13 @@ import { wp } from "@/utils";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { FlatList, StyleSheet, TouchableOpacity, useColorScheme, View } from "react-native";
+import {
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+  useColorScheme,
+  View,
+} from "react-native";
 
 type Match = {
   id: string;
@@ -36,31 +42,40 @@ export default function Matches() {
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
 
   useEffect(() => {
-    fetchMatches();
+    console.log("matches", matches);
+  }, [matches]);
+
+  useEffect(() => {
+    const loadMatches = async () => {
+      try {
+        setLoading(true);
+        const currentUser = await getCurrentAuth();
+        if (currentUser?.currentUser?.uid) {
+          const userMatches = await fetchUserMatches(
+            currentUser.currentUser.uid
+          );
+          setMatches(userMatches);
+        }
+      } catch (error) {
+        console.error("Error loading matches:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadMatches();
   }, []);
 
-  const fetchMatches = async () => {
-    try {
-      setLoading(true);
-      const currentUser = await getCurrentAuth();
-      if (currentUser?.currentUser?.uid) {
-        const userMatches = await fetchUserMatches(currentUser.currentUser.uid);
-        setMatches(userMatches);
-        setTotalMatches(userMatches.length);
-      }
-    } catch (error) {
-      console.error("Error fetching matches:", error);
-    } finally {
-      setLoading(false);
+  const handleMatchPress = (
+    userId: string,
+    status: string,
+    matchId: string
+  ) => {
+    if (status == "pending") {
+      return;
     }
-  };
-
-  const handleMatchPress = (matchId: string) => {
-    const match = matches.find(m => m.id === matchId);
-    if (match) {
-      setSelectedMatch(match);
-      setShowMatchModal(true);
-    }
+    router.push(`/(tabs)/discover/${userId}`);
+    setShowMatchModal(false);
   };
 
   const handleMessagePress = () => {
@@ -72,44 +87,6 @@ export default function Matches() {
     setShowMatchModal(false);
     setSelectedMatch(null);
   };
-
-  const modalStyles = StyleSheet.create({
-    modalContainer: {
-      backgroundColor: Colors[theme].background,
-      borderRadius: 20,
-      padding: 20,
-      alignItems: 'center',
-      marginHorizontal: 20,
-    },
-    title: {
-      fontSize: 24,
-      fontWeight: 'bold',
-      color: Colors[theme].redText,
-      marginBottom: 10,
-      textAlign: 'center',
-    },
-    subtitle: {
-      fontSize: 16,
-      color: Colors[theme].blackText,
-      marginBottom: 30,
-      textAlign: 'center',
-      lineHeight: 22,
-    },
-    messageButton: {
-      backgroundColor: Colors[theme].pink,
-      paddingHorizontal: 30,
-      paddingVertical: 12,
-      borderRadius: 25,
-      minWidth: 120,
-    },
-    messageButtonText: {
-      color: Colors[theme].whiteText,
-      fontSize: 16,
-      fontWeight: '600',
-      textAlign: 'center',
-    },
-  });
-
   return (
     <ScrollContainer>
       {/* Header */}
@@ -184,7 +161,10 @@ export default function Matches() {
                 distance={item.distance}
                 image={item.image}
                 matchPercentage={item.matchPercentage}
-                onPress={() => handleMatchPress(item.id)}
+                onPress={() =>
+                  handleMatchPress(item.userId, item.status, item.id)
+                }
+                isPending={item.status == "pending"}
               />
             )}
             numColumns={2}
@@ -194,7 +174,7 @@ export default function Matches() {
             style={{ width: wp(100) }}
             ListEmptyComponent={
               !loading ? (
-                <View style={{ alignItems: 'center', paddingVertical: 20 }}>
+                <View style={{ alignItems: "center", paddingVertical: 20 }}>
                   <RnText style={{ color: Colors[theme].tabIconDefault }}>
                     No matches yet. Start swiping to find matches!
                   </RnText>
@@ -204,26 +184,6 @@ export default function Matches() {
           />
         </View>
       </View>
-
-      {/* Match Modal */}
-      <RnModal 
-        show={showMatchModal} 
-        backButton={handleCloseModal}
-        backDrop={handleCloseModal}
-      >
-        <View style={modalStyles.modalContainer}>
-          <RnText style={modalStyles.title}>It's a match</RnText>
-          <RnText style={modalStyles.subtitle}>
-            Start a conversation now with each other
-          </RnText>
-          <TouchableOpacity 
-            style={modalStyles.messageButton}
-            onPress={handleMessagePress}
-          >
-            <RnText style={modalStyles.messageButtonText}>Message</RnText>
-          </TouchableOpacity>
-        </View>
-      </RnModal>
     </ScrollContainer>
   );
 }

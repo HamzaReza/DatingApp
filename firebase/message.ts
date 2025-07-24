@@ -1,4 +1,5 @@
 import { User } from "@/app/(tabs)/messages/types";
+import { getAuth } from "@react-native-firebase/auth";
 import {
   addDoc,
   arrayUnion,
@@ -12,6 +13,8 @@ import {
   onSnapshot,
   orderBy,
   query,
+  serverTimestamp,
+  setDoc,
   Timestamp,
   updateDoc,
   where,
@@ -72,29 +75,87 @@ export interface Conversation {
 }
 
 // Create a new message
-const createMessage = async (messageData: {
-  senderId: string;
-  receiverId: string;
-  content: string;
-  messageType?: "text" | "image" | "audio";
-  mediaUrl?: string;
-}) => {
+const sendDirectMessage = async (
+  matchId: string,
+  senderId: string,
+  content: string
+): Promise<void> => {
   try {
+    if (!matchId || typeof matchId !== "string") {
+      throw new Error("Invalid matchId");
+    }
+
     const db = getFirestore();
-    const messageRef = await addDoc(collection(db, "messages"), {
-      senderId: messageData.senderId,
-      receiverId: messageData.receiverId,
-      content: messageData.content,
-      messageType: messageData.messageType || "text",
-      mediaUrl: messageData.mediaUrl,
-      timestamp: Timestamp.now(),
-      isRead: false,
-    });
-    return messageRef.id;
+    const messageRef = doc(db, "messages", matchId);
+
+    const newMessage = {
+      senderId,
+      content,
+      timestamp: new Date(),
+      read: false,
+    };
+
+    const lastMessageInfo = {
+      content,
+      senderId,
+      timestamp: serverTimestamp(), // For sorting
+    };
+
+    const docSnapshot = await getDoc(messageRef);
+
+    if (docSnapshot.exists()) {
+      await updateDoc(messageRef, {
+        messages: arrayUnion(newMessage),
+        lastUpdated: serverTimestamp(),
+        lastMessage: lastMessageInfo, // ✅ Store last message preview
+      });
+    } else {
+      await setDoc(messageRef, {
+        messages: [newMessage],
+        lastUpdated: serverTimestamp(),
+        lastMessage: lastMessageInfo, // ✅ Store last message preview
+        participants: matchId.includes("_")
+          ? matchId.split("_")
+          : [senderId, matchId],
+      });
+    }
   } catch (error) {
-    console.error("Error creating message:", error);
-    throw error;
+    console.error("Error sending message:", error);
+    throw new Error("Failed to send message");
   }
+};
+
+export const checkAndUpdateMessageLimit = async (
+  chatId: string,
+  senderId: string
+): Promise<number> => {
+  const db = getFirestore();
+  const limitRef = doc(db, "messageLimits", chatId);
+  const snapshot = await getDoc(limitRef);
+
+  let data = {};
+  let currentCount = 0;
+
+  if (snapshot.exists()) {
+    data = snapshot.data();
+    currentCount = data[senderId] || 0;
+  }
+
+  if (currentCount >= 5) {
+    throw new Error("Free message limit reached");
+  }
+
+  // update sender's message count
+  await setDoc(
+    limitRef,
+    {
+      [senderId]: currentCount + 1,
+      lastUpdated: serverTimestamp(),
+    },
+    { merge: true }
+  );
+
+  return currentCount + 1;
 };
 
 // Fetch messages between two users
@@ -392,7 +453,7 @@ export const sendGroupMessage = async (messageData: {
     await updateDoc(groupRef, {
       messages: arrayUnion(newMessage),
       lastMessage: newMessage,
-      lastMessageTime: Timestamp.now(),
+      lastMessageTime: serverTimestamp(), // ✅ use serverTimestamp
     });
   } catch (error) {
     console.error("Error sending group message:", error);
@@ -433,6 +494,20 @@ export const setupGroupMessagesListener = (
   });
 };
 
+export const setupDirectMessageListener = (
+  matchId: string,
+  callback: (messages: Message[]) => void
+) => {
+  const db = getFirestore();
+  const messageRef = doc(db, "messages", matchId);
+
+  return onSnapshot(messageRef, doc => {
+    if (doc.exists()) {
+      callback(doc.data().messages || []);
+    }
+  });
+};
+
 const userCache = new Map<string, User>();
 
 export const getUser = async (userId: string): Promise<User | null> => {
@@ -455,8 +530,25 @@ export const getUser = async (userId: string): Promise<User | null> => {
     return null;
   }
 };
+
+export const fetchOneToOneChats = async (userId: string) => {
+  const db = getFirestore();
+  const messagesRef = collection(db, "messages");
+  const snapshot = await getDocs(messagesRef);
+
+  const oneToOneChats = snapshot.docs
+    .filter(doc => {
+      const idParts = doc.id.split("_");
+      return (
+        idParts.length === 2 && (idParts[0] === userId || idParts[1] === userId)
+      );
+    })
+    .map(doc => ({ id: doc.id, ...doc.data() }));
+
+  return oneToOneChats;
+};
 export {
-  createMessage,
+  sendDirectMessage,
   deleteMessage,
   fetchMessagesBetweenUsers,
   fetchUserConversations,

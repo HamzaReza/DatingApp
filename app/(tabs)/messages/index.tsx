@@ -12,11 +12,12 @@ import RoundButton from "@/components/RoundButton";
 import { Colors } from "@/constants/Colors";
 import {
   fetchTags,
+  getUserByUid,
   sendGroupInvitesByTags,
   uploadImage,
 } from "@/firebase/auth";
-import { fetchUserGroups } from "@/firebase/message";
-import { wp } from "@/utils";
+import { fetchOneToOneChats, fetchUserGroups } from "@/firebase/message";
+import { encodeImagePath, wp } from "@/utils";
 import { Ionicons } from "@expo/vector-icons";
 import { getAuth } from "@react-native-firebase/auth";
 import { LinearGradient } from "expo-linear-gradient";
@@ -45,7 +46,7 @@ type RecentMatch = {
 
 type Message = {
   id: string;
-  groupName?: string; // Optional for recent matches
+  groupName?: string;
   name: string;
   message: string;
   time: string;
@@ -179,21 +180,77 @@ export default function Messages() {
   const [maxAge, setMaxAge] = useState("");
   const [eventDate, setEventDate] = useState<Date | undefined>(undefined);
   const [groupDescription, setGroupDescription] = useState("");
+  const [oneToOneList, setOneToOneList] = useState([]);
+  const [chatList, setChatList] = useState<Message[]>([]);
+  const [receiverId, setRecieverId] = useState("");
+  const currentUserId = getAuth().currentUser?.uid;
 
   useEffect(() => {
-    console.log(groupName, "groupName");
-  }, [groupName]);
+    console.log("oneToOneList", chatList);
+  }, [chatList]);
 
   useEffect(() => {
-    const loadGroups = async () => {
+    const loadChats = async () => {
       const currentUserId = getAuth().currentUser?.uid as string;
       console.log("currentUserId", currentUserId);
+
       const groups = await fetchUserGroups(currentUserId);
       setGroupList(groups);
+
+      const oneToOneChats = await fetchOneToOneChats(currentUserId);
+      setOneToOneList(oneToOneChats);
     };
 
-    loadGroups();
+    loadChats();
   }, []);
+
+  useEffect(() => {
+    const prepareChatList = async () => {
+      const allChats: Message[] = [];
+
+      for (const group of groupList) {
+        allChats.push({
+          id: group.id,
+          groupName: group.groupName,
+          message: group.lastMessage,
+          time: formatTimestamp(group.lastMessage.timestamp),
+          image: group.image,
+          isOnline: group.isOnline,
+          unread: group.unread,
+          type: "group",
+          lastMessage: group.lastMessage.content,
+        });
+      }
+
+      for (const convo of oneToOneList) {
+        const otherUserId = convo.participants.find(p => p !== currentUserId);
+        setRecieverId(otherUserId);
+        if (!otherUserId) continue;
+
+        const user = await getUserByUid(otherUserId);
+        if (!user) continue;
+
+        const lastMessage = convo.messages[convo.messages.length - 1];
+
+        allChats.push({
+          id: convo.id,
+          groupName: user.name,
+          message: lastMessage?.text || "No message yet",
+          time: formatTimestamp(convo.lastUpdated),
+          image: encodeImagePath(user.photo) || null,
+          isOnline: user.isOnline || false,
+          unread: convo.unread || 0,
+          lastMessage: convo.lastMessage.content,
+        });
+      }
+
+      allChats.sort((a, b) => b.time?.seconds - a.time?.seconds);
+
+      setChatList(allChats);
+    };
+
+    prepareChatList();
+  }, [groupList, oneToOneList]);
 
   useEffect(() => {
     const unsubscribe = fetchTags(tags => {
@@ -220,8 +277,19 @@ export default function Messages() {
     }
   };
 
-  const handleMessagePress = (messageId: string) => {
-    router.push(`/messages/chat/${messageId}`);
+  const handleMessagePress = (messageId: string, type: string) => {
+    if (type == "group") {
+      router.push(`/messages/chat/${messageId}`);
+    } else {
+      router.push({
+        pathname: "/(tabs)/messages/chat/[id]",
+        params: {
+          matchId: messageId,
+          otherUserId: receiverId,
+          chatType: "single",
+        },
+      });
+    }
   };
 
   const handleCreateHangout = async () => {
@@ -246,6 +314,12 @@ export default function Messages() {
     }
   };
 
+  const formatTimestamp = (timestamp: any) => {
+    if (!timestamp) return "";
+    const date = new Date(timestamp.seconds * 1000);
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  };
+
   const renderRecentMatch = ({ item }: { item: RecentMatch }) => (
     <TouchableOpacity
       style={styles.recentMatchItem}
@@ -266,12 +340,12 @@ export default function Messages() {
   const renderMessage = ({ item }: { item: Message }) => (
     <MessageItem
       name={item.groupName ?? item.name}
-      message={item.message}
+      message={item.lastMessage}
       time={item.time}
       image={item.image}
       isOnline={item.isOnline}
       unread={item.unread}
-      onPress={() => handleMessagePress(item.id)}
+      onPress={() => handleMessagePress(item.id, item.type)}
     />
   );
 
@@ -309,7 +383,6 @@ export default function Messages() {
             />
           </View>
 
-          {/* Recent Matches Section */}
           <View style={styles.recentSection}>
             <View style={styles.recentHeader}>
               <RnText style={styles.recentTitle}>Recent Matches</RnText>
@@ -331,10 +404,10 @@ export default function Messages() {
           </View>
         </LinearGradient>
       </View>
-      {/* Messages List */}
+
       <View style={styles.messagesContainer}>
         <FlatList
-          data={groupList}
+          data={chatList}
           keyExtractor={item => item.id}
           renderItem={renderMessage}
           showsVerticalScrollIndicator={false}
@@ -388,8 +461,6 @@ export default function Messages() {
             />
           </View>
 
-          {/* <View style={styles.rowContainer}> */}
-
           <View style={styles.rowContainer}>
             <View style={styles.dropdownWrapper}>
               <RnText style={styles.dropdownLabel}>Group Gender:</RnText>
@@ -421,10 +492,6 @@ export default function Messages() {
               />
             </View>
           </View>
-
-          {/* Participant Count Dropdown */}
-
-          {/* Tags Dropdown */}
 
           <View style={""}></View>
 
@@ -463,7 +530,7 @@ export default function Messages() {
                 showPicker={() => setShowImagePicker(true)}
                 hidePicker={() => setShowImagePicker(false)}
                 setUri={(uri: any) => {
-                  setPickedImageUri(uri.uri); // You can now use this anywhere
+                  setPickedImageUri(uri.uri);
                 }}
               >
                 <TouchableOpacity
@@ -485,7 +552,6 @@ export default function Messages() {
             </View>
           </View>
 
-          {/* Create Button */}
           <RnButton
             style={[styles.createButton, styles.createButtonText]}
             onPress={handleCreateHangout}

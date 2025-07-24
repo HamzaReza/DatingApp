@@ -1020,43 +1020,84 @@ const fetchUserMatches = async (currentUserId: string) => {
   try {
     const db = getFirestore();
 
-    // Get all matches where current user is involved
+    // 1. Get mutual matches (from matches collection)
     const matchesRef = collection(db, "matches");
     const matchesSnapshot = await getDocs(matchesRef);
 
-    const userMatches: any[] = [];
+    const mutualMatches: any[] = [];
+    const matchedUserIds: string[] = [];
 
-    matchesSnapshot.forEach((doc: any) => {
+    matchesSnapshot.forEach(doc => {
       const matchData = doc.data();
-      const users = matchData.users || [];
-
-      // Check if current user is in this match
-      if (users.includes(currentUserId) && matchData.isActive) {
-        // Get the other user's ID
-        const otherUserId = users.find((id: string) => id !== currentUserId);
+      if (matchData.users.includes(currentUserId) && matchData.isActive) {
+        const otherUserId = matchData.users.find(
+          (id: string) => id !== currentUserId
+        );
         if (otherUserId) {
-          userMatches.push({
-            matchId: doc.id,
+          mutualMatches.push({
+            id: doc.id,
             otherUserId,
             matchedAt: matchData.matchedAt,
+            status: "matched",
           });
+          matchedUserIds.push(otherUserId);
         }
       }
     });
 
-    // Fetch user data for all matched users
+    // 2. Get pending likes (users we've liked but haven't liked us back)
+    const currentUserLikesRef = collection(db, "users", currentUserId, "likes");
+    const currentUserLikesSnapshot = await getDocs(currentUserLikesRef);
+
+    const pendingMatches: any[] = [];
+
+    await Promise.all(
+      currentUserLikesSnapshot.docs.map(async likeDoc => {
+        const likedUserId = likeDoc.id;
+
+        if (matchedUserIds.includes(likedUserId)) return;
+
+        const theirLikeRef = doc(
+          db,
+          "users",
+          likedUserId,
+          "likes",
+          currentUserId
+        );
+        const theirLikeDoc = await getDoc(theirLikeRef);
+
+        if (!theirLikeDoc.exists()) {
+          pendingMatches.push({
+            id: `pending_${currentUserId}_${likedUserId}`,
+            otherUserId: likedUserId,
+            likedAt: likeDoc.data().likedAt,
+            status: "pending",
+          });
+        }
+      })
+    );
+
+    // Combine both types
+    const allMatches = [...mutualMatches, ...pendingMatches];
+
+    // Fetch user details with location and match percentage
     const matchesWithUserData = await Promise.all(
-      userMatches.map(async match => {
+      allMatches.map(async match => {
         try {
           const userDoc = await getDoc(doc(db, "users", match.otherUserId));
           if (userDoc.exists()) {
             const userData = userDoc.data() as any;
 
-            // Generate random distance and match percentage if not available
+            // Generate random distance and match percentage
             const distance = `${(Math.random() * 10 + 0.5).toFixed(1)} km away`;
-            const matchPercentage = Math.floor(Math.random() * 20 + 80); // 80-100%
 
-            // Handle location field properly
+            // Different percentage ranges based on match status
+            const matchPercentage =
+              match.status === "matched"
+                ? Math.floor(Math.random() * 20 + 80) // 80-100% for matches
+                : Math.floor(Math.random() * 30 + 50); // 50-80% for pending
+
+            // Handle location field (your existing logic)
             let locationString = "UNKNOWN";
             if (userData.location) {
               if (typeof userData.location === "string") {
@@ -1072,30 +1113,30 @@ const fetchUserMatches = async (currentUserId: string) => {
             }
 
             return {
-              id: match.matchId,
+              id: match.id,
+              userId: match.otherUserId,
               name: userData.name || "Unknown",
               age: userData.age || 25,
               location: locationString,
               distance,
-              image:
-                userData.photo ||
-                "https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=300",
+              image: userData.photo,
               matchPercentage,
-              matchedAt: match.matchedAt,
+              timestamp: match.matchedAt || match.likedAt,
+              status: match.status,
+              isPending: match.status === "pending",
             };
           }
           return null;
         } catch (error) {
-          console.error("Error fetching user data for match:", error);
+          console.error("Error fetching user data:", error);
           return null;
         }
       })
     );
 
-    // Filter out null values and return
     return matchesWithUserData.filter(match => match !== null);
   } catch (error) {
-    console.error("Error fetching user matches:", error);
+    console.error("Error fetching matches:", error);
     return [];
   }
 };

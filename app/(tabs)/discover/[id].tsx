@@ -13,6 +13,7 @@ import { Colors } from "@/constants/Colors";
 import {
   fetchTags,
   getUserByUid,
+  recordLike,
   updateUser,
   uploadMultipleImages,
 } from "@/firebase/auth";
@@ -68,6 +69,7 @@ export default function Profile() {
   const [dropdownValue, setDropdownValue] = useState<string[]>([]);
   const [updating, setUpdating] = useState(false);
   const [tags, setTags] = useState<Tag[]>([]);
+  const [showActionButtons, setShowActionButtons] = useState(false);
 
   const [galleryVisible, setGalleryVisible] = useState(false);
 
@@ -75,6 +77,9 @@ export default function Profile() {
 
   useEffect(() => {
     getUserDetails();
+    if (user?.uid !== id) {
+      setShowActionButtons(true);
+    }
   }, []);
 
   useEffect(() => {
@@ -116,20 +121,72 @@ export default function Profile() {
     setLoading(false);
   };
 
+  const updateTrustScore = async (userId: string) => {
+    try {
+      const currentUserData = await getUserByUid(userId);
+
+      if (currentUserData) {
+        let newTrustScore: number;
+
+        if (
+          currentUserData.trustScore !== undefined &&
+          currentUserData.trustScore !== null
+        ) {
+          // If trustScore exists, add 1 but don't go over 100
+          newTrustScore = Math.min(100, currentUserData.trustScore + 1);
+        } else {
+          // If trustScore doesn't exist, start with 1
+          newTrustScore = 1;
+        }
+
+        // Update user with new trust score
+        await updateUser(userId, { trustScore: newTrustScore });
+      }
+    } catch (error) {
+      console.error("Error updating trust score:", error);
+    }
+  };
+
   const handleEditPress = () => {
     setEditModalVisible(true);
   };
 
-  const handleDislikePress = () => {
-    console.log("Dislike profile");
+  const handleDislikePress = async () => {
+    try {
+      if (!user?.uid || !profileData?.uid) return;
+
+      setShowActionButtons(false);
+    } catch (error) {
+      console.error("Error handling dislike:", error);
+    }
   };
 
-  const handleLikePress = () => {
-    console.log("Like profile");
+  const handleLikePress = async () => {
+    try {
+      if (!user?.uid || !profileData?.uid) return;
+
+      await recordLike(user.uid, profileData.uid);
+
+      await updateTrustScore(user.uid);
+
+      setShowActionButtons(false);
+    } catch (error) {
+      console.error("Error handling like:", error);
+    }
   };
 
-  const handleSuperLikePress = () => {
-    console.log("Super like profile");
+  const handleSuperLikePress = async () => {
+    try {
+      if (!user?.uid || !profileData?.uid) return;
+
+      await recordLike(user.uid, profileData.uid);
+
+      await updateTrustScore(user.uid);
+
+      setShowActionButtons(false);
+    } catch (error) {
+      console.error("Error handling super like:", error);
+    }
   };
 
   const handleSendPress = () => {
@@ -252,7 +309,7 @@ export default function Profile() {
 
       {/* Floating Action Buttons */}
 
-      {user.uid !== id && (
+      {showActionButtons && (
         <Animated.View
           style={[
             styles.floatingActionButtons,

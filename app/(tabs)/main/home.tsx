@@ -11,6 +11,7 @@ import {
   fetchAllUserStories,
   fetchStoriesForUser,
   handleStoryUpload,
+  updateUser,
 } from "@/firebase/auth";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import {
@@ -22,7 +23,6 @@ import { RootState } from "@/redux/store";
 import { encodeImagePath, hp, wp } from "@/utils";
 import { requestLocationPermission } from "@/utils/Permission";
 import { getAuth } from "@react-native-firebase/auth";
-import { doc, getFirestore, setDoc } from "@react-native-firebase/firestore";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import { router } from "expo-router";
@@ -115,20 +115,15 @@ export default function Home() {
         dispatch(setDeviceLocation(location));
 
         const currentUser = getAuth().currentUser?.uid;
-        const db = getFirestore();
 
         if (currentUser) {
-          await setDoc(
-            doc(db, "users", currentUser),
-            {
-              location: {
-                latitude: location.coords.latitude,
-                longitude: location.coords.longitude,
-                timestamp: new Date().toISOString(),
-              },
+          await updateUser(currentUser, {
+            location: {
+              latitude: location.coords.latitude,
+              longitude: location.coords.longitude,
+              timestamp: new Date().toISOString(),
             },
-            { merge: true }
-          );
+          });
         }
       } else {
         console.log("Location permission denied");
@@ -169,7 +164,7 @@ export default function Home() {
       params: {
         userId: userStory.id,
         username: userStory.username,
-        profilePic: userStory.profilePic,
+        profilePic: userStory.image,
         stories: JSON.stringify(currentUserStories),
         initialStoryIndex: 0,
       },
@@ -234,13 +229,11 @@ export default function Home() {
           keyExtractor={item => item.id}
           renderItem={({ item }) => (
             <StoryCircle
-              image={encodeImagePath(item.profilePic)}
+              image={encodeImagePath(item.image)}
               username={item.username || "user"}
               isOwn={item.isOwn}
               onPress={() => handleStoryPress(item)}
-              ownUploadOnPress={() =>
-                handleStoryUpload(item, pickStory(), user)
-              }
+              ownUploadOnPress={() => handleStoryUpload(pickStory(), user)}
             />
           )}
           horizontal

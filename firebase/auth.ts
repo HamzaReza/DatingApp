@@ -271,11 +271,18 @@ const uploadImage = async (
   imageUri: string,
   type: "user" | "event" | "creator" | "story",
   userId?: string,
-  imageType?: "profile" | "gallery"
+  imageType?: "profile" | "gallery" | "reel"
 ): Promise<string> => {
   try {
+    // Check if Firebase is properly initialized
+    if (!storage) {
+      throw new Error("Firebase Storage is not initialized");
+    }
+
+    const extension = imageUri.split(".").pop();
+
     const timestamp = Date.now();
-    const filename = `${timestamp}.jpg`;
+    const filename = `${timestamp}.${extension}`;
 
     const storagePath =
       type === "user"
@@ -291,7 +298,21 @@ const uploadImage = async (
     return downloadURL;
   } catch (error: any) {
     console.error("Error uploading image:", error);
-    throw new Error(`Failed to upload image: ${error.message}`);
+
+    // Handle specific Firebase errors
+    if (error.code === "storage/unauthorized") {
+      throw new Error("Upload unauthorized. Please check your authentication.");
+    } else if (error.code === "storage/canceled") {
+      throw new Error("Upload was canceled.");
+    } else if (error.code === "storage/unknown") {
+      throw new Error("Unknown storage error occurred.");
+    } else if (error.message?.includes("RejectedExecutionException")) {
+      throw new Error("Upload service is busy. Please try again.");
+    }
+
+    throw new Error(
+      `Failed to upload image: ${error.message || "Unknown error"}`
+    );
   }
 };
 

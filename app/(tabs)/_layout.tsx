@@ -2,12 +2,13 @@ import { Borders } from "@/constants/Borders";
 import { Colors } from "@/constants/Colors";
 import { hp, wp } from "@/utils";
 import { MaterialIcons } from "@expo/vector-icons";
-import { router, Tabs } from "expo-router";
+import { router, Tabs, usePathname } from "expo-router";
 import { Pressable, StyleSheet, useColorScheme, View } from "react-native";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
+  const pathname = usePathname();
 
   const styles = StyleSheet.create({
     iconContainer: {
@@ -51,7 +52,11 @@ export default function TabLayout() {
                 {...rest}
                 android_ripple={null}
                 style={props.style}
-                onPress={() => router.replace("/main/home")}
+                onPress={() => {
+                  if (pathname !== "/main/home") {
+                    router.replace("/main/home");
+                  }
+                }}
               >
                 {props.children}
               </Pressable>
@@ -89,7 +94,11 @@ export default function TabLayout() {
                 {...rest}
                 android_ripple={null}
                 style={props.style}
-                onPress={() => router.replace("/discover/discovery")}
+                onPress={() => {
+                  if (pathname !== "/discover/discovery") {
+                    router.replace("/discover/discovery");
+                  }
+                }}
               >
                 {props.children}
               </Pressable>
@@ -127,7 +136,11 @@ export default function TabLayout() {
                 {...rest}
                 android_ripple={null}
                 style={props.style}
-                onPress={() => router.replace("/swipeProfile")}
+                onPress={() => {
+                  if (pathname !== "/swipeProfile") {
+                    router.replace("/swipeProfile");
+                  }
+                }}
               >
                 {props.children}
               </Pressable>
@@ -165,7 +178,11 @@ export default function TabLayout() {
                 {...rest}
                 android_ripple={null}
                 style={props.style}
-                onPress={() => router.replace("/matches")}
+                onPress={() => {
+                  if (pathname !== "/matches") {
+                    router.replace("/matches");
+                  }
+                }}
               >
                 {props.children}
               </Pressable>
@@ -203,7 +220,11 @@ export default function TabLayout() {
                 {...rest}
                 android_ripple={null}
                 style={props.style}
-                onPress={() => router.replace("/messages")}
+                onPress={() => {
+                  if (pathname !== "/messages") {
+                    router.replace("/messages");
+                  }
+                }}
               >
                 {props.children}
               </Pressable>

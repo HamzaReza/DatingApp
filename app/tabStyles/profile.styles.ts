@@ -207,6 +207,8 @@ export default (theme: "dark" | "light") =>
     largeGalleryItem: {
       flex: 1,
       height: hp(25),
+      width: wp(38),
+      marginRight: wp(2),
       borderRadius: Borders.radius2,
       overflow: "hidden",
       position: "relative",
@@ -214,6 +216,8 @@ export default (theme: "dark" | "light") =>
     smallGalleryItem: {
       flex: 1,
       height: hp(12),
+      width: wp(38),
+      marginRight: wp(2),
       borderRadius: Borders.radius2,
       overflow: "hidden",
     },
@@ -236,6 +240,7 @@ export default (theme: "dark" | "light") =>
     //modal
     modalBackground: {
       backgroundColor: Colors[theme].whiteText,
+      padding: wp(2),
     },
     closeButton: {
       backgroundColor: Colors[theme].whiteText,
@@ -259,9 +264,9 @@ export default (theme: "dark" | "light") =>
       alignSelf: "center",
     },
     modalMainImage: {
-      width: wp(100),
-      height: "auto",
-      borderRadius: Borders.radius3,
+      height: hp(75),
+      width: "80%",
+      alignSelf: "center",
     },
     thumbnailList: {
       paddingHorizontal: wp(2),
@@ -289,5 +294,20 @@ export default (theme: "dark" | "light") =>
     editProfileButton: {
       width: wp(70),
       marginTop: hp(3),
+    },
+    reelItem: {
+      width: wp(70),
+      height: hp(20),
+      borderRadius: Borders.radius2,
+      overflow: "hidden",
+      position: "relative",
+      marginRight: wp(2),
+    },
+    video: {
+      height: hp(75),
+      width: "95%",
+      alignSelf: "center",
+      borderRadius: Borders.radius2,
+      overflow: "hidden",
     },
   });

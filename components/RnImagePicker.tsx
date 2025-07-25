@@ -35,7 +35,7 @@ const RnImagePicker: React.FC<RnImagePickerProps> = ({
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: multiple ? ["images", "videos"] : "images",
+        mediaTypes: "images",
         allowsMultipleSelection: multiple,
         allowsEditing: multiple ? false : true,
         aspect: [1, 1],

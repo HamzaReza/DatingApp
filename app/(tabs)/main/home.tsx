@@ -242,7 +242,7 @@ export default function Home() {
         />
       </View>
 
-      <View style={styles.tabContainer}>
+      {/* <View style={styles.tabContainer}>
         <TouchableOpacity
           style={[styles.tab, activeTab === "Make Friends" && styles.activeTab]}
           onPress={() => setActiveTab("Make Friends")}
@@ -273,7 +273,7 @@ export default function Home() {
             Search Partners
           </RnText>
         </TouchableOpacity>
-      </View>
+      </View> */}
 
       <FlatList
         data={questions}

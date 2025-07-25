@@ -94,7 +94,7 @@ export interface RnHeaderProps {
 
 export interface RnModalProps {
   show: boolean;
-  backButton(): void;
+  backButton?: () => void;
   backDrop?: () => void;
   children: ReactNode;
 }
@@ -136,19 +136,9 @@ export interface RnWheelPickerProps {
 
 export interface RnImagePickerProps {
   setUri: (
-    obj:
-      | {
-          uri: string;
-          path: string;
-          type: string;
-          name: string;
-        }
-      | {
-          uri: string;
-          path: string;
-          type: string;
-          name: string;
-        }[]
+    obj: Multiple extends true
+      ? { uri: string; path: string; type: string; name: string }[]
+      : { uri: string; path: string; type: string; name: string }
   ) => void;
   visible: boolean;
   showPicker(): void;

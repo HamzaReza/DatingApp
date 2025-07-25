@@ -8,6 +8,7 @@ import RnImagePicker from "@/components/RnImagePicker";
 import RnInput from "@/components/RnInput";
 import RnModal from "@/components/RnModal";
 import RnText from "@/components/RnText";
+import showToaster from "@/components/RnToast";
 import RoundButton from "@/components/RoundButton";
 import { Colors } from "@/constants/Colors";
 import {
@@ -15,16 +16,19 @@ import {
   getUserByUid,
   recordLike,
   updateUser,
+  uploadImage,
   uploadMultipleImages,
 } from "@/firebase/auth";
 import { RootState } from "@/redux/store";
-import { encodeImagePath, hp, wp } from "@/utils";
+import { encodeImagePath, hp } from "@/utils";
 import getDistanceFromLatLonInMeters from "@/utils/Distance";
 import { Ionicons } from "@expo/vector-icons";
-import { getAuth } from "@react-native-firebase/auth";
 import { doc, getDoc, getFirestore } from "@react-native-firebase/firestore";
+import * as ImagePicker from "expo-image-picker";
 import { reverseGeocodeAsync } from "expo-location";
 import { router, useLocalSearchParams } from "expo-router";
+import { useVideoPlayer, VideoView } from "expo-video";
+import * as VideoThumbnails from "expo-video-thumbnails";
 import { Formik, FormikProps } from "formik";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -33,7 +37,6 @@ import {
   Animated,
   FlatList,
   Image,
-  Pressable,
   TouchableOpacity,
   useColorScheme,
   View,
@@ -57,8 +60,8 @@ export default function Profile() {
   const { user } = useSelector((state: RootState) => state.user);
 
   const { id } = useLocalSearchParams();
-  const [modalVisible, setModalVisible] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [galleryModalVisible, setGalleryModalVisible] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [showFullAbout, setShowFullAbout] = useState(false);
   const [profileData, setProfileData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -73,11 +76,11 @@ export default function Profile() {
   const [updating, setUpdating] = useState(false);
   const [tags, setTags] = useState<Tag[]>([]);
   const [showActionButtons, setShowActionButtons] = useState(false);
-
-  const [galleryVisible, setGalleryVisible] = useState(false);
-
+  const [imagePickerVisible, setImagePickerVisible] = useState(false);
+  const [galleryLoading, setGalleryLoading] = useState(false);
+  const [reelModalVisible, setReelModalVisible] = useState(false);
+  const [selectedReel, setSelectedReel] = useState<string | null>(null);
   const formikRef = useRef<FormikProps<any>>(null);
-  const currentUserId = getAuth().currentUser?.uid;
 
   useEffect(() => {
     console.log("id", id);
@@ -86,6 +89,24 @@ export default function Profile() {
       setShowActionButtons(true);
     }
   }, []);
+
+  // Single useEffect to handle all video player state management
+  useEffect(() => {
+    if (reelModalVisible && selectedReel) {
+      // Modal is open and a reel is selected - play the video
+      player.currentTime = 0;
+      player.play();
+    } else {
+      // Modal is closed or no reel selected - pause and cleanup
+      player.pause();
+      player.currentTime = 0;
+
+      // If modal is closed, clear the selected reel
+      if (!reelModalVisible) {
+        setSelectedReel(null);
+      }
+    }
+  }, [reelModalVisible, selectedReel]);
 
   useEffect(() => {
     const getAddress = async () => {
@@ -118,6 +139,11 @@ export default function Profile() {
         .filter(Boolean)
     );
   }, [profileData, dropdownItems]);
+
+  const player = useVideoPlayer(selectedReel, (player: any) => {
+    player.loop = true;
+    player.play();
+  });
 
   const getUserDetails = async () => {
     scrollY.setValue(0);
@@ -229,7 +255,7 @@ export default function Profile() {
       if (matchFound) {
         // Navigate to chat with the match ID
         router.push({
-          pathname: "/(tabs)/messages/chat/[id]",
+          pathname: `/(tabs)/messages/chat/[id]`,
           params: {
             matchId: matchId,
             otherUserId: profileViewingUserId,
@@ -249,7 +275,75 @@ export default function Profile() {
     }
   };
 
-  // // Image transform animations
+  const handleGalleryUpload = async (
+    uri: {
+      uri: string;
+      path: string;
+      type: string;
+      name: string;
+    }[]
+  ) => {
+    setGalleryLoading(true);
+    let imageUris: string[] = [];
+    uri.map(img => imageUris.push(img.uri));
+    let galleryUrl = await uploadMultipleImages(
+      imageUris,
+      "user",
+      user.uid,
+      "gallery"
+    );
+    await updateUser(user.uid, {
+      gallery: [...(profileData?.gallery || []), ...galleryUrl],
+    });
+    setGalleryLoading(false);
+    await getUserDetails();
+  };
+
+  const handleReelUpload = async (uri: string) => {
+    try {
+      setGalleryLoading(true);
+      let reelUrl = await uploadImage(uri, "user", user.uid, "reel");
+
+      const thumbnailUri = await generateThumbnail(uri);
+
+      let thumbnailUrl = null;
+      if (thumbnailUri) {
+        thumbnailUrl = await uploadImage(
+          thumbnailUri,
+          "user",
+          user.uid,
+          "gallery"
+        );
+      }
+
+      const newReel = {
+        reelUrl,
+        thumbnailUrl,
+        visibility: "private",
+        status: "approved",
+        likes: 0,
+        dislikes: 0,
+        comments: [],
+        createdAt: new Date(),
+      };
+      await updateUser(user.uid, {
+        reels: [...(profileData?.reels || []), newReel],
+      });
+
+      await getUserDetails();
+    } catch (error: any) {
+      console.error("Error uploading reel:", error);
+      showToaster({
+        type: "error",
+        heading: "Upload Failed",
+        message: error.message || "Failed to upload reel. Please try again.",
+      });
+    } finally {
+      setGalleryLoading(false);
+    }
+  };
+
+  // Image transform animations
   const imageTranslateY = scrollY.interpolate({
     inputRange: [0, IMAGE_HEIGHT],
     outputRange: [0, -IMAGE_HEIGHT / 2],
@@ -301,6 +395,18 @@ export default function Profile() {
       return `${Math.round(distanceInMeters)} m`;
     } else {
       return `${(distanceInMeters / 1000).toFixed(1)} km`;
+    }
+  };
+
+  const generateThumbnail = async (reelUrl: string) => {
+    try {
+      const { uri } = await VideoThumbnails.getThumbnailAsync(reelUrl, {
+        time: 5000,
+      });
+      return uri;
+    } catch (e) {
+      console.warn(e);
+      return null;
     }
   };
 
@@ -407,7 +513,7 @@ export default function Profile() {
                 style={styles.sendButton}
                 onPress={() => {
                   console.log("Button pressed!"); // Test if this logs
-                  handleSendPress(currentUserId, id);
+                  handleSendPress(user.uid, id as string);
                 }}
               >
                 <RoundButton
@@ -417,7 +523,7 @@ export default function Profile() {
                   backgroundColour={Colors[theme].background}
                   onPress={() => {
                     console.log("Button pressed!"); // Test if this logs
-                    handleSendPress(currentUserId, id);
+                    handleSendPress(user.uid, id as string);
                   }}
                 />
               </TouchableOpacity>
@@ -491,11 +597,11 @@ export default function Profile() {
               {user.uid === id && (
                 <RnImagePicker
                   setUri={uri =>
-                    handleImageUpload(Array.isArray(uri) ? uri : [uri])
+                    handleGalleryUpload(Array.isArray(uri) ? uri : [uri])
                   }
-                  visible={galleryVisible}
-                  showPicker={() => setGalleryVisible(true)}
-                  hidePicker={() => setGalleryVisible(false)}
+                  visible={imagePickerVisible}
+                  showPicker={() => setImagePickerVisible(true)}
+                  hidePicker={() => setImagePickerVisible(false)}
                   multiple={true}
                 >
                   <RnText style={styles.seeAll}>Add</RnText>
@@ -503,88 +609,105 @@ export default function Profile() {
               )}
             </View>
 
-            <View style={styles.gallery}>
-              <View style={styles.galleryRow}>
-                {Array.isArray(profileData?.gallery) &&
-                  profileData.gallery.length > 0 &&
-                  profileData.gallery.map((item: string, index: number) => (
-                    <TouchableOpacity
-                      key={index}
-                      style={
-                        index === 0
-                          ? styles.largeGalleryItem
-                          : styles.smallGalleryItem
-                      }
-                      onPress={() => {
-                        setSelectedIndex(index);
-                        setModalVisible(true);
-                      }}
-                    >
-                      <Image
-                        source={{ uri: item }}
-                        style={styles.galleryImage}
-                      />
-                      {index === 0 && (
-                        <View style={styles.playButton}>
-                          <Ionicons
-                            name="play"
-                            size={20}
-                            color={Colors[theme].whiteText}
-                          />
-                        </View>
-                      )}
-                    </TouchableOpacity>
-                  ))}
-              </View>
+            <FlatList
+              data={profileData?.gallery || []}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={(item, index) => index.toString()}
+              renderItem={({ item, index }) => (
+                console.log("item", item),
+                (
+                  <TouchableOpacity
+                    style={
+                      index === 0
+                        ? styles.largeGalleryItem
+                        : styles.smallGalleryItem
+                    }
+                    onPress={() => {
+                      setSelectedImage(item);
+                      setGalleryModalVisible(true);
+                    }}
+                  >
+                    <Image source={{ uri: item }} style={styles.galleryImage} />
+                  </TouchableOpacity>
+                )
+              )}
+            />
+          </View>
+
+          {/* Reels Section */}
+          <View style={styles.section}>
+            <View style={styles.galleryHeader}>
+              <RnText style={styles.sectionTitle}>Reels</RnText>
+              {user.uid === id && (
+                <RnText
+                  style={styles.seeAll}
+                  onPress={async () => {
+                    const result = await ImagePicker.launchImageLibraryAsync({
+                      mediaTypes: "videos",
+                      quality: 0.7,
+                    });
+                    if (!result.canceled) {
+                      handleReelUpload(result.assets[0].uri);
+                    }
+                  }}
+                >
+                  Add
+                </RnText>
+              )}
             </View>
+
+            <FlatList
+              data={profileData?.reels || []}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={(item, index) => index.toString()}
+              renderItem={({ item, index }) => (
+                <TouchableOpacity
+                  style={styles.reelItem}
+                  onPress={() => {
+                    // Cleanup any existing player state
+                    if (player) {
+                      player.pause();
+                      player.currentTime = 0;
+                    }
+                    // Set new reel and open modal
+                    setSelectedReel(item.reelUrl);
+                    setReelModalVisible(true);
+                  }}
+                >
+                  <Image
+                    source={{
+                      uri: item.thumbnailUrl,
+                    }}
+                    style={styles.galleryImage}
+                  />
+                  <View style={styles.playButton}>
+                    <Ionicons
+                      name="play"
+                      size={20}
+                      color={Colors[theme].whiteText}
+                    />
+                  </View>
+                </TouchableOpacity>
+              )}
+            />
           </View>
         </View>
       </Animated.ScrollView>
 
       <RnModal
-        show={modalVisible}
-        backDrop={() => setModalVisible(false)}
-        backButton={() => setModalVisible(false)}
+        show={galleryModalVisible}
+        backDrop={() => setGalleryModalVisible(false)}
+        backButton={() => setGalleryModalVisible(false)}
       >
-        <View style={styles.modalBackground}>
-          <View style={{ height: hp(10), width: wp(10) }}>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setModalVisible(false)}
-            >
-              <Ionicons
-                name="arrow-back"
-                size={25}
-                color={Colors[theme].pink}
-              />
-            </TouchableOpacity>
-          </View>
-
+        {selectedImage && (
           <Image
-            source={{ uri: profileData?.gallery?.[selectedIndex] }}
+            source={{ uri: selectedImage }}
             style={styles.modalMainImage}
             resizeMode="contain"
           />
-
-          <FlatList
-            data={profileData?.gallery}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.thumbnailList}
-            keyExtractor={(_, idx) => idx.toString()}
-            renderItem={({ item, index }) => (
-              <Pressable onPress={() => setSelectedIndex(index)}>
-                <Image
-                  source={{ uri: item }}
-                  style={[
-                    styles.thumbnail,
-                    index === selectedIndex && styles.selectedThumbnail,
-                  ]}
-                />
-              </Pressable>
-            )}
-          />
-        </View>
+        )}
       </RnModal>
 
       <RnModal
@@ -675,6 +798,41 @@ export default function Profile() {
             )}
           </Formik>
         </View>
+      </RnModal>
+      <RnModal show={galleryLoading}>
+        <View
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        >
+          <RnText
+            style={{ marginBottom: hp(2), color: Colors[theme].whiteText }}
+          >
+            Uploading...
+          </RnText>
+          <ActivityIndicator size="large" color={Colors[theme].primary} />
+        </View>
+      </RnModal>
+      <RnModal
+        show={reelModalVisible}
+        backDrop={() => {
+          setReelModalVisible(false);
+          player.pause();
+          player.currentTime = 0;
+        }}
+        backButton={() => {
+          setReelModalVisible(false);
+          player.pause();
+          player.currentTime = 0;
+        }}
+      >
+        {selectedReel && (
+          <VideoView
+            key={selectedReel}
+            style={styles.video}
+            player={player}
+            allowsFullscreen={false}
+            allowsPictureInPicture={false}
+          />
+        )}
       </RnModal>
     </Container>
   );

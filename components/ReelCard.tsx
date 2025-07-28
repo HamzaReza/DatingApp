@@ -7,7 +7,8 @@ import { hp, wp } from "@/utils";
 import { encodeImagePath } from "@/utils/EncodedImage";
 import { formatTimeAgo } from "@/utils/FormatDate";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
-import React from "react";
+import { useVideoPlayer, VideoView } from "expo-video";
+import React, { useEffect, useState } from "react";
 import {
   Image,
   StyleSheet,
@@ -44,18 +45,72 @@ const ReelCard: React.FC<ReelCardProps> = ({
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
 
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isVideoLoaded, setIsVideoLoaded] = useState(false);
+  const player = useVideoPlayer(reel.videoUrl, player => {
+    player.loop = true;
+    player.muted = true;
+    player.volume = 0;
+  });
+
+  useEffect(() => {
+    if (isPlaying && isVideoLoaded) {
+      player.play();
+    } else {
+      player.pause();
+    }
+  }, [isPlaying, isVideoLoaded]);
+
+  const handlePlayPress = () => {
+    if (isVideoLoaded) {
+      setIsPlaying(!isPlaying);
+    } else {
+      setIsPlaying(true);
+    }
+  };
+
+  // Set video as loaded when player is ready
+  useEffect(() => {
+    if (player) {
+      setIsVideoLoaded(true);
+    }
+  }, [player]);
+
+  // Cleanup video player when component unmounts
+  useEffect(() => {
+    return () => {
+      if (player) {
+        player.pause();
+      }
+    };
+  }, [player]);
+
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.9}>
-      <Image
-        source={{ uri: reel.thumbnailUrl || reel.videoUrl }}
-        style={styles.thumbnailImage}
-      />
+    <View style={styles.card}>
+      {isPlaying && isVideoLoaded ? (
+        <VideoView
+          style={styles.video}
+          player={player}
+          allowsFullscreen={false}
+          allowsPictureInPicture={false}
+        />
+      ) : (
+        <Image
+          source={{ uri: reel.thumbnailUrl || reel.videoUrl }}
+          style={styles.thumbnailImage}
+        />
+      )}
+
       <View style={styles.overlay} />
 
-      {/* Play button overlay */}
-      <View style={styles.playButton}>
-        <Ionicons name="play" size={24} color={Colors[theme].whiteText} />
-      </View>
+      {/* Play/Pause button overlay */}
+      <TouchableOpacity style={styles.playButton} onPress={handlePlayPress}>
+        <Ionicons
+          name={isPlaying ? "pause" : "play"}
+          size={24}
+          color={Colors[theme].whiteText}
+        />
+      </TouchableOpacity>
 
       <View style={styles.content}>
         <View style={styles.captionContainer}>
@@ -126,7 +181,7 @@ const ReelCard: React.FC<ReelCardProps> = ({
           )}
         </TouchableOpacity>
       </View>
-    </TouchableOpacity>
+    </View>
   );
 };
 
@@ -142,6 +197,11 @@ const createStyles = (theme: "dark" | "light") =>
       flexDirection: "row",
     },
     thumbnailImage: {
+      width: "100%",
+      height: "100%",
+      position: "absolute",
+    },
+    video: {
       width: "100%",
       height: "100%",
       position: "absolute",

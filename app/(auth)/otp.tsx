@@ -8,7 +8,7 @@ import showToaster from "@/components/RnToast";
 import { Colors } from "@/constants/Colors";
 import {
   authenticateWithPhone,
-  getUserByUid,
+  getUserByUidAsync,
   saveUserToDatabase,
   verifyCode,
 } from "@/firebase/auth";
@@ -51,7 +51,7 @@ export default function OtpScreen() {
           const user = auth.currentUser;
 
           if (user) {
-            const existingUser = await getUserByUid(user.uid);
+            const existingUser = await getUserByUidAsync(user.uid);
 
             if (existingUser) {
               if (existingUser.isProfileComplete) {

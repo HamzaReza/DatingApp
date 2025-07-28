@@ -259,6 +259,28 @@ const getUserByUid = (
   }
 };
 
+const getUserByUidAsync = async (userId: string) => {
+  try {
+    if (!userId) {
+      console.error("User ID is required for getting user data");
+      return null;
+    }
+
+    const db = getFirestore();
+    const userRef = doc(db, "users", userId);
+    const snapshot = await getDoc(userRef);
+
+    if (snapshot.exists()) {
+      return snapshot.data();
+    } else {
+      return null;
+    }
+  } catch (error: any) {
+    console.error("Error getting user data:", error);
+    throw new Error(`Failed to get user data: ${error.message}`);
+  }
+};
+
 const getUserByPhoneNumber = async (phoneNumber: string) => {
   try {
     const db = getFirestore();
@@ -1233,6 +1255,7 @@ export {
   getRandomUser,
   getUserByEmail,
   getUserByUid,
+  getUserByUidAsync,
   getUserLocation,
   handleStoryUpload,
   recordLike,

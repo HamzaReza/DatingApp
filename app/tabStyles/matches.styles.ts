@@ -65,4 +65,30 @@ export default (theme: "dark" | "light") =>
       flexDirection: "row",
       gap: wp(2),
     },
+
+    modalItem: {
+      flexDirection: "row",
+      alignItems: "center",
+      padding: 15,
+      borderBottomWidth: 1,
+      borderBottomColor: Colors[theme].border,
+    },
+    modalImage: {
+      width: 50,
+      height: 50,
+      borderRadius: 25,
+      marginRight: 15,
+    },
+    modalTextContainer: {
+      flex: 1,
+    },
+    modalName: {
+      fontSize: 16,
+      fontWeight: "bold",
+      color: Colors[theme].text,
+    },
+    modalTime: {
+      fontSize: 12,
+      color: Colors[theme].tabIconDefault,
+    },
   });

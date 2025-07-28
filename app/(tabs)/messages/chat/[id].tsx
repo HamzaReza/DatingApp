@@ -8,9 +8,9 @@ import { Colors } from "@/constants/Colors";
 import { FontSize } from "@/constants/FontSize";
 import {
   checkAndUpdateMessageLimit,
+  checkIfMeetRejected,
   sendDirectMessage,
   sendGroupMessage,
-  sendOneToOneMessage,
   setupDirectMessageListener,
   setupGroupMessagesListener,
 } from "@/firebase/message";
@@ -22,6 +22,7 @@ import {
   collection,
   doc,
   getDoc,
+  getDocs,
   getFirestore,
   onSnapshot,
   updateDoc,
@@ -40,6 +41,8 @@ import {
   TouchableOpacity,
   useColorScheme,
   View,
+  StyleSheet,
+  Modal,
 } from "react-native";
 import {
   GestureHandlerRootView,
@@ -48,6 +51,7 @@ import {
 import { GroupMessage } from "../types";
 import RnModal from "@/components/RnModal";
 import { getUserByUid } from "@/firebase/auth";
+import { FontFamily } from "@/constants/FontFamily";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
@@ -105,6 +109,33 @@ export default function Chat() {
   const isSingleChat = chatType === "single";
   const flatListRef = useRef<FlatList>(null);
   const navigation = useNavigation();
+  const [statusMessage, setStatusMessage] = useState("");
+  const [meetDataModalVisible, setMeetDataModalVisible] = useState(false);
+
+  useEffect(() => {
+    if (isSingleChat) {
+      const unsubscribe = setupRealtimeChatStatus(
+        matchId,
+        currentUserId,
+        status => {
+          setStatusMessage(status);
+        }
+      );
+
+      return () => unsubscribe(); // Cleanup on unmount
+    }
+  }, [matchId, currentUserId]);
+
+  useEffect(() => {
+    if (isSingleChat) {
+      const fetchRejection = async () => {
+        const rejection = await checkIfMeetRejected(matchId, currentUserId);
+        console.log("rejectionData", rejection);
+      };
+
+      fetchRejection();
+    }
+  }, [matchId]);
 
   useEffect(() => {
     if (messages) {
@@ -135,6 +166,16 @@ export default function Chat() {
       });
     };
   }, [navigation]);
+
+  useEffect(() => {
+    if (isSingleChat) {
+      getUserByUid(otherUserId).then(userData => {
+        if (userData) {
+          setReceiverData(userData);
+        }
+      });
+    }
+  }, [matchId, isSingleChat, otherUserId]);
 
   useEffect(() => {
     const fetchGroupWithUsers = async () => {
@@ -177,63 +218,15 @@ export default function Chat() {
     console.log(group, "group");
   }, [groupId]);
 
-  const groupMessagesByDate = (messages: GroupMessage[]) => {
-    const grouped: { [date: string]: GroupMessage[] } = {};
-
-    messages.forEach(message => {
-      const dateKey = formatMessageDate(message.timestamp);
-      if (!grouped[dateKey]) {
-        grouped[dateKey] = [];
-      }
-      grouped[dateKey].push(message);
-    });
-
-    return grouped;
-  };
-
-  // Format date for display
-  const formatMessageDate = (timestamp: any) => {
-    const date = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    // Reset time for comparison
-    const messageDate = new Date(date);
-    messageDate.setHours(0, 0, 0, 0);
-    today.setHours(0, 0, 0, 0);
-    yesterday.setHours(0, 0, 0, 0);
-
-    if (messageDate.getTime() === today.getTime()) {
-      return "Today";
-    } else if (messageDate.getTime() === yesterday.getTime()) {
-      return "Yesterday";
-    } else {
-      return messageDate.toLocaleDateString([], {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      });
-    }
-  };
-
-  // Update your message listener
   useEffect(() => {
     let unsubscribe: () => void;
 
     if (isSingleChat) {
-      // 1:1 chat listener
       unsubscribe = setupDirectMessageListener(matchId, messages => {
         setMessages(messages);
         setLoading(false);
-
-        // Mark messages as read when opened
-        // if (currentUserId) {
-        //   markMessagesAsRead(id, currentUserId);
-        // }
       });
     } else {
-      // Group chat listener (your existing code)
       unsubscribe = setupGroupMessagesListener(id, group => {
         setMessages(group.messages || []);
         setLoading(false);
@@ -282,7 +275,18 @@ export default function Chat() {
         if (messageCount > 5) {
           Alert.alert(
             "Limit Reached",
-            "Your free messages are finished. Please pay now."
+            "Messages are finished. Please pay now to meet.",
+            [
+              {
+                text: "Cancel",
+                style: "cancel",
+              },
+              {
+                text: "Pay Now",
+                onPress: () =>
+                  router.push("/eventScreens/tickets/paymentScreen"),
+              },
+            ]
           );
           return;
         }
@@ -294,7 +298,18 @@ export default function Chat() {
         } else if (messageCount === 5) {
           Alert.alert(
             "Limit Reached",
-            "Your free messages are finished. Please pay now."
+            "Messages are finished. Please pay now to meet.",
+            [
+              {
+                text: "Cancel",
+                style: "cancel",
+              },
+              {
+                text: "Pay Now",
+                onPress: () =>
+                  router.push("/eventScreens/tickets/paymentScreen"),
+              },
+            ]
           );
         }
 
@@ -311,35 +326,6 @@ export default function Chat() {
       setMessage("");
     } catch (error: any) {
       Alert.alert("Error", error.message || "Failed to send message");
-    }
-  };
-
-  const onGestureEvent = Animated.event(
-    [{ nativeEvent: { translationY: translateY } }],
-    { useNativeDriver: true }
-  );
-
-  const onHandlerStateChange = (event: any) => {
-    if (event.nativeEvent.oldState === 4) {
-      // ACTIVE
-      const { translationY, velocityY } = event.nativeEvent;
-
-      if (translationY > 100 || velocityY > 500) {
-        // Close modal
-        Animated.timing(translateY, {
-          toValue: SCREEN_HEIGHT,
-          duration: 300,
-          useNativeDriver: true,
-        }).start(() => {
-          router.back();
-        });
-      } else {
-        // Snap back
-        Animated.spring(translateY, {
-          toValue: 0,
-          useNativeDriver: true,
-        }).start();
-      }
     }
   };
 
@@ -428,22 +414,9 @@ export default function Chat() {
     });
   };
 
-  useEffect(() => {
-    let unsubscribe: () => void;
-
-    if (isSingleChat) {
-      // Fetch receiver data separately
-      getUserByUid(otherUserId).then(userData => {
-        if (userData) {
-          setReceiverData(userData); // Save to state to show name/photo etc.
-        }
-      });
-    }
-  }, [matchId, isSingleChat, otherUserId]);
-
   const renderMessage = ({ item }: { item: GroupMessage }) => {
     const isOwn = item.senderId === currentUserId;
-    console.log(item.timestamp);
+
     const time = new Date(item.timestamp).toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
@@ -454,7 +427,6 @@ export default function Chat() {
     );
 
     const finalDirectDate = directData.toLocaleString();
-    console.log("finalDirectDate", finalDirectDate);
 
     return (
       <View
@@ -491,6 +463,71 @@ export default function Chat() {
         </View>
       </View>
     );
+  };
+
+  const setupRealtimeChatStatus = (groupId, currentUserId, callback) => {
+    const db = getFirestore();
+    const meetRef = collection(db, "messages", groupId, "meet");
+
+    const unsubscribe = onSnapshot(meetRef, meetSnap => {
+      // First check if meet subcollection exists at all
+      if (meetSnap.empty) {
+        callback(null);
+        return;
+      }
+
+      try {
+        const docs = meetSnap.docs;
+        const hasConfirm = docs.some(doc => doc.id === "confirm");
+        const hasRejected = docs.some(doc => doc.id === "rejected");
+
+        // Check for confirmation first
+        if (hasConfirm) {
+          const confirmDoc = docs.find(doc => doc.id === "confirm");
+          callback({
+            type: "button",
+            label: "View Meeting Details",
+            finalData: confirmDoc?.data(),
+          });
+          return;
+        }
+
+        // Check for rejections
+        if (hasRejected) {
+          const rejectedDoc = docs.find(doc => doc.id === "rejected");
+          const rejectionData = rejectedDoc?.data();
+
+          callback({
+            type: "text",
+            message:
+              rejectionData?.userId === currentUserId
+                ? "You declined the meeting preferences"
+                : "The other person declined your meeting preferences",
+          });
+          return;
+        }
+
+        // If there are any other docs (user preferences)
+        if (docs.length > 0) {
+          callback({
+            type: "text",
+            message: "Discussing meeting preferences",
+          });
+          return;
+        }
+
+        callback(null);
+      } catch (error) {
+        console.error("Error in realtime status update:", error);
+        callback(null);
+      }
+    });
+
+    return unsubscribe;
+  };
+  const handleDetailsPress = () => {
+    console.log("hi");
+    setMeetDataModalVisible(!meetDataModalVisible);
   };
 
   return (
@@ -544,7 +581,7 @@ export default function Chat() {
                   <RnText style={styles.userStatus}>{usersName}</RnText>
                 </View>
               </View>
-              {!isSingleChat && (
+              {!isSingleChat ? (
                 <TouchableOpacity
                   onPress={handleMorePress}
                   style={styles.headerIconButton}
@@ -556,14 +593,42 @@ export default function Chat() {
                     onPress={() => setShowMemberList(true)}
                   />
                 </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={styles.meetButton}
+                  onPress={() => router.push(`/meet/${matchId}`)} // navigate to meet setup screen
+                >
+                  <MaterialIcons
+                    name="video-call"
+                    size={20}
+                    color={Colors[theme].greenText}
+                  />
+                </TouchableOpacity>
               )}
             </View>
+
+            {isSingleChat && (
+              <>
+                {statusMessage?.type === "text" && (
+                  <RnText style={teststyles.text}>
+                    {statusMessage.message}
+                  </RnText>
+                )}
+
+                {statusMessage?.type === "button" && (
+                  <TouchableOpacity
+                    onPress={handleDetailsPress}
+                    style={teststyles.finalButton}
+                  >
+                    <RnText style={teststyles.finalText}>
+                      {statusMessage.label}
+                    </RnText>
+                  </TouchableOpacity>
+                )}
+              </>
+            )}
+
             {/* Date Separator */}
-            <View style={styles.dateSeparator}>
-              <View style={styles.dateLine} />
-              <RnText style={styles.dateText}>Today</RnText>
-              <View style={styles.dateLine} />
-            </View>
 
             {/* Messages List */}
             <FlatList
@@ -666,8 +731,98 @@ export default function Chat() {
               )}
             </View>
           </RnModal>
+          <Modal
+            animationType="slide"
+            transparent={true}
+            visible={meetDataModalVisible}
+            onRequestClose={() => setMeetDataModalVisible(false)}
+          >
+            <View style={teststyles.modalBackground}>
+              <View style={teststyles.modalContainer}>
+                <RnText style={teststyles.modalTitle}>
+                  Final Meet Details
+                </RnText>
+
+                <RnText style={teststyles.modalText}>
+                  Location: {statusMessage?.finalData?.finalPlace}
+                </RnText>
+                <RnText style={teststyles.modalText}>
+                  Date: {statusMessage?.finalData?.finalDate}
+                </RnText>
+                <RnText style={teststyles.modalText}>
+                  Time: {statusMessage?.finalData?.finalTime}
+                </RnText>
+
+                <TouchableOpacity
+                  onPress={() => setMeetDataModalVisible(false)}
+                  style={teststyles.modalCloseButton}
+                >
+                  <RnText style={teststyles.modalCloseText}>Close</RnText>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
         </KeyboardAvoidingView>
       </Animated.View>
     </GestureHandlerRootView>
   );
 }
+
+const teststyles = StyleSheet.create({
+  finalButton: {
+    backgroundColor: Colors.light.primary,
+    paddingVertical: hp(1.5),
+    paddingHorizontal: wp(4),
+    borderRadius: Borders.radius3,
+    alignSelf: "center",
+    marginVertical: hp(2),
+  },
+  finalText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  text: {
+    color: Colors.dark.primary,
+    textAlign: "center",
+    fontSize: FontSize.small,
+    marginHorizontal: wp(1.5),
+    fontFamily: FontFamily.bold,
+  },
+
+  modalBackground: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContainer: {
+    width: "80%",
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 15,
+    alignItems: "center",
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 15,
+  },
+  modalText: {
+    fontSize: 16,
+    marginVertical: 5,
+    textAlign: "center",
+  },
+  modalCloseButton: {
+    marginTop: 20,
+    backgroundColor: "#FF6347",
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+  },
+  modalCloseText: {
+    color: "white",
+    fontSize: 16,
+  },
+});

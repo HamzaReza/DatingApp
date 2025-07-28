@@ -8,6 +8,13 @@ import { Colors } from "@/constants/Colors";
 import { fetchUserMatches, getCurrentAuth } from "@/firebase/auth";
 import { wp } from "@/utils";
 import { Ionicons } from "@expo/vector-icons";
+import {
+  collectionGroup,
+  doc,
+  getDoc,
+  getDocs,
+  getFirestore,
+} from "@react-native-firebase/firestore";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -17,6 +24,10 @@ import {
   useColorScheme,
   View,
 } from "react-native";
+import { calculateMatchScore } from "@/utils/MatchScore";
+import { getAuth } from "@react-native-firebase/auth";
+import { useSelector } from "react-redux";
+import { RootState } from "@/redux/store";
 
 type Match = {
   id: string;
@@ -33,17 +44,15 @@ export default function Matches() {
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
 
-  const [likedCount] = useState(32);
-  const [connectCount] = useState(16);
+  const [likedCount, setLikedCount] = useState(0);
+  const [connectCount, setConnectCount] = useState(0);
   const [totalMatches, setTotalMatches] = useState(0);
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [showMatchModal, setShowMatchModal] = useState(false);
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
-
-  useEffect(() => {
-    console.log("matches", matches);
-  }, [matches]);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const { user: reduxUser } = useSelector((state: RootState) => state.user);
 
   useEffect(() => {
     const loadMatches = async () => {
@@ -64,29 +73,44 @@ export default function Matches() {
     };
 
     loadMatches();
+    loadCounts();
   }, []);
 
-  const handleMatchPress = (
-    userId: string,
-    status: string,
-    matchId: string
-  ) => {
-    if (status == "pending") {
-      return;
+  const loadCounts = async () => {
+    const currentUser = await getCurrentAuth();
+    const currentUserId = currentUser?.currentUser?.uid;
+
+    if (!currentUserId) return;
+
+    const db = getFirestore();
+
+    // 1. Get users who liked **me**
+    const usersRef = collectionGroup(db, "likes");
+    const allLikesSnap = await getDocs(usersRef);
+
+    // 2. Filter only those who liked the current user
+    const likedByUsers = allLikesSnap.docs
+      .filter(doc => doc.id === currentUserId)
+      .map(doc => doc.ref.parent.parent?.id)
+      .filter(Boolean) as string[]; // Remove nulls
+
+    let mutualConnections = 0;
+
+    // 3. Check if I also liked them (mutual)
+    for (const likerId of likedByUsers) {
+      const myLikeRef = doc(db, "users", currentUserId, "likes", likerId);
+      const myLikeDoc = await getDoc(myLikeRef);
+
+      if (myLikeDoc.exists()) {
+        mutualConnections += 1;
+      }
     }
-    router.push(`/(tabs)/discover/${userId}`);
-    setShowMatchModal(false);
+
+    // 4. Update counts
+    setLikedCount(likedByUsers.length - mutualConnections); // only one-sided likes
+    setConnectCount(mutualConnections); // mutual
   };
 
-  const handleMessagePress = () => {
-    setShowMatchModal(false);
-    router.push("/(tabs)/messages");
-  };
-
-  const handleCloseModal = () => {
-    setShowMatchModal(false);
-    setSelectedMatch(null);
-  };
   return (
     <ScrollContainer>
       {/* Header */}
@@ -102,7 +126,10 @@ export default function Matches() {
 
       {/* Stats Section */}
       <View style={styles.statsContainer}>
-        <View style={styles.statItem}>
+        <TouchableOpacity
+          style={styles.statItem}
+          onPress={() => router.push("/mainScreens/LikesCount?type=likes")}
+        >
           <View
             style={[
               styles.statCircle,
@@ -115,9 +142,14 @@ export default function Matches() {
             <RnText style={styles.statLabel}>Likes</RnText>
             <RnText style={styles.statNumber}>{likedCount}</RnText>
           </View>
-        </View>
+        </TouchableOpacity>
 
-        <View style={styles.statItem}>
+        <TouchableOpacity
+          style={styles.statItem}
+          onPress={() =>
+            router.push("/mainScreens/LikesCount?type=connections")
+          }
+        >
           <View
             style={[
               styles.statCircle,
@@ -134,17 +166,17 @@ export default function Matches() {
             <RnText style={styles.statLabel}>Connect</RnText>
             <RnText style={styles.statNumber}>{connectCount}</RnText>
           </View>
-        </View>
+        </TouchableOpacity>
       </View>
 
       {/* Your Matches Section */}
       <View>
         <View style={styles.statTextContainers}>
-          <RnText style={styles.sectionTitle}>Your Matches</RnText>
+          <RnText style={styles.sectionTitle}>Your Matches </RnText>
           <RnText
             style={[styles.sectionTitle, { color: Colors[theme].redText }]}
           >
-            {totalMatches}
+            {connectCount}
           </RnText>
         </View>
 
@@ -152,18 +184,19 @@ export default function Matches() {
           <FlatList
             data={matches}
             keyExtractor={item => item.id}
-            renderItem={({ item }) => (
+            renderItem={({ item }: { item: any }) => (
               <MatchCard
                 id={item.id}
                 name={item.name}
                 age={item.age}
-                location={item.location}
+                // location={item.location}
                 distance={item.distance}
                 image={item.image}
                 matchPercentage={item.matchPercentage}
-                onPress={() =>
-                  handleMatchPress(item.userId, item.status, item.id)
-                }
+                // onPress={() =>
+                //   // handleMatchPress(item.userId, item.status, item.id)'\
+                //   conso
+                // }
                 isPending={item.status == "pending"}
               />
             )}

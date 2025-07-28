@@ -10,17 +10,19 @@ import RnModal from "@/components/RnModal";
 import RnText from "@/components/RnText";
 import showToaster from "@/components/RnToast";
 import RoundButton from "@/components/RoundButton";
+import { Borders } from "@/constants/Borders";
 import { Colors } from "@/constants/Colors";
+import { FontFamily } from "@/constants/FontFamily";
 import {
   fetchTags,
   getUserByUid,
   recordLike,
   updateUser,
-  uploadImage,
   uploadMultipleImages,
 } from "@/firebase/auth";
+import { uploadReel } from "@/firebase/reels";
 import { RootState } from "@/redux/store";
-import { encodeImagePath, hp } from "@/utils";
+import { encodeImagePath, hp, wp } from "@/utils";
 import getDistanceFromLatLonInMeters from "@/utils/Distance";
 import { Ionicons } from "@expo/vector-icons";
 import { doc, getDoc, getFirestore } from "@react-native-firebase/firestore";
@@ -41,6 +43,7 @@ import {
   useColorScheme,
   View,
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSelector } from "react-redux";
 import * as Yup from "yup";
 
@@ -80,10 +83,15 @@ export default function Profile() {
   const [galleryLoading, setGalleryLoading] = useState(false);
   const [reelModalVisible, setReelModalVisible] = useState(false);
   const [selectedReel, setSelectedReel] = useState<string | null>(null);
+  const [reelUploadModalVisible, setReelUploadModalVisible] = useState(false);
+  const [selectedVideoUri, setSelectedVideoUri] = useState<string | null>(null);
+  const [selectedVideoThumbnail, setSelectedVideoThumbnail] = useState<
+    string | null
+  >(null);
+  const reelFormikRef = useRef<FormikProps<any>>(null);
   const formikRef = useRef<FormikProps<any>>(null);
 
   useEffect(() => {
-    console.log("id", id);
     getUserDetails();
     if (user?.uid !== id) {
       setShowActionButtons(true);
@@ -132,7 +140,6 @@ export default function Profile() {
   }, []);
 
   useEffect(() => {
-    console.log("hello");
     setDropdownValue(
       (profileData?.interests?.split(",") || [])
         .map((i: string) => i.trim())
@@ -225,10 +232,7 @@ export default function Profile() {
     currentUserId: string,
     profileViewingUserId: string
   ) => {
-    console.log("hi");
-
     try {
-      console.log("hi");
       const db = getFirestore();
 
       // Check both possible match document ID formats
@@ -299,37 +303,22 @@ export default function Profile() {
     await getUserDetails();
   };
 
-  const handleReelUpload = async (uri: string) => {
+  const handleReelUpload = async (uri: string, caption: string) => {
     try {
       setGalleryLoading(true);
-      let reelUrl = await uploadImage(uri, "user", user.uid, "reel");
 
+      // Generate thumbnail from video
       const thumbnailUri = await generateThumbnail(uri);
 
-      let thumbnailUrl = null;
-      if (thumbnailUri) {
-        thumbnailUrl = await uploadImage(
-          thumbnailUri,
-          "user",
-          user.uid,
-          "gallery"
-        );
-      }
+      // Use the new uploadReel function
+      await uploadReel(uri, thumbnailUri || undefined, caption);
 
-      const newReel = {
-        reelUrl,
-        thumbnailUrl,
-        visibility: "private",
-        status: "approved",
-        likes: 0,
-        dislikes: 0,
-        comments: [],
-        createdAt: new Date(),
-      };
-      await updateUser(user.uid, {
-        reels: [...(profileData?.reels || []), newReel],
-      });
+      // Reset form and close modal
+      setReelUploadModalVisible(false);
+      setSelectedVideoUri(null);
+      setSelectedVideoThumbnail(null);
 
+      // Refresh user details to show the new reel
       await getUserDetails();
     } catch (error: any) {
       console.error("Error uploading reel:", error);
@@ -512,7 +501,6 @@ export default function Profile() {
               <TouchableOpacity
                 style={styles.sendButton}
                 onPress={() => {
-                  console.log("Button pressed!"); // Test if this logs
                   handleSendPress(user.uid, id as string);
                 }}
               >
@@ -522,7 +510,6 @@ export default function Profile() {
                   iconColor={Colors[theme].primary}
                   backgroundColour={Colors[theme].background}
                   onPress={() => {
-                    console.log("Button pressed!"); // Test if this logs
                     handleSendPress(user.uid, id as string);
                   }}
                 />
@@ -615,22 +602,19 @@ export default function Profile() {
               showsHorizontalScrollIndicator={false}
               keyExtractor={(item, index) => index.toString()}
               renderItem={({ item, index }) => (
-                console.log("item", item),
-                (
-                  <TouchableOpacity
-                    style={
-                      index === 0
-                        ? styles.largeGalleryItem
-                        : styles.smallGalleryItem
-                    }
-                    onPress={() => {
-                      setSelectedImage(item);
-                      setGalleryModalVisible(true);
-                    }}
-                  >
-                    <Image source={{ uri: item }} style={styles.galleryImage} />
-                  </TouchableOpacity>
-                )
+                <TouchableOpacity
+                  style={
+                    index === 0
+                      ? styles.largeGalleryItem
+                      : styles.smallGalleryItem
+                  }
+                  onPress={() => {
+                    setSelectedImage(item);
+                    setGalleryModalVisible(true);
+                  }}
+                >
+                  <Image source={{ uri: item }} style={styles.galleryImage} />
+                </TouchableOpacity>
               )}
             />
           </View>
@@ -648,7 +632,19 @@ export default function Profile() {
                       quality: 0.7,
                     });
                     if (!result.canceled) {
-                      handleReelUpload(result.assets[0].uri);
+                      const videoUri = result.assets[0].uri;
+                      setSelectedVideoUri(videoUri);
+
+                      // Generate thumbnail for preview
+                      try {
+                        const thumbnailUri = await generateThumbnail(videoUri);
+                        setSelectedVideoThumbnail(thumbnailUri);
+                      } catch (error) {
+                        console.warn("Failed to generate thumbnail:", error);
+                        setSelectedVideoThumbnail(null);
+                      }
+
+                      setReelUploadModalVisible(true);
                     }
                   }}
                 >
@@ -833,6 +829,105 @@ export default function Profile() {
             allowsPictureInPicture={false}
           />
         )}
+      </RnModal>
+
+      {/* Reel Upload Modal */}
+      <RnModal
+        show={reelUploadModalVisible}
+        backDrop={() => {
+          setReelUploadModalVisible(false);
+          setSelectedVideoUri(null);
+          setSelectedVideoThumbnail(null);
+        }}
+        backButton={() => {
+          setReelUploadModalVisible(false);
+          setSelectedVideoUri(null);
+          setSelectedVideoThumbnail(null);
+        }}
+      >
+        <View style={styles.reelUploadModal}>
+          <Formik
+            initialValues={{
+              caption: "",
+            }}
+            innerRef={reelFormikRef}
+            validationSchema={Yup.object({
+              caption: Yup.string()
+                .max(200, "Caption must be less than 200 characters")
+                .required("Caption is required"),
+            })}
+            onSubmit={async values => {
+              if (selectedVideoUri) {
+                await handleReelUpload(selectedVideoUri, values.caption);
+              }
+            }}
+          >
+            {({ handleChange, handleSubmit, values, errors }) => (
+              <KeyboardAwareScrollView
+                contentContainerStyle={{ flexGrow: 1, padding: wp(4) }}
+                keyboardShouldPersistTaps="handled"
+              >
+                <RnText style={styles.sectionTitle}>Upload Reel</RnText>
+
+                {selectedVideoThumbnail && (
+                  <Image
+                    source={{ uri: selectedVideoThumbnail }}
+                    style={{
+                      width: "100%",
+                      height: hp(20),
+                      borderRadius: Borders.radius2,
+                    }}
+                  />
+                )}
+
+                <RnText
+                  style={{
+                    marginVertical: hp(1),
+                    fontFamily: FontFamily.semiBold,
+                  }}
+                >
+                  Caption
+                </RnText>
+                <RnInput
+                  value={values.caption}
+                  onChangeText={handleChange("caption")}
+                  error={errors.caption as string}
+                  placeholder="Write a caption for your reel..."
+                  maxLength={200}
+                  multiline
+                  numberOfLines={3}
+                  inputContainerStyle={{ height: hp(10) }}
+                  style={{ height: hp(10), textAlignVertical: "top" }}
+                />
+
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    marginTop: hp(3),
+                  }}
+                >
+                  <RnButton
+                    title="Cancel"
+                    onPress={() => {
+                      setReelUploadModalVisible(false);
+                      setSelectedVideoUri(null);
+                      setSelectedVideoThumbnail(null);
+                    }}
+                    style={[[styles.reelButton, styles.cancelButton]]}
+                    disabled={galleryLoading}
+                  />
+                  <RnButton
+                    title="Upload"
+                    onPress={handleSubmit}
+                    loading={galleryLoading}
+                    style={[styles.reelButton]}
+                  />
+                </View>
+              </KeyboardAwareScrollView>
+            )}
+          </Formik>
+        </View>
       </RnModal>
     </Container>
   );

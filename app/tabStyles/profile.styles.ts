@@ -310,4 +310,14 @@ export default (theme: "dark" | "light") =>
       borderRadius: Borders.radius2,
       overflow: "hidden",
     },
+    reelButton: {
+      flex: 0.48,
+    },
+    cancelButton: {
+      backgroundColor: Colors[theme].tabIconDefault,
+    },
+    reelUploadModal: {
+      backgroundColor: Colors[theme].background,
+      borderRadius: Borders.radius2,
+    },
   });

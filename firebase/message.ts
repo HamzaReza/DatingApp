@@ -19,6 +19,8 @@ import {
   updateDoc,
   where,
 } from "@react-native-firebase/firestore";
+import { router } from "expo-router";
+import { Alert } from "react-native";
 
 // Types for message data
 export interface Message {
@@ -139,10 +141,6 @@ export const checkAndUpdateMessageLimit = async (
   if (snapshot.exists()) {
     data = snapshot.data();
     currentCount = data[senderId] || 0;
-  }
-
-  if (currentCount >= 5) {
-    throw new Error("Free message limit reached");
   }
 
   // update sender's message count
@@ -547,7 +545,132 @@ export const fetchOneToOneChats = async (userId: string) => {
 
   return oneToOneChats;
 };
+
+const fetchMeetData = async (groupId: string) => {
+  try {
+    const db = getFirestore();
+    const meetRef = doc(db, "meets", groupId);
+    const meetSnap = await getDoc(meetRef);
+
+    if (meetSnap.exists()) {
+      return meetSnap.data();
+    } else {
+      console.log("No meet found for this group");
+      return null;
+    }
+  } catch (error) {
+    console.error("Error fetching meet data:", error);
+    return null;
+  }
+};
+
+// matches
+
+export const checkIfMeetRejected = async (matchId, currentUserId) => {
+  const db = getFirestore();
+  const rejectedSnap = await getDoc(
+    doc(db, "messages", matchId, "meet", "rejected")
+  );
+
+  if (rejectedSnap.exists()) {
+    const rejection = rejectedSnap.data();
+
+    // Only show alert if rejected by other user
+    if (rejection.userId !== currentUserId) {
+      const unavailable = rejection.unavailable || [];
+      const reasons = rejection.reasons || {};
+
+      // Format reasons for display
+      const reasonText = Object.entries(reasons)
+        .map(([item, reason]) => `${item}: ${reason}`)
+        .join("\n");
+
+      Alert.alert(
+        "Meet Preferences Rejected",
+        `Unavailable items:\n${unavailable.join(
+          ", "
+        )}\n\nReasons:\n${reasonText}`
+      );
+    }
+
+    return rejection;
+  }
+
+  return null;
+};
+
+export const listenToUserGroups = (
+  userId: string,
+  callback: (groups: any[]) => void
+) => {
+  const db = getFirestore();
+  const groupsRef = collection(db, "messages");
+  const q = query(groupsRef, where("type", "==", "group"));
+
+  const unsubscribe = onSnapshot(q, snapshot => {
+    const userGroups = snapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() }))
+      .filter(group => {
+        const matchedUser = group.users?.find((u: any) => u.uid === userId);
+        return matchedUser && matchedUser.status === "accepted";
+      });
+
+    callback(userGroups);
+  });
+
+  return unsubscribe;
+};
+
+export const listenToOneToOneChats = (
+  userId: string,
+  callback: (chats: any[]) => void
+) => {
+  const db = getFirestore();
+  const messagesRef = collection(db, "messages");
+
+  const unsubscribe = onSnapshot(messagesRef, snapshot => {
+    const oneToOneChats = snapshot.docs
+      .filter(doc => {
+        const idParts = doc.id.split("_");
+        return (
+          idParts.length === 2 &&
+          (idParts[0] === userId || idParts[1] === userId)
+        );
+      })
+      .map(doc => ({ id: doc.id, ...doc.data() }));
+
+    callback(oneToOneChats);
+  });
+
+  return unsubscribe;
+};
+
+export const setupChatListeners = (
+  onGroupsUpdate: (groups: any[]) => void,
+  onOneToOneUpdate: (chats: any[]) => void
+) => {
+  const currentUserId = getAuth().currentUser?.uid;
+  if (!currentUserId) {
+    throw new Error("No authenticated user found");
+  }
+
+  const unsubscribeGroups = listenToUserGroups(currentUserId, onGroupsUpdate);
+  const unsubscribeOneToOne = listenToOneToOneChats(
+    currentUserId,
+    onOneToOneUpdate
+  );
+
+  return {
+    unsubscribe: () => {
+      unsubscribeGroups();
+      unsubscribeOneToOne();
+    },
+    unsubscribeGroups,
+    unsubscribeOneToOne,
+  };
+};
 export {
+  fetchMeetData,
   sendDirectMessage,
   deleteMessage,
   fetchMessagesBetweenUsers,

@@ -239,5 +239,26 @@ export default (theme: "dark" | "light") =>
     leftText: {
       color: Colors[theme].whiteText,
     },
+
+    //
+    finalButton: {
+      backgroundColor: Colors[theme].pink, // Dodger Blue
+      paddingVertical: 10,
+      paddingHorizontal: 20,
+      borderRadius: 10,
+      alignSelf: "center",
+      marginVertical: 10,
+    },
+    finalText: {
+      color: "white",
+      fontSize: 16,
+      fontWeight: "bold",
+      textAlign: "center",
+    },
+    text: {
+      color: Colors.dark.primary,
+      textAlign: "center",
+      fontSize: FontSize.small,
+    },
     // ...existing code...
   });

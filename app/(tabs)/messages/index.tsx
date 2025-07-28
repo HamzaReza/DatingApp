@@ -16,10 +16,21 @@ import {
   sendGroupInvitesByTags,
   uploadImage,
 } from "@/firebase/auth";
-import { fetchOneToOneChats, fetchUserGroups } from "@/firebase/message";
+import {
+  fetchOneToOneChats,
+  fetchUserGroups,
+  setupChatListeners,
+} from "@/firebase/message";
 import { encodeImagePath, wp } from "@/utils";
 import { Ionicons } from "@expo/vector-icons";
 import { getAuth } from "@react-native-firebase/auth";
+import {
+  collection,
+  doc,
+  getDoc,
+  getFirestore,
+  onSnapshot,
+} from "@react-native-firebase/firestore";
 import { LinearGradient } from "expo-linear-gradient";
 import {
   Accuracy,
@@ -183,74 +194,136 @@ export default function Messages() {
   const [oneToOneList, setOneToOneList] = useState([]);
   const [chatList, setChatList] = useState<Message[]>([]);
   const [receiverId, setRecieverId] = useState("");
+  const [chatStatusMap, setChatStatusMap] = useState({});
+
   const currentUserId = getAuth().currentUser?.uid;
 
+  // Replace this useEffect with the new listener setup
   useEffect(() => {
-    console.log("oneToOneList", chatList);
-  }, [chatList]);
+    const currentUserId = getAuth().currentUser?.uid as string;
+    console.log("currentUserId", currentUserId);
 
-  useEffect(() => {
-    const loadChats = async () => {
-      const currentUserId = getAuth().currentUser?.uid as string;
-      console.log("currentUserId", currentUserId);
+    const { unsubscribe } = setupChatListeners(
+      groups => setGroupList(groups),
+      chats => setOneToOneList(chats)
+    );
 
-      const groups = await fetchUserGroups(currentUserId);
-      setGroupList(groups);
-
-      const oneToOneChats = await fetchOneToOneChats(currentUserId);
-      setOneToOneList(oneToOneChats);
-    };
-
-    loadChats();
+    return () => unsubscribe();
   }, []);
 
-  useEffect(() => {
-    const prepareChatList = async () => {
-      const allChats: Message[] = [];
+  const listenToMeetStatus = (convoId, updateChatStatus) => {
+    const db = getFirestore();
 
+    const confirmRef = doc(db, "messages", convoId, "meet", "confirm");
+    const rejectRef = doc(db, "messages", convoId, "meet", "rejected");
+
+    const unsubConfirm = onSnapshot(confirmRef, docSnap => {
+      updateChatStatus(convoId, prev => ({
+        ...prev,
+        isConfirmed: docSnap.exists(),
+      }));
+    });
+
+    const unsubReject = onSnapshot(rejectRef, docSnap => {
+      updateChatStatus(convoId, prev => ({
+        ...prev,
+        isRejected: docSnap.exists(),
+      }));
+    });
+
+    return [unsubConfirm, unsubReject];
+  };
+
+  const updateChatStatus = (convoId, statusUpdateFn) => {
+    setChatStatusMap(prev => ({
+      ...prev,
+      [convoId]: statusUpdateFn(prev[convoId] || {}),
+    }));
+  };
+
+  useEffect(() => {
+    const unsubListeners = [];
+
+    const prepareChatList = async () => {
+      const allChats = [];
+
+      // Group Chats
       for (const group of groupList) {
+        const timestamp =
+          group.lastMessage?.timestamp || group.lastUpdated || new Date();
+
         allChats.push({
           id: group.id,
           groupName: group.groupName,
           message: group.lastMessage,
-          time: formatTimestamp(group.lastMessage.timestamp),
+          time: formatTimestamp(timestamp),
+          rawTime: timestamp,
           image: group.image,
           isOnline: group.isOnline,
           unread: group.unread,
           type: "group",
-          lastMessage: group.lastMessage.content,
+          lastMessage: group.lastMessage?.content || "",
         });
       }
 
+      // One-to-One Chats
       for (const convo of oneToOneList) {
         const otherUserId = convo.participants.find(p => p !== currentUserId);
-        setRecieverId(otherUserId);
         if (!otherUserId) continue;
 
         const user = await getUserByUid(otherUserId);
         if (!user) continue;
 
-        const lastMessage = convo.messages[convo.messages.length - 1];
+        const lastMessage = convo.messages?.[convo.messages.length - 1];
+        const timestamp =
+          lastMessage?.timestamp || convo.lastUpdated || new Date();
+
+        const convoId = convo.id;
+
+        const status = chatStatusMap[convoId] || {
+          isConfirmed: false,
+          isRejected: false,
+        };
 
         allChats.push({
-          id: convo.id,
+          id: convoId,
           groupName: user.name,
           message: lastMessage?.text || "No message yet",
-          time: formatTimestamp(convo.lastUpdated),
+          time: formatTimestamp(timestamp),
+          rawTime: timestamp,
           image: encodeImagePath(user.photo) || null,
           isOnline: user.isOnline || false,
           unread: convo.unread || 0,
-          lastMessage: convo.lastMessage.content,
+          lastMessage: lastMessage?.content || "No message yet",
+          type: "single",
+          ...status,
         });
+
+        // Add Firestore listeners for this convo
+        unsubListeners.push(...listenToMeetStatus(convoId, updateChatStatus));
       }
 
-      allChats.sort((a, b) => b.time?.seconds - a.time?.seconds);
+      // Sort by latest message time
+      allChats.sort((a, b) => {
+        const getTime = t =>
+          t?.seconds
+            ? t.seconds * 1000
+            : t?.toDate
+            ? t.toDate().getTime()
+            : new Date(t).getTime();
+
+        return getTime(b.rawTime) - getTime(a.rawTime);
+      });
 
       setChatList(allChats);
     };
 
     prepareChatList();
-  }, [groupList, oneToOneList]);
+
+    return () => {
+      unsubListeners.forEach(unsub => unsub());
+    };
+  }, [groupList, oneToOneList, chatStatusMap]);
 
   useEffect(() => {
     const unsubscribe = fetchTags(tags => {
@@ -337,17 +410,29 @@ export default function Messages() {
     </TouchableOpacity>
   );
 
-  const renderMessage = ({ item }: { item: Message }) => (
-    <MessageItem
-      name={item.groupName ?? item.name}
-      message={item.lastMessage}
-      time={item.time}
-      image={item.image}
-      isOnline={item.isOnline}
-      unread={item.unread}
-      onPress={() => handleMessagePress(item.id, item.type)}
-    />
-  );
+  // const renderMessage = ({ item }: { item: Message }) =>
+  //   console.log("Rendering MessageItem", item.id, "Rejected?", item.isRejected);
+  // {
+  //   return (
+
+  //   );
+  // }
+
+  const renderMessage = ({ item }) => {
+    return (
+      <MessageItem
+        name={item.groupName ?? item.name}
+        message={item.lastMessage}
+        time={item.time}
+        image={item.image}
+        isOnline={item.isOnline}
+        unread={item.unread}
+        onPress={() => handleMessagePress(item.id, item.type)}
+        isRejected={item.isRejected}
+        isConfirmed={item.isConfirmed}
+      />
+    );
+  };
 
   return (
     <Container customStyle={styles.container}>

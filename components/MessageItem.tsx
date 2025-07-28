@@ -6,7 +6,13 @@ import { FontSize } from "@/constants/FontSize";
 import { hp, wp } from "@/utils";
 import { CheckBox } from "@rneui/base";
 import React from "react";
-import { Image, StyleSheet, TouchableOpacity, useColorScheme, View } from "react-native";
+import {
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  useColorScheme,
+  View,
+} from "react-native";
 
 type MessageItemProps = {
   name: string;
@@ -18,6 +24,8 @@ type MessageItemProps = {
   onPress?: () => void;
   isSelected?: boolean; // Add this new prop
   showCheckbox?: boolean; // Add this to control checkbox visibility
+  isRejected: boolean;
+  isConfirmed: boolean;
 };
 
 export const MessageItem: React.FC<MessageItemProps> = ({
@@ -30,11 +38,13 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   onPress,
   isSelected = false,
   showCheckbox = false,
+  isRejected,
+  isConfirmed,
 }) => {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
-
+  // console.log("my", isConfirmed);
   return (
     <TouchableOpacity style={styles.messageItem} onPress={onPress}>
       {showCheckbox && (
@@ -66,81 +76,92 @@ export const MessageItem: React.FC<MessageItemProps> = ({
       <View style={styles.messageEnd}>
         {unread && <View style={styles.unreadDot} />}
         <RnText style={styles.messageTime}>{time}</RnText>
+
+        {isRejected ? (
+          <RnText style={styles.rejectText}>Meet preferences rejected</RnText>
+        ) : isConfirmed ? (
+          <RnText
+            style={[styles.rejectText, { color: Colors[theme].greenText }]}
+          >
+            Meet Scheduled
+          </RnText>
+        ) : null}
       </View>
     </TouchableOpacity>
   );
 };
 
- 
-
-
-const createStyles  = (theme:'dark'|'light')=>StyleSheet.create({
-  messageItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: hp(2),
-    borderBottomWidth: 1,
-    borderBottomColor: "#F0F0F0",
-  },
-  messageImageContainer: {
-    position: "relative",
-    marginRight: wp(3),
-  },
-  messageImage: {
-    width: wp(14),
-    height: wp(14),
-    borderRadius: Borders.circle,
-  },
-  onlineIndicator: {
-    position: "absolute",
-    bottom: 0,
-    right: 0,
-    width: wp(4),
-    height: wp(4),
-    borderRadius:Borders.circle,
-    backgroundColor: Colors[theme].primary,
-    borderWidth: 2,
-    borderColor: Colors[theme].background,
-  },
-  messageContent: {
-    flex: 1,
-  },
-  messageName: {
-    fontSize: FontSize.small,
-  fontFamily:FontFamily.semiBold,
-    color: Colors[theme].blackText,
-    marginBottom: hp(0.5),
-  },
-  messageText: {
-    fontSize: FontSize.regular,
-    color: Colors[theme].tabIconDefault,
-  },
-  messageEnd: {
-    alignItems: "flex-end",
-    justifyContent: "center",
-    minWidth: wp(8),
-    gap: wp(1),
-    // flexDirection: "row",
-  },
-  messageTime: {
-    fontSize: FontSize.extraSmall,
-fontFamily:FontFamily.semiBold,
-    color: Colors[theme].tabIconDefault,
-  },
-  unreadDot: {
-    width: wp(2.5),
-    height: wp(2.5),
-    borderRadius: Borders.circle,
-    backgroundColor: Colors[theme].primary,
-    marginLeft: wp(1),
-    alignSelf: "center",
-  },
-   checkboxContainer: {
-    padding: 0,
-    margin: 0,
-    marginRight: wp(1),
-    backgroundColor: 'transparent',
-    borderWidth: 0,
-  },
- 
-});
+const createStyles = (theme: "dark" | "light") =>
+  StyleSheet.create({
+    messageItem: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingVertical: hp(2),
+      borderBottomWidth: 1,
+      borderBottomColor: "#F0F0F0",
+    },
+    messageImageContainer: {
+      position: "relative",
+      marginRight: wp(3),
+    },
+    messageImage: {
+      width: wp(14),
+      height: wp(14),
+      borderRadius: Borders.circle,
+    },
+    onlineIndicator: {
+      position: "absolute",
+      bottom: 0,
+      right: 0,
+      width: wp(4),
+      height: wp(4),
+      borderRadius: Borders.circle,
+      backgroundColor: Colors[theme].primary,
+      borderWidth: 2,
+      borderColor: Colors[theme].background,
+    },
+    messageContent: {
+      flex: 1,
+    },
+    messageName: {
+      fontSize: FontSize.small,
+      fontFamily: FontFamily.semiBold,
+      color: Colors[theme].blackText,
+      marginBottom: hp(0.5),
+    },
+    messageText: {
+      fontSize: FontSize.regular,
+      color: Colors[theme].tabIconDefault,
+    },
+    messageEnd: {
+      alignItems: "flex-end",
+      justifyContent: "center",
+      minWidth: wp(8),
+      gap: wp(1),
+      // flexDirection: "row",
+    },
+    messageTime: {
+      fontSize: FontSize.extraSmall,
+      fontFamily: FontFamily.semiBold,
+      color: Colors[theme].tabIconDefault,
+    },
+    unreadDot: {
+      width: wp(2.5),
+      height: wp(2.5),
+      borderRadius: Borders.circle,
+      backgroundColor: Colors[theme].primary,
+      marginLeft: wp(1),
+      alignSelf: "center",
+    },
+    checkboxContainer: {
+      padding: 0,
+      margin: 0,
+      marginRight: wp(1),
+      backgroundColor: "transparent",
+      borderWidth: 0,
+    },
+    rejectText: {
+      color: Colors[theme].redText,
+      fontSize: FontSize.extraSmall,
+    },
+  });

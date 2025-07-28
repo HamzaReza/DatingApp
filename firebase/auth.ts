@@ -1,4 +1,5 @@
 import getDistanceFromLatLonInMeters from "@/utils/Distance";
+import { calculateMatchScore } from "@/utils/MatchScore";
 import {
   getAuth,
   GoogleAuthProvider,
@@ -574,7 +575,6 @@ export const sendGroupInvitesByTags = async (
   eventDate: any
 ) => {
   try {
-
     const db = getFirestore();
 
     const inviterDoc = await getDoc(doc(db, "users", invitedBy));
@@ -586,7 +586,6 @@ export const sendGroupInvitesByTags = async (
 
     const inviterLat = inviterData.location.latitude;
     const inviterLon = inviterData.location.longitude;
-
 
     const usersSnapshot = await getDocs(collection(db, "users"));
 
@@ -626,7 +625,6 @@ export const sendGroupInvitesByTags = async (
           !isNaN(userAge) && userAge >= minAge && userAge <= maxAge;
 
         return hasMatchingTag && genderMatch && ageMatch;
-
       })
       .slice(0, maxParticipants)
       .map(userDoc => ({
@@ -637,7 +635,6 @@ export const sendGroupInvitesByTags = async (
     if (matchingUsers.length === 0) {
       throw new Error("No users found matching the selected criteria");
     }
-
 
     const inviterName = inviterData?.name || "Someone";
 
@@ -721,7 +718,6 @@ export const sendGroupInvitesByTags = async (
     await notificationBatch.commit();
 
     return { success: true };
-
   } catch (error) {
     console.error("Error sending group invites:", error);
     return { success: false, error: error.message };
@@ -748,9 +744,7 @@ export const respondToGroupInvite = async (
   userId: string,
   accept: boolean
 ) => {
-
   console.log("hello", groupId, accept);
-
 
   const db = getFirestore();
   try {
@@ -1041,14 +1035,14 @@ const fetchUserMatches = async (currentUserId: string) => {
   try {
     const db = getFirestore();
 
-    // 1. Get mutual matches (from matches collection)
+    // 1. Get mutual matches
     const matchesRef = collection(db, "matches");
     const matchesSnapshot = await getDocs(matchesRef);
 
     const mutualMatches: any[] = [];
     const matchedUserIds: string[] = [];
 
-    matchesSnapshot.forEach(doc => {
+    matchesSnapshot.forEach((doc: any) => {
       const matchData = doc.data();
       if (matchData.users.includes(currentUserId) && matchData.isActive) {
         const otherUserId = matchData.users.find(
@@ -1066,7 +1060,7 @@ const fetchUserMatches = async (currentUserId: string) => {
       }
     });
 
-    // 2. Get pending likes (users we've liked but haven't liked us back)
+    // 2. Get pending likes
     const currentUserLikesRef = collection(db, "users", currentUserId, "likes");
     const currentUserLikesSnapshot = await getDocs(currentUserLikesRef);
 
@@ -1098,10 +1092,14 @@ const fetchUserMatches = async (currentUserId: string) => {
       })
     );
 
-    // Combine both types
     const allMatches = [...mutualMatches, ...pendingMatches];
 
-    // Fetch user details with location and match percentage
+    // ✅ Fetch current user's profile
+    const currentUserDoc = await getDoc(doc(db, "users", currentUserId));
+    if (!currentUserDoc.exists()) throw new Error("Current user not found");
+    const currentUserData = currentUserDoc.data();
+
+    // 3. Fetch user details with location and calculated match percentage
     const matchesWithUserData = await Promise.all(
       allMatches.map(async match => {
         try {
@@ -1109,16 +1107,22 @@ const fetchUserMatches = async (currentUserId: string) => {
           if (userDoc.exists()) {
             const userData = userDoc.data() as any;
 
-            // Generate random distance and match percentage
             const distance = `${(Math.random() * 10 + 0.5).toFixed(1)} km away`;
 
-            // Different percentage ranges based on match status
-            const matchPercentage =
-              match.status === "matched"
-                ? Math.floor(Math.random() * 20 + 80) // 80-100% for matches
-                : Math.floor(Math.random() * 30 + 50); // 50-80% for pending
+            // ✅ Calculate real match percentage
+            const matchPercentage = calculateMatchScore(
+              {
+                userId: currentUserId,
+                intent: currentUserData.lookingFor,
+                profileScore: currentUserData.profileScore,
+              },
+              {
+                userId: match.otherUserId,
+                intent: userData.lookingFor,
+                profileScore: userData.profileScore,
+              }
+            );
 
-            // Handle location field (your existing logic)
             let locationString = "UNKNOWN";
             if (userData.location) {
               if (typeof userData.location === "string") {

@@ -20,7 +20,7 @@ import {
   updateUser,
   uploadMultipleImages,
 } from "@/firebase/auth";
-import { uploadReel } from "@/firebase/reels";
+import { deleteReelWithFiles, updateReel, uploadReel } from "@/firebase/reels";
 import { RootState } from "@/redux/store";
 import { encodeImagePath, hp, wp } from "@/utils";
 import getDistanceFromLatLonInMeters from "@/utils/Distance";
@@ -98,18 +98,14 @@ export default function Profile() {
     }
   }, []);
 
-  // Single useEffect to handle all video player state management
   useEffect(() => {
     if (reelModalVisible && selectedReel) {
-      // Modal is open and a reel is selected - play the video
       player.currentTime = 0;
       player.play();
     } else {
-      // Modal is closed or no reel selected - pause and cleanup
       player.pause();
       player.currentTime = 0;
 
-      // If modal is closed, clear the selected reel
       if (!reelModalVisible) {
         setSelectedReel(null);
       }
@@ -340,6 +336,53 @@ export default function Profile() {
     } finally {
       setGalleryLoading(false);
     }
+  };
+
+  const handleReelVisibilityToggle = async (
+    reelId: string,
+    currentVisibility: string
+  ) => {
+    try {
+      const newVisibility =
+        currentVisibility === "public" ? "private" : "public";
+      await updateReel(reelId, user.uid, {
+        visibility: newVisibility,
+      });
+
+      // Refresh user details to show the updated reel
+      await getUserDetails();
+    } catch (error) {
+      console.error("Error updating reel visibility:", error);
+      Alert.alert("Error", "Failed to update reel visibility");
+    }
+  };
+
+  const handleReelDelete = (reelId: string) => {
+    Alert.alert(
+      "Delete Reel",
+      "Are you sure you want to delete this reel? This action cannot be undone.",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteReelWithFiles(reelId, user.uid);
+
+              // Refresh user details to show the updated reels
+              await getUserDetails();
+            } catch (error) {
+              console.error("Error deleting reel:", error);
+              Alert.alert("Error", "Failed to delete reel");
+            }
+          },
+        },
+      ]
+    );
   };
 
   // Image transform animations
@@ -667,33 +710,74 @@ export default function Profile() {
               showsHorizontalScrollIndicator={false}
               keyExtractor={(item, index) => index.toString()}
               renderItem={({ item, index }) => (
-                <TouchableOpacity
-                  style={styles.reelItem}
-                  onPress={() => {
-                    // Cleanup any existing player state
-                    if (player) {
-                      player.pause();
-                      player.currentTime = 0;
-                    }
-                    // Set new reel and open modal
-                    setSelectedReel(item.reelUrl);
-                    setReelModalVisible(true);
-                  }}
-                >
+                <View style={styles.reelItem}>
                   <Image
                     source={{
                       uri: item.thumbnailUrl,
                     }}
                     style={styles.galleryImage}
                   />
-                  <View style={styles.playButton}>
+
+                  {/* Top-left visibility toggle button */}
+                  {user.uid === id && (
+                    <TouchableOpacity
+                      style={styles.reelTopLeftButton}
+                      onPress={e => {
+                        e.stopPropagation();
+                        handleReelVisibilityToggle(
+                          item.reelId,
+                          item.visibility || "public"
+                        );
+                      }}
+                    >
+                      <Ionicons
+                        name={
+                          item.visibility === "public" ? "globe" : "lock-closed"
+                        }
+                        size={16}
+                        color={Colors[theme].whiteText}
+                      />
+                    </TouchableOpacity>
+                  )}
+
+                  {/* Top-right delete button */}
+                  {user.uid === id && (
+                    <TouchableOpacity
+                      style={styles.reelTopRightButton}
+                      onPress={e => {
+                        e.stopPropagation();
+                        handleReelDelete(item.reelId);
+                      }}
+                    >
+                      <Ionicons
+                        name="trash-outline"
+                        size={16}
+                        color={Colors[theme].redText}
+                      />
+                    </TouchableOpacity>
+                  )}
+
+                  {/* Center play button */}
+                  <TouchableOpacity
+                    style={styles.reelCenterPlayButton}
+                    onPress={() => {
+                      // Cleanup any existing player state
+                      if (player) {
+                        player.pause();
+                        player.currentTime = 0;
+                      }
+                      // Set new reel and open modal
+                      setSelectedReel(item.reelUrl);
+                      setReelModalVisible(true);
+                    }}
+                  >
                     <Ionicons
                       name="play"
                       size={20}
                       color={Colors[theme].whiteText}
                     />
-                  </View>
-                </TouchableOpacity>
+                  </TouchableOpacity>
+                </View>
               )}
             />
           </View>

@@ -94,7 +94,6 @@ export default function Home() {
           });
         }
       } else {
-        console.log("Location permission denied");
         dispatch(setLocationPermissionGranted(false));
       }
     } catch (error) {
@@ -168,7 +167,6 @@ export default function Home() {
     try {
       const currentUser = getAuth().currentUser;
       if (!currentUser) {
-        console.log("User not authenticated");
         return;
       }
 
@@ -424,7 +422,7 @@ export default function Home() {
       <FlatList
         data={reels}
         keyExtractor={item => item.id}
-        contentContainerStyle={{ flexGrow: 1, paddingBottom: hp(10) }}
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: hp(50) }}
         renderItem={({ item }: { item: Reel }) => {
           const optimisticState = optimisticUpdates[item.id];
           const currentUser = getAuth().currentUser;

@@ -87,59 +87,6 @@ const recentMatches: RecentMatch[] = [
   },
 ];
 
-const messages: Message[] = [
-  {
-    id: "1",
-    name: "Jessica Parker, 23",
-    message: "What about that new jacket if I ...",
-    time: "09:18",
-    image:
-      "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150",
-    isOnline: true,
-    unread: false,
-  },
-  {
-    id: "2",
-    name: "Clara Hazel",
-    message: "I know right 😊",
-    time: "12:44",
-    image:
-      "https://images.pexels.com/photos/1499327/pexels-photo-1499327.jpeg?auto=compress&cs=tinysrgb&w=150",
-    isOnline: true,
-    unread: false,
-  },
-  {
-    id: "3",
-    name: "Brandon Aminoff",
-    message: "I've already registered, can't wai...",
-    time: "08:06",
-    image:
-      "https://images.pexels.com/photos/1674752/pexels-photo-1674752.jpeg?auto=compress&cs=tinysrgb&w=150",
-    isOnline: true,
-    unread: true,
-  },
-  {
-    id: "4",
-    name: "Amina Mina",
-    message: "It will have two lines of heading ...",
-    time: "09:32",
-    image:
-      "https://images.pexels.com/photos/1130626/pexels-photo-1130626.jpeg?auto=compress&cs=tinysrgb&w=150",
-    isOnline: false,
-    unread: true,
-  },
-  {
-    id: "5",
-    name: "Savanna Hall",
-    message: "It will have two lines of heading ...",
-    time: "06:21",
-    image:
-      "https://images.pexels.com/photos/1040880/pexels-photo-1040880.jpeg?auto=compress&cs=tinysrgb&w=150",
-    isOnline: false,
-    unread: true,
-  },
-];
-
 interface Tag {
   label: string;
   value: string;

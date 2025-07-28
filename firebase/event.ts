@@ -50,7 +50,6 @@ const fetchNextUpcomingEvent = (callback: (event: any | null) => void) => {
           const eventTime = formatDate(data.time);
 
           if (!eventDate) {
-            console.log("Skipping event with invalid date format:", data);
             continue;
           }
 

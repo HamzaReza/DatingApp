@@ -65,7 +65,6 @@ export default function UserProfile() {
       // Update Firestore
       if (user?.uid) {
         await updateUser(user.uid, { status });
-        console.log("Status updated successfully");
       } else {
         console.warn("User UID not found");
       }

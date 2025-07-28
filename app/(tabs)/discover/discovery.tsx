@@ -205,7 +205,6 @@ export default function Discover() {
         const location = await Location.getCurrentPositionAsync({});
         dispatch(setDeviceLocation(location));
       } else {
-        console.log("Location permission denied");
         dispatch(setLocationPermissionGranted(false));
       }
     } catch (error) {

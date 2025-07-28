@@ -21,7 +21,6 @@ import {
   ref,
 } from "@react-native-firebase/storage";
 
-// Types for reel data
 export interface Reel {
   id: string;
   userId: string;
@@ -30,8 +29,10 @@ export interface Reel {
   videoUrl: string;
   thumbnailUrl?: string;
   caption: string;
-  likes: string[]; // Array of user IDs who liked the reel
-  dislikes: string[]; // Array of user IDs who disliked the reel
+  visibility: "public" | "private";
+  status: "approved" | "pending" | "rejected";
+  likes: string[];
+  dislikes: string[];
   comments: ReelComment[];
   createdAt: Date | string | FirebaseFirestoreTypes.Timestamp;
   updatedAt: Date | string | FirebaseFirestoreTypes.Timestamp;
@@ -53,7 +54,6 @@ export const fetchUserReels = (
     const db = getFirestore();
     const reelsRef = collection(db, "reels");
 
-    // Query reels ordered by creation date (newest first)
     const q = query(reelsRef, orderBy("createdAt", "desc"));
 
     const unsubscribe = onSnapshot(
@@ -72,6 +72,8 @@ export const fetchUserReels = (
               videoUrl: data.videoUrl,
               thumbnailUrl: data.thumbnailUrl,
               caption: data.caption,
+              visibility: data.visibility || "public",
+              status: data.status || "approved",
               likes: data.likes || [],
               dislikes: data.dislikes || [],
               comments: data.comments || [],
@@ -110,7 +112,6 @@ export const likeDislikeReel = async (
     const db = getFirestore();
     const reelRef = doc(db, "reels", reelId);
 
-    // Get current reel data
     const reelDoc = await getDoc(reelRef);
     if (!reelDoc.exists()) {
       throw new Error("Reel not found");
@@ -125,24 +126,20 @@ export const likeDislikeReel = async (
     let updatedDislikes = [...currentDislikes];
 
     if (action === "like") {
-      // Remove from dislikes if user previously disliked
       if (currentDislikes.includes(userId)) {
         updatedDislikes = currentDislikes.filter((id: string) => id !== userId);
       }
 
-      // Toggle like
       if (currentLikes.includes(userId)) {
         updatedLikes = currentLikes.filter((id: string) => id !== userId);
       } else {
         updatedLikes.push(userId);
       }
     } else if (action === "dislike") {
-      // Remove from likes if user previously liked
       if (currentLikes.includes(userId)) {
         updatedLikes = currentLikes.filter((id: string) => id !== userId);
       }
 
-      // Toggle dislike
       if (currentDislikes.includes(userId)) {
         updatedDislikes = currentDislikes.filter((id: string) => id !== userId);
       } else {
@@ -150,14 +147,12 @@ export const likeDislikeReel = async (
       }
     }
 
-    // Update the reel in the main reels collection
     await updateDoc(reelRef, {
       likes: updatedLikes,
       dislikes: updatedDislikes,
       updatedAt: serverTimestamp(),
     });
 
-    // Also update the reel in the user's profile document
     if (reelOwnerId) {
       const userRef = doc(db, "users", reelOwnerId);
       const userDoc = await getDoc(userRef);
@@ -166,7 +161,6 @@ export const likeDislikeReel = async (
         const userData = userDoc.data();
         const userReels = userData?.reels || [];
 
-        // Find and update the specific reel in user's reels array
         const updatedUserReels = userReels.map((userReel: any) => {
           if (userReel.reelId === reelId) {
             return {
@@ -178,7 +172,6 @@ export const likeDislikeReel = async (
           return userReel;
         });
 
-        // Update the user's profile with the updated reels array
         await updateDoc(userRef, {
           reels: updatedUserReels,
         });
@@ -210,7 +203,6 @@ export const addCommentToReel = async (
     const reelRef = doc(db, "reels", reelId);
     const userRef = doc(db, "users", currentUser.uid);
 
-    // Check if reel exists
     const reelDoc = await getDoc(reelRef);
     if (!reelDoc.exists()) {
       throw new Error("Reel not found");
@@ -219,7 +211,6 @@ export const addCommentToReel = async (
     const reelData = reelDoc.data();
     const reelOwnerId = reelData?.userId;
 
-    // Get current user data
     const userDoc = await getDoc(userRef);
     if (!userDoc.exists()) {
       throw new Error("User data not found");
@@ -227,9 +218,8 @@ export const addCommentToReel = async (
 
     const userData = userDoc.data();
 
-    // Create new comment
     const newComment: ReelComment = {
-      id: `${Date.now()}_${currentUser.uid}`, // Simple ID generation
+      id: `${Date.now()}_${currentUser.uid}`,
       userId: currentUser.uid,
       username: userData?.name || "User",
       userPhoto: userData?.photo || "",
@@ -237,13 +227,11 @@ export const addCommentToReel = async (
       createdAt: new Date(),
     };
 
-    // Add comment to reel in the main reels collection
     await updateDoc(reelRef, {
       comments: arrayUnion(newComment),
       updatedAt: serverTimestamp(),
     });
 
-    // Also add comment to the reel in the user's profile document
     if (reelOwnerId) {
       const reelOwnerRef = doc(db, "users", reelOwnerId);
       const reelOwnerDoc = await getDoc(reelOwnerRef);
@@ -252,7 +240,6 @@ export const addCommentToReel = async (
         const reelOwnerData = reelOwnerDoc.data();
         const userReels = reelOwnerData?.reels || [];
 
-        // Find and update the specific reel in user's reels array
         const updatedUserReels = userReels.map((userReel: any) => {
           if (userReel.reelId === reelId) {
             const currentComments = userReel.comments || [];
@@ -264,7 +251,6 @@ export const addCommentToReel = async (
           return userReel;
         });
 
-        // Update the user's profile with the updated reels array
         await updateDoc(reelOwnerRef, {
           reels: updatedUserReels,
         });
@@ -276,7 +262,6 @@ export const addCommentToReel = async (
   }
 };
 
-// Real-time listener for comments on a specific reel
 export const listenToReelComments = (
   reelId: string,
   callback: (comments: ReelComment[]) => void
@@ -334,12 +319,10 @@ export const uploadReel = async (
     const storage = getStorage();
     const db = getFirestore();
 
-    // Check if Firebase Storage is properly initialized
     if (!storage) {
       throw new Error("Firebase Storage is not initialized");
     }
 
-    // Get user data for the reel
     const userRef = doc(db, "users", currentUser.uid);
     const userDoc = await getDoc(userRef);
 
@@ -352,7 +335,6 @@ export const uploadReel = async (
     const videoExtension = videoUri.split(".").pop() || "mp4";
     const thumbnailExtension = thumbnailUri?.split(".").pop() || "jpg";
 
-    // Upload video file
     const videoFilename = `reel_${timestamp}.${videoExtension}`;
     const videoStoragePath = `users/${currentUser.uid}/reels/${videoFilename}`;
     const videoStorageRef = ref(storage, videoStoragePath);
@@ -360,7 +342,6 @@ export const uploadReel = async (
     await putFile(videoStorageRef, videoUri);
     const videoDownloadURL = await getDownloadURL(videoStorageRef);
 
-    // Upload thumbnail if provided, otherwise use a default or generate one
     let thumbnailDownloadURL: string | undefined;
 
     if (thumbnailUri) {
@@ -372,7 +353,6 @@ export const uploadReel = async (
       thumbnailDownloadURL = await getDownloadURL(thumbnailStorageRef);
     }
 
-    // Create reel document in Firestore
     const reelsRef = collection(db, "reels");
     const newReel = {
       userId: currentUser.uid,
@@ -380,6 +360,8 @@ export const uploadReel = async (
       userPhoto: userData?.photo || "",
       videoUrl: videoDownloadURL,
       thumbnailUrl: thumbnailDownloadURL,
+      visibility: "public",
+      status: "approved",
       caption: caption?.trim() || "",
       likes: [],
       dislikes: [],
@@ -390,29 +372,35 @@ export const uploadReel = async (
 
     const docRef = await addDoc(reelsRef, newReel);
 
-    // Also add reel to user's profile document (maintaining existing structure)
     const userReelData = {
       reelUrl: videoDownloadURL,
       thumbnailUrl: thumbnailDownloadURL,
-      visibility: "public", // or "private" based on your needs
+      visibility: "public",
       status: "approved",
       likes: 0,
       dislikes: 0,
       comments: [],
       createdAt: new Date(),
-      reelId: docRef.id, // Store the reel document ID for reference
+      updatedAt: new Date(),
+      reelId: docRef.id,
     };
 
-    // Update user's profile with the new reel
+    // Get current user data to see existing reels
+    const currentUserDoc = await getDoc(userRef);
+    const currentUserData = currentUserDoc.data();
+    const existingReels = currentUserData?.reels || [];
+
+    // Add new reel to the array
+    const updatedReels = [...existingReels, userReelData];
+
     await updateDoc(userRef, {
-      reels: arrayUnion(userReelData),
+      reels: updatedReels,
     });
 
     return docRef.id;
   } catch (error: any) {
     console.error("Error uploading reel:", error);
 
-    // Handle specific Firebase errors
     if (error.code === "storage/unauthorized") {
       throw new Error("Upload unauthorized. Please check your authentication.");
     } else if (error.code === "storage/canceled") {
@@ -429,12 +417,6 @@ export const uploadReel = async (
   }
 };
 
-/**
- * Delete a reel and its associated files from storage
- * @param reelId - ID of the reel to delete
- * @param userId - ID of the user attempting to delete (for authorization)
- * @returns Promise<void>
- */
 export const deleteReelWithFiles = async (
   reelId: string,
   userId: string
@@ -448,7 +430,6 @@ export const deleteReelWithFiles = async (
     const storage = getStorage();
     const reelRef = doc(db, "reels", reelId);
 
-    // Check if reel exists and user owns it
     const reelDoc = await reelRef.get();
     if (!reelDoc.exists) {
       throw new Error("Reel not found");
@@ -459,7 +440,6 @@ export const deleteReelWithFiles = async (
       throw new Error("Unauthorized: User can only delete their own reels");
     }
 
-    // Delete video file from storage
     if (reelData.videoUrl) {
       try {
         const videoRef = ref(storage, reelData.videoUrl);
@@ -469,7 +449,6 @@ export const deleteReelWithFiles = async (
       }
     }
 
-    // Delete thumbnail file from storage
     if (reelData.thumbnailUrl) {
       try {
         const thumbnailRef = ref(storage, reelData.thumbnailUrl);
@@ -482,10 +461,94 @@ export const deleteReelWithFiles = async (
       }
     }
 
-    // Delete the reel document
     await reelRef.delete();
   } catch (error) {
     console.error("Error deleting reel with files:", error);
+    throw error;
+  }
+};
+
+export const updateReel = async (
+  reelId: string,
+  userId: string,
+  updates: {
+    caption?: string;
+    visibility?: "public" | "private";
+    status?: "approved" | "pending" | "rejected";
+  }
+): Promise<void> => {
+  try {
+    if (!reelId || !userId) {
+      throw new Error("Reel ID and User ID are required");
+    }
+
+    if (!updates || Object.keys(updates).length === 0) {
+      throw new Error("At least one field must be provided for update");
+    }
+
+    const db = getFirestore();
+    const reelRef = doc(db, "reels", reelId);
+
+    const reelDoc = await getDoc(reelRef);
+    if (!reelDoc.exists()) {
+      throw new Error("Reel not found");
+    }
+
+    const reelData = reelDoc.data();
+    if (reelData?.userId !== userId) {
+      throw new Error("Unauthorized: User can only update their own reels");
+    }
+
+    const updateData: any = {
+      updatedAt: serverTimestamp(),
+    };
+
+    if (updates.caption !== undefined) {
+      updateData.caption = updates.caption.trim();
+    }
+
+    if (updates.visibility !== undefined) {
+      if (!["public", "private"].includes(updates.visibility)) {
+        throw new Error("Visibility must be either 'public' or 'private'");
+      }
+      updateData.visibility = updates.visibility;
+    }
+
+    if (updates.status !== undefined) {
+      if (!["approved", "pending", "rejected"].includes(updates.status)) {
+        throw new Error(
+          "Status must be either 'approved', 'pending', or 'rejected'"
+        );
+      }
+      updateData.status = updates.status;
+    }
+
+    await updateDoc(reelRef, updateData);
+
+    const userRef = doc(db, "users", userId);
+    const userDoc = await getDoc(userRef);
+
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      const userReels = userData?.reels || [];
+
+      const updatedUserReels = userReels.map((userReel: any) => {
+        if (userReel.reelId === reelId) {
+          return {
+            ...userReel,
+            ...updateData,
+            updatedAt: new Date(),
+          };
+        }
+        return userReel;
+      });
+
+      await updateDoc(userRef, {
+        reels: updatedUserReels,
+      });
+    }
+  } catch (error) {
+    console.error("Error updating reel:", error);
     throw error;
   }
 };

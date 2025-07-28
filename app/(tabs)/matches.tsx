@@ -1,6 +1,5 @@
 import createStyles from "@/app/tabStyles/matches.styles";
 import MatchCard from "@/components/MatchCard";
-import RnModal from "@/components/RnModal";
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
 import RoundButton from "@/components/RoundButton";
@@ -17,17 +16,7 @@ import {
 } from "@react-native-firebase/firestore";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import {
-  FlatList,
-  StyleSheet,
-  TouchableOpacity,
-  useColorScheme,
-  View,
-} from "react-native";
-import { calculateMatchScore } from "@/utils/MatchScore";
-import { getAuth } from "@react-native-firebase/auth";
-import { useSelector } from "react-redux";
-import { RootState } from "@/redux/store";
+import { FlatList, TouchableOpacity, useColorScheme, View } from "react-native";
 
 type Match = {
   id: string;
@@ -46,13 +35,8 @@ export default function Matches() {
 
   const [likedCount, setLikedCount] = useState(0);
   const [connectCount, setConnectCount] = useState(0);
-  const [totalMatches, setTotalMatches] = useState(0);
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showMatchModal, setShowMatchModal] = useState(false);
-  const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  const { user: reduxUser } = useSelector((state: RootState) => state.user);
 
   useEffect(() => {
     const loadMatches = async () => {

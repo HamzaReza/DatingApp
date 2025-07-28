@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { Borders } from "@/constants/Borders";
 import { Colors } from "@/constants/Colors";
 import { FontFamily } from "@/constants/FontFamily";
@@ -18,6 +17,7 @@ import {
   View,
 } from "react-native";
 import RnText from "./RnText";
+import { useVideoContext } from "./VideoContext";
 
 interface ReelCardProps {
   reel: Reel;
@@ -46,45 +46,84 @@ const ReelCard: React.FC<ReelCardProps> = ({
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
 
-  const [isPlaying, setIsPlaying] = useState(false);
+  const { currentlyPlayingId, setCurrentlyPlaying } = useVideoContext();
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
+  const [playerError, setPlayerError] = useState(false);
+
+  // Check if this video is currently playing
+  const isPlaying = currentlyPlayingId === reel.id;
+
   const player = useVideoPlayer(reel.videoUrl, player => {
-    player.loop = true;
-    player.muted = true;
-    player.volume = 0;
+    try {
+      player.loop = true;
+      player.muted = true;
+      player.volume = 0;
+      setPlayerError(false);
+    } catch (error) {
+      console.warn("Error configuring video player:", error);
+      setPlayerError(true);
+    }
   });
-
-  useEffect(() => {
-    if (isPlaying && isVideoLoaded) {
-      player.play();
-    } else {
-      player.pause();
-    }
-  }, [isPlaying, isVideoLoaded]);
-
-  const handlePlayPress = () => {
-    if (isVideoLoaded) {
-      setIsPlaying(!isPlaying);
-    } else {
-      setIsPlaying(true);
-    }
-  };
 
   // Set video as loaded when player is ready
   useEffect(() => {
-    if (player) {
+    if (player && !playerError) {
       setIsVideoLoaded(true);
     }
-  }, [player]);
+  }, [player, playerError]);
 
-  // Cleanup video player when component unmounts
+  // Main video play/pause effect
+  useEffect(() => {
+    if (isPlaying && isVideoLoaded && !playerError) {
+      try {
+        if (player && typeof player.play === "function") {
+          player.play();
+        }
+      } catch (error) {
+        console.warn("Error playing video:", error);
+        setCurrentlyPlaying(null);
+        setPlayerError(true);
+      }
+    } else {
+      try {
+        if (player && typeof player.pause === "function") {
+          player.pause();
+        }
+      } catch (error) {
+        console.warn("Error pausing video:", error);
+      }
+    }
+  }, [isPlaying, isVideoLoaded, playerError, player, setCurrentlyPlaying]);
+
+  // Simple cleanup on unmount
   useEffect(() => {
     return () => {
-      if (player) {
-        player.pause();
+      try {
+        if (player) {
+          player.pause();
+        }
+      } catch (error) {
+        console.warn("Error cleaning up video player:", error);
       }
     };
   }, [player]);
+
+  const handlePlayPress = () => {
+    if (playerError) {
+      setPlayerError(false);
+      setIsVideoLoaded(false);
+      return;
+    }
+
+    // If this video is already playing, pause it
+    if (currentlyPlayingId === reel.id) {
+      setCurrentlyPlaying(null);
+      return;
+    }
+
+    // If this video is not playing, start it (this will automatically stop other videos)
+    setCurrentlyPlaying(reel.id);
+  };
 
   return (
     <View style={styles.card}>

@@ -88,6 +88,9 @@ export default function Profile() {
   const [selectedVideoThumbnail, setSelectedVideoThumbnail] = useState<
     string | null
   >(null);
+  const [deleteReelModalVisible, setDeleteReelModalVisible] = useState(false);
+  const [reelToDelete, setReelToDelete] = useState<string | null>(null);
+  const [deletingReel, setDeletingReel] = useState(false);
   const reelFormikRef = useRef<FormikProps<any>>(null);
   const formikRef = useRef<FormikProps<any>>(null);
 
@@ -100,17 +103,44 @@ export default function Profile() {
 
   useEffect(() => {
     if (reelModalVisible && selectedReel) {
-      player.currentTime = 0;
-      player.play();
+      try {
+        player.currentTime = 0;
+        player.play();
+      } catch (error) {
+        console.warn("Error playing video:", error);
+      }
     } else {
-      player.pause();
-      player.currentTime = 0;
+      try {
+        player.pause();
+        player.currentTime = 0;
+      } catch (error) {
+        console.warn("Error pausing video:", error);
+      }
 
       if (!reelModalVisible) {
         setSelectedReel(null);
       }
     }
   }, [reelModalVisible, selectedReel]);
+
+  // Clean up video player if selected reel is no longer in data
+  useEffect(() => {
+    if (selectedReel && profileData?.reels) {
+      const reelExists = profileData.reels.some(
+        (reel: any) => reel.videoUrl === selectedReel
+      );
+      if (!reelExists) {
+        try {
+          player.pause();
+          player.currentTime = 0;
+        } catch (error) {
+          console.warn("Error cleaning up player for deleted reel:", error);
+        }
+        setSelectedReel(null);
+        setReelModalVisible(false);
+      }
+    }
+  }, [profileData?.reels, selectedReel]);
 
   useEffect(() => {
     const getAddress = async () => {
@@ -358,31 +388,50 @@ export default function Profile() {
   };
 
   const handleReelDelete = (reelId: string) => {
-    Alert.alert(
-      "Delete Reel",
-      "Are you sure you want to delete this reel? This action cannot be undone.",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await deleteReelWithFiles(reelId, user.uid);
+    setReelToDelete(reelId);
+    setDeleteReelModalVisible(true);
+  };
 
-              // Refresh user details to show the updated reels
-              await getUserDetails();
-            } catch (error) {
-              console.error("Error deleting reel:", error);
-              Alert.alert("Error", "Failed to delete reel");
-            }
-          },
-        },
-      ]
-    );
+  const confirmDeleteReel = async () => {
+    if (!reelToDelete) return;
+
+    try {
+      setDeletingReel(true);
+
+      // Clean up video player before deleting
+      if (player && selectedReel) {
+        try {
+          player.pause();
+          player.currentTime = 0;
+        } catch (error) {
+          console.warn("Error cleaning up player before delete:", error);
+        }
+      }
+
+      // Close modal and clear selected reel
+      setReelModalVisible(false);
+      setSelectedReel(null);
+
+      await deleteReelWithFiles(reelToDelete, user.uid);
+
+      // Refresh user details to show the updated reels
+      await getUserDetails();
+
+      // Close modal and reset state
+      setDeleteReelModalVisible(false);
+      setReelToDelete(null);
+    } catch (error) {
+      console.error("Error deleting reel:", error);
+      Alert.alert("Error", "Failed to delete reel");
+    } finally {
+      setDeletingReel(false);
+    }
+  };
+
+  const cancelDeleteReel = () => {
+    setDeleteReelModalVisible(false);
+    setReelToDelete(null);
+    setDeletingReel(false);
   };
 
   // Image transform animations
@@ -725,7 +774,7 @@ export default function Profile() {
                       onPress={e => {
                         e.stopPropagation();
                         handleReelVisibilityToggle(
-                          item.reelId,
+                          item.id,
                           item.visibility || "public"
                         );
                       }}
@@ -746,7 +795,7 @@ export default function Profile() {
                       style={styles.reelTopRightButton}
                       onPress={e => {
                         e.stopPropagation();
-                        handleReelDelete(item.reelId);
+                        handleReelDelete(item.id);
                       }}
                     >
                       <Ionicons
@@ -763,11 +812,15 @@ export default function Profile() {
                     onPress={() => {
                       // Cleanup any existing player state
                       if (player) {
-                        player.pause();
-                        player.currentTime = 0;
+                        try {
+                          player.pause();
+                          player.currentTime = 0;
+                        } catch (error) {
+                          console.warn("Error cleaning up player:", error);
+                        }
                       }
                       // Set new reel and open modal
-                      setSelectedReel(item.reelUrl);
+                      setSelectedReel(item.videoUrl);
                       setReelModalVisible(true);
                     }}
                   >
@@ -887,29 +940,25 @@ export default function Profile() {
           </Formik>
         </View>
       </RnModal>
-      <RnModal show={galleryLoading}>
-        <View
-          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-        >
-          <RnText
-            style={{ marginBottom: hp(2), color: Colors[theme].whiteText }}
-          >
-            Uploading...
-          </RnText>
-          <ActivityIndicator size="large" color={Colors[theme].primary} />
-        </View>
-      </RnModal>
       <RnModal
         show={reelModalVisible}
         backDrop={() => {
           setReelModalVisible(false);
-          player.pause();
-          player.currentTime = 0;
+          try {
+            player.pause();
+            player.currentTime = 0;
+          } catch (error) {
+            console.warn("Error pausing player on backdrop:", error);
+          }
         }}
         backButton={() => {
           setReelModalVisible(false);
-          player.pause();
-          player.currentTime = 0;
+          try {
+            player.pause();
+            player.currentTime = 0;
+          } catch (error) {
+            console.warn("Error pausing player on back button:", error);
+          }
         }}
       >
         {selectedReel && (
@@ -1019,6 +1068,36 @@ export default function Profile() {
               </KeyboardAwareScrollView>
             )}
           </Formik>
+        </View>
+      </RnModal>
+
+      {/* Delete Reel Warning Modal */}
+      <RnModal
+        show={deleteReelModalVisible}
+        backDrop={cancelDeleteReel}
+        backButton={cancelDeleteReel}
+      >
+        <View style={styles.deleteModalContainer}>
+          <RnText style={styles.sectionTitle}>Delete Reel</RnText>
+          <RnText style={styles.deleteModalText}>
+            Are you sure you want to delete this reel? This action cannot be
+            undone.
+          </RnText>
+
+          <View style={styles.deleteModalButtons}>
+            <RnButton
+              title="Cancel"
+              onPress={cancelDeleteReel}
+              style={[[styles.reelButton, styles.cancelButton]]}
+              disabled={deletingReel}
+            />
+            <RnButton
+              title="Delete"
+              onPress={confirmDeleteReel}
+              loading={deletingReel}
+              style={[styles.reelButton]}
+            />
+          </View>
         </View>
       </RnModal>
     </Container>

@@ -422,7 +422,10 @@ export default function Home() {
       <FlatList
         data={reels}
         keyExtractor={item => item.id}
-        contentContainerStyle={{ flexGrow: 1, paddingBottom: hp(50) }}
+        contentContainerStyle={{
+          flexGrow: 1,
+          paddingBottom: reels?.length > 0 ? hp(50) : hp(8),
+        }}
         renderItem={({ item }: { item: Reel }) => {
           const optimisticState = optimisticUpdates[item.id];
           const currentUser = getAuth().currentUser;

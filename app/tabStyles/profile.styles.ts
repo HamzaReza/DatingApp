@@ -354,4 +354,20 @@ export default (theme: "dark" | "light") =>
       padding: wp(2),
       borderRadius: Borders.circle,
     },
+    deleteModalContainer: {
+      backgroundColor: Colors[theme].background,
+      padding: wp(4),
+      borderRadius: Borders.radius2,
+      minWidth: wp(80),
+    },
+    deleteModalText: {
+      fontSize: FontSize.regular,
+      marginVertical: hp(2),
+      textAlign: "center",
+    },
+    deleteModalButtons: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      gap: wp(3),
+    },
   });

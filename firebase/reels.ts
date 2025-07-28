@@ -3,6 +3,7 @@ import {
   addDoc,
   arrayUnion,
   collection,
+  deleteDoc,
   doc,
   FirebaseFirestoreTypes,
   getDoc,
@@ -162,11 +163,11 @@ export const likeDislikeReel = async (
         const userReels = userData?.reels || [];
 
         const updatedUserReels = userReels.map((userReel: any) => {
-          if (userReel.reelId === reelId) {
+          if (userReel.id === reelId) {
             return {
               ...userReel,
-              likes: updatedLikes.length,
-              dislikes: updatedDislikes.length,
+              likes: updatedLikes,
+              dislikes: updatedDislikes,
             };
           }
           return userReel;
@@ -241,7 +242,7 @@ export const addCommentToReel = async (
         const userReels = reelOwnerData?.reels || [];
 
         const updatedUserReels = userReels.map((userReel: any) => {
-          if (userReel.reelId === reelId) {
+          if (userReel.id === reelId) {
             const currentComments = userReel.comments || [];
             return {
               ...userReel,
@@ -366,23 +367,24 @@ export const uploadReel = async (
       likes: [],
       dislikes: [],
       comments: [],
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
     const docRef = await addDoc(reelsRef, newReel);
 
     const userReelData = {
-      reelUrl: videoDownloadURL,
+      id: docRef.id,
+      videoUrl: videoDownloadURL,
       thumbnailUrl: thumbnailDownloadURL,
+      caption: caption?.trim() || "",
       visibility: "public",
       status: "approved",
-      likes: 0,
-      dislikes: 0,
+      likes: [],
+      dislikes: [],
       comments: [],
       createdAt: new Date(),
       updatedAt: new Date(),
-      reelId: docRef.id,
     };
 
     // Get current user data to see existing reels
@@ -429,9 +431,10 @@ export const deleteReelWithFiles = async (
     const db = getFirestore();
     const storage = getStorage();
     const reelRef = doc(db, "reels", reelId);
+    const userRef = doc(db, "users", userId);
 
-    const reelDoc = await reelRef.get();
-    if (!reelDoc.exists) {
+    const reelDoc = await getDoc(reelRef);
+    if (!reelDoc.exists()) {
       throw new Error("Reel not found");
     }
 
@@ -440,18 +443,30 @@ export const deleteReelWithFiles = async (
       throw new Error("Unauthorized: User can only delete their own reels");
     }
 
+    // Delete video file from storage
     if (reelData.videoUrl) {
       try {
-        const videoRef = ref(storage, reelData.videoUrl);
+        // Extract storage path from download URL
+        const videoUrl = new URL(reelData.videoUrl);
+        const videoPath = decodeURIComponent(
+          videoUrl.pathname.split("/o/")[1]?.split("?")[0] || ""
+        );
+        const videoRef = ref(storage, videoPath);
         await deleteObject(videoRef);
       } catch (storageError) {
         console.warn("Could not delete video file from storage:", storageError);
       }
     }
 
+    // Delete thumbnail file from storage
     if (reelData.thumbnailUrl) {
       try {
-        const thumbnailRef = ref(storage, reelData.thumbnailUrl);
+        // Extract storage path from download URL
+        const thumbnailUrl = new URL(reelData.thumbnailUrl);
+        const thumbnailPath = decodeURIComponent(
+          thumbnailUrl.pathname.split("/o/")[1]?.split("?")[0] || ""
+        );
+        const thumbnailRef = ref(storage, thumbnailPath);
         await deleteObject(thumbnailRef);
       } catch (storageError) {
         console.warn(
@@ -461,7 +476,23 @@ export const deleteReelWithFiles = async (
       }
     }
 
-    await reelRef.delete();
+    // Delete from reels collection
+    await deleteDoc(reelRef);
+
+    // Remove reel from user's reels array
+    const userDoc = await getDoc(userRef);
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      const userReels = userData?.reels || [];
+
+      const updatedUserReels = userReels.filter(
+        (userReel: any) => userReel.id !== reelId
+      );
+
+      await updateDoc(userRef, {
+        reels: updatedUserReels,
+      });
+    }
   } catch (error) {
     console.error("Error deleting reel with files:", error);
     throw error;
@@ -533,7 +564,7 @@ export const updateReel = async (
       const userReels = userData?.reels || [];
 
       const updatedUserReels = userReels.map((userReel: any) => {
-        if (userReel.reelId === reelId) {
+        if (userReel.id === reelId) {
           return {
             ...userReel,
             ...updateData,

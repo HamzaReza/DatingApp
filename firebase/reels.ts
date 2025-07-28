@@ -48,9 +48,7 @@ export interface ReelComment {
   createdAt: Date | string | FirebaseFirestoreTypes.Timestamp;
 }
 
-export const fetchUserReels = (
-  callback: (reels: Reel[]) => void
-): (() => void) => {
+const fetchUserReels = (callback: (reels: Reel[]) => void): (() => void) => {
   try {
     const db = getFirestore();
     const reelsRef = collection(db, "reels");
@@ -65,23 +63,27 @@ export const fetchUserReels = (
         snapshot.forEach(
           (doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
             const data = doc.data();
-            const reel: Reel = {
-              id: doc.id,
-              userId: data.userId,
-              username: data.username,
-              userPhoto: data.userPhoto,
-              videoUrl: data.videoUrl,
-              thumbnailUrl: data.thumbnailUrl,
-              caption: data.caption,
-              visibility: data.visibility || "public",
-              status: data.status || "approved",
-              likes: data.likes || [],
-              dislikes: data.dislikes || [],
-              comments: data.comments || [],
-              createdAt: data.createdAt?.toDate() || new Date(),
-              updatedAt: data.updatedAt?.toDate() || new Date(),
-            };
-            reels.push(reel);
+
+            // Filter for public visibility in the client side
+            if (data.visibility === "public") {
+              const reel: Reel = {
+                id: doc.id,
+                userId: data.userId,
+                username: data.username,
+                userPhoto: data.userPhoto,
+                videoUrl: data.videoUrl,
+                thumbnailUrl: data.thumbnailUrl,
+                caption: data.caption,
+                visibility: data.visibility || "public",
+                status: data.status || "approved",
+                likes: data.likes || [],
+                dislikes: data.dislikes || [],
+                comments: data.comments || [],
+                createdAt: data.createdAt?.toDate() || new Date(),
+                updatedAt: data.updatedAt?.toDate() || new Date(),
+              };
+              reels.push(reel);
+            }
           }
         );
 
@@ -100,7 +102,7 @@ export const fetchUserReels = (
   }
 };
 
-export const likeDislikeReel = async (
+const likeDislikeReel = async (
   reelId: string,
   userId: string,
   action: "like" | "dislike"
@@ -184,7 +186,7 @@ export const likeDislikeReel = async (
   }
 };
 
-export const addCommentToReel = async (
+const addCommentToReel = async (
   reelId: string,
   content: string
 ): Promise<void> => {
@@ -263,7 +265,7 @@ export const addCommentToReel = async (
   }
 };
 
-export const listenToReelComments = (
+const listenToReelComments = (
   reelId: string,
   callback: (comments: ReelComment[]) => void
 ): (() => void) => {
@@ -300,7 +302,7 @@ export const listenToReelComments = (
   }
 };
 
-export const uploadReel = async (
+const uploadReel = async (
   videoUri: string,
   thumbnailUri?: string,
   caption?: string
@@ -419,7 +421,7 @@ export const uploadReel = async (
   }
 };
 
-export const deleteReelWithFiles = async (
+const deleteReelWithFiles = async (
   reelId: string,
   userId: string
 ): Promise<void> => {
@@ -499,7 +501,7 @@ export const deleteReelWithFiles = async (
   }
 };
 
-export const updateReel = async (
+const updateReel = async (
   reelId: string,
   userId: string,
   updates: {
@@ -582,4 +584,14 @@ export const updateReel = async (
     console.error("Error updating reel:", error);
     throw error;
   }
+};
+
+export {
+  addCommentToReel,
+  deleteReelWithFiles,
+  fetchUserReels,
+  likeDislikeReel,
+  listenToReelComments,
+  updateReel,
+  uploadReel,
 };

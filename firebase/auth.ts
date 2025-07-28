@@ -217,22 +217,45 @@ const getUserByEmail = async (email: string) => {
   }
 };
 
-const getUserByUid = async (userId: string) => {
+const getUserByUid = (
+  userId: string,
+  callback?: (userData: any) => void
+): (() => void) => {
   try {
-    const db = getFirestore();
-
-    const userRef = doc(db, "users", userId);
-    const userDoc = await getDoc(userRef);
-
-    if (!userDoc.exists()) {
-      return null;
+    if (!userId) {
+      console.error("User ID is required for getting user data");
+      return () => {};
     }
 
-    const userData = userDoc.data();
-    return userData;
-  } catch (error: any) {
-    console.error("Error getting user data:", error);
-    throw new Error(`Failed to get user data: ${error.message}`);
+    const db = getFirestore();
+    const userRef = doc(db, "users", userId);
+
+    const unsubscribe = onSnapshot(
+      userRef,
+      snapshot => {
+        if (snapshot.exists()) {
+          const userData = snapshot.data();
+          if (callback) {
+            callback(userData);
+          }
+        } else {
+          if (callback) {
+            callback(null);
+          }
+        }
+      },
+      error => {
+        console.error("Error in getUserByUid listener:", error);
+        if (callback) {
+          callback(null);
+        }
+      }
+    );
+
+    return unsubscribe;
+  } catch (error) {
+    console.error("Error setting up getUserByUid listener:", error);
+    return () => {};
   }
 };
 

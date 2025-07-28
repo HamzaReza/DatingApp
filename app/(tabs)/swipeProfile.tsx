@@ -69,25 +69,29 @@ export default function SwipeProfile() {
 
   const updateTrustScore = async (userId: string) => {
     try {
-      const currentUserData = await getUserByUid(userId);
+      // Use real-time listener to get current user data
+      const unsubscribe = getUserByUid(userId, async currentUserData => {
+        if (currentUserData) {
+          let newTrustScore: number;
 
-      if (currentUserData) {
-        let newTrustScore: number;
+          if (
+            currentUserData.trustScore !== undefined &&
+            currentUserData.trustScore !== null
+          ) {
+            // If trustScore exists, subtract 1 but don't go below 0
+            newTrustScore = Math.max(0, currentUserData.trustScore - 1);
+          } else {
+            // If trustScore doesn't exist, start with 100 - 1 = 99
+            newTrustScore = 99;
+          }
 
-        if (
-          currentUserData.trustScore !== undefined &&
-          currentUserData.trustScore !== null
-        ) {
-          // If trustScore exists, subtract 1 but don't go below 0
-          newTrustScore = Math.max(0, currentUserData.trustScore - 1);
-        } else {
-          // If trustScore doesn't exist, start with 100 - 1 = 99
-          newTrustScore = 99;
+          // Update user with new trust score
+          await updateUser(userId, { trustScore: newTrustScore });
+
+          // Clean up the listener after updating
+          unsubscribe();
         }
-
-        // Update user with new trust score
-        await updateUser(userId, { trustScore: newTrustScore });
-      }
+      });
     } catch (error) {
       console.error("Error updating trust score:", error);
     }

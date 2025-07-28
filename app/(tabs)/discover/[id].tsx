@@ -155,32 +155,42 @@ export default function Profile() {
   const getUserDetails = async () => {
     scrollY.setValue(0);
     setLoading(true);
-    const data = await getUserByUid(id as string);
-    setProfileData(data);
-    setLoading(false);
+
+    // Set up real-time listener for user data
+    const unsubscribe = getUserByUid(id as string, data => {
+      setProfileData(data);
+      setLoading(false);
+    });
+
+    // Store the unsubscribe function for cleanup
+    return unsubscribe;
   };
 
   const updateTrustScore = async (userId: string) => {
     try {
-      const currentUserData = await getUserByUid(userId);
+      // Use real-time listener to get current user data
+      const unsubscribe = getUserByUid(userId, async currentUserData => {
+        if (currentUserData) {
+          let newTrustScore: number;
 
-      if (currentUserData) {
-        let newTrustScore: number;
+          if (
+            currentUserData.trustScore !== undefined &&
+            currentUserData.trustScore !== null
+          ) {
+            // If trustScore exists, add 1 but don't go over 100
+            newTrustScore = Math.min(100, currentUserData.trustScore + 1);
+          } else {
+            // If trustScore doesn't exist, start with 1
+            newTrustScore = 1;
+          }
 
-        if (
-          currentUserData.trustScore !== undefined &&
-          currentUserData.trustScore !== null
-        ) {
-          // If trustScore exists, add 1 but don't go over 100
-          newTrustScore = Math.min(100, currentUserData.trustScore + 1);
-        } else {
-          // If trustScore doesn't exist, start with 1
-          newTrustScore = 1;
+          // Update user with new trust score
+          await updateUser(userId, { trustScore: newTrustScore });
+
+          // Clean up the listener after updating
+          unsubscribe();
         }
-
-        // Update user with new trust score
-        await updateUser(userId, { trustScore: newTrustScore });
-      }
+      });
     } catch (error) {
       console.error("Error updating trust score:", error);
     }
@@ -634,8 +644,6 @@ export default function Profile() {
                     if (!result.canceled) {
                       const videoUri = result.assets[0].uri;
                       setSelectedVideoUri(videoUri);
-
-                      // Generate thumbnail for preview
                       try {
                         const thumbnailUri = await generateThumbnail(videoUri);
                         setSelectedVideoThumbnail(thumbnailUri);

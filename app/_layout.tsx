@@ -1,3 +1,4 @@
+import { VideoProvider } from "@/components/VideoContext";
 import { Colors } from "@/constants/Colors";
 import { FontSize } from "@/constants/FontSize";
 import { useColorScheme } from "@/hooks/useColorScheme";
@@ -121,13 +122,15 @@ export default function RootLayout() {
               <ThemeProvider
                 value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
               >
-                <Stack screenOptions={{ headerShown: false }}>
-                  <Stack.Screen name="(auth)" />
-                  <Stack.Screen name="(tabs)" />
-                  <Stack.Screen name="(admin)" />
-                  <Stack.Screen name="+not-found" />
-                  <Stack.Screen name="eventScreens/explore" />
-                </Stack>
+                <VideoProvider>
+                  <Stack screenOptions={{ headerShown: false }}>
+                    <Stack.Screen name="(auth)" />
+                    <Stack.Screen name="(tabs)" />
+                    <Stack.Screen name="(admin)" />
+                    <Stack.Screen name="+not-found" />
+                    <Stack.Screen name="eventScreens/explore" />
+                  </Stack>
+                </VideoProvider>
               </ThemeProvider>
             </PersistGate>
           </Provider>

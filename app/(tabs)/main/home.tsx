@@ -1,9 +1,11 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import createStyles from "@/app/tabStyles/home.styles";
-import QuestionCard from "@/components/QuestionCard";
+import CommentModal from "@/components/CommentModal";
+import ReelCard from "@/components/ReelCard";
 import RnAvatar from "@/components/RnAvatar";
 import Container from "@/components/RnContainer";
 import RnText from "@/components/RnText";
+import showToaster from "@/components/RnToast";
 import RoundButton from "@/components/RoundButton";
 import StoryCircle from "@/components/StoryCircle";
 import { Colors } from "@/constants/Colors";
@@ -13,6 +15,13 @@ import {
   handleStoryUpload,
   updateUser,
 } from "@/firebase/auth";
+import {
+  addCommentToReel,
+  fetchUserReels,
+  likeDislikeReel,
+  listenToReelComments,
+  Reel,
+} from "@/firebase/reels";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import {
   setDeviceLocation,
@@ -37,73 +46,32 @@ type Story = {
   isOwn: boolean;
 };
 
-type Question = {
-  id: string;
-  category: string;
-  question: string;
-  user: {
-    name: string;
-    location: string;
-    avatar: string;
-  };
-  backgroundImage: string;
-};
-
-const questions: Question[] = [
-  {
-    id: "1",
-    category: "Travel",
-    question: "If you could live anywhere in the world, where would you pick?",
-    user: {
-      name: "Miranda Kehlani",
-      location: "STUTTGART",
-      avatar:
-        "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=100",
-    },
-    backgroundImage:
-      "https://images.pexels.com/photos/1433052/pexels-photo-1433052.jpeg?auto=compress&cs=tinysrgb&w=400",
-  },
-  {
-    id: "2",
-    category: "Football",
-    question: "What's your favorite football team and why?",
-    user: {
-      name: "Alex Johnson",
-      location: "MUNICH",
-      avatar:
-        "https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=100",
-    },
-    backgroundImage:
-      "https://images.pexels.com/photos/114296/pexels-photo-114296.jpeg?auto=compress&cs=tinysrgb&w=400",
-  },
-  {
-    id: "3",
-    category: "Food",
-    question: "What's the most adventurous dish you've ever tried?",
-    user: {
-      name: "Sofia Martinez",
-      location: "BARCELONA",
-      avatar:
-        "https://images.pexels.com/photos/1499327/pexels-photo-1499327.jpeg?auto=compress&cs=tinysrgb&w=100",
-    },
-    backgroundImage:
-      "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=400",
-  },
-];
-
 export default function Home() {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
   const { user } = useSelector((state: RootState) => state.user);
 
-  const [activeTab, setActiveTab] = useState<
-    "Make Friends" | "Search Partners"
-  >("Make Friends");
   const [hasNotification] = useState(true);
 
   const dispatch = useDispatch();
   const [allStories, setAllStories] = useState<Story[]>([]);
+  const [reels, setReels] = useState<Reel[]>([]);
+  const [optimisticUpdates, setOptimisticUpdates] = useState<{
+    [reelId: string]: {
+      likes: number;
+      dislikes: number;
+      isLiked: boolean;
+      isDisliked: boolean;
+    };
+  }>({});
+  const [commentModalVisible, setCommentModalVisible] = useState(false);
+  const [selectedReelForComment, setSelectedReelForComment] =
+    useState<Reel | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [commentListener, setCommentListener] = useState<(() => void) | null>(
+    null
+  );
 
   // Get user's current location
   const getCurrentLocation = async () => {
@@ -126,7 +94,6 @@ export default function Home() {
           });
         }
       } else {
-        console.log("Location permission denied");
         dispatch(setLocationPermissionGranted(false));
       }
     } catch (error) {
@@ -138,21 +105,46 @@ export default function Home() {
   useEffect(() => {
     getCurrentLocation();
     getStories();
+    const unsubscribe = getReels();
 
     const interval = setInterval(() => {
       getCurrentLocation();
     }, 60000);
 
-    return () => clearInterval(interval);
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+      clearInterval(interval);
+      // Clean up comment listener if it exists
+      if (commentListener) {
+        commentListener();
+      }
+    };
   }, []);
+
+  useEffect(() => {
+    setOptimisticUpdates({});
+  }, [reels]);
 
   const getStories = async () => {
     try {
       const stories = await fetchAllUserStories();
-
       setAllStories(stories);
     } catch (error) {
       console.log("error when fetch stories", error);
+    }
+  };
+
+  const getReels = () => {
+    try {
+      const unsubscribe = fetchUserReels((reelsData: Reel[]) => {
+        setReels(reelsData);
+      });
+
+      return unsubscribe;
+    } catch (error) {
+      console.log("error when fetch reels", error);
     }
   };
 
@@ -171,8 +163,193 @@ export default function Home() {
     });
   };
 
-  const handleCardAction = (action: string, questionId: string) => {
-    console.log(`${action} on question ${questionId}`);
+  const handleReelAction = async (action: string, reelId: string) => {
+    try {
+      const currentUser = getAuth().currentUser;
+      if (!currentUser) {
+        return;
+      }
+
+      if (action === "like" || action === "dislike") {
+        const currentReel = reels.find(reel => reel.id === reelId);
+        if (!currentReel) return;
+
+        const currentLikes = currentReel.likes || [];
+        const currentDislikes = currentReel.dislikes || [];
+        const isCurrentlyLiked = currentLikes.includes(currentUser.uid);
+        const isCurrentlyDisliked = currentDislikes.includes(currentUser.uid);
+        const currentLikeCount = currentLikes.length;
+        const currentDislikeCount = currentDislikes.length;
+
+        let newLikeCount: number;
+        let newDislikeCount: number;
+        let newIsLiked: boolean;
+        let newIsDisliked: boolean;
+
+        if (action === "like") {
+          if (isCurrentlyLiked) {
+            newLikeCount = Math.max(0, currentLikeCount - 1);
+            newIsLiked = false;
+          } else {
+            newLikeCount = currentLikeCount + 1;
+            newIsLiked = true;
+          }
+
+          if (isCurrentlyDisliked) {
+            newDislikeCount = Math.max(0, currentDislikeCount - 1);
+            newIsDisliked = false;
+          } else {
+            newDislikeCount = currentDislikeCount;
+            newIsDisliked = false;
+          }
+        } else {
+          if (isCurrentlyDisliked) {
+            newDislikeCount = Math.max(0, currentDislikeCount - 1);
+            newIsDisliked = false;
+          } else {
+            newDislikeCount = currentDislikeCount + 1;
+            newIsDisliked = true;
+          }
+
+          if (isCurrentlyLiked) {
+            newLikeCount = Math.max(0, currentLikeCount - 1);
+            newIsLiked = false;
+          } else {
+            newLikeCount = currentLikeCount;
+            newIsLiked = false;
+          }
+        }
+
+        setOptimisticUpdates(prev => ({
+          ...prev,
+          [reelId]: {
+            likes: newLikeCount,
+            dislikes: newDislikeCount,
+            isLiked: newIsLiked,
+            isDisliked: newIsDisliked,
+          },
+        }));
+
+        try {
+          await likeDislikeReel(
+            reelId,
+            currentUser.uid,
+            action as "like" | "dislike"
+          );
+
+          // Optimistic update successful, keep the state
+        } catch (error) {
+          setOptimisticUpdates(prev => {
+            const newState = { ...prev };
+            delete newState[reelId];
+            return newState;
+          });
+
+          console.error(`Error ${action}ing reel:`, error);
+          showToaster({
+            type: "error",
+            heading: "Action Failed",
+            message: `Failed to ${action} reel. Please try again.`,
+          });
+        }
+      } else if (action === "comment") {
+        const currentReel = reels.find(reel => reel.id === reelId);
+        if (currentReel) {
+          setSelectedReelForComment(currentReel);
+          setCommentModalVisible(true);
+
+          // Set up real-time listener for comments
+          const unsubscribe = listenToReelComments(reelId, comments => {
+            setSelectedReelForComment(prev =>
+              prev ? { ...prev, comments } : null
+            );
+            // Also update the main reels state
+            setReels(prevReels =>
+              prevReels.map(reel =>
+                reel.id === reelId ? { ...reel, comments } : reel
+              )
+            );
+          });
+          setCommentListener(() => unsubscribe);
+        }
+      }
+    } catch (error) {
+      console.error(`Error handling reel action ${action}:`, error);
+    }
+  };
+
+  const handleReelPress = (reel: Reel) => {
+    console.log("Reel pressed:", reel.id);
+  };
+
+  const handleAddComment = async (comment: string) => {
+    if (!selectedReelForComment) return;
+
+    const currentUser = getAuth().currentUser;
+    if (!currentUser) {
+      showToaster({
+        type: "error",
+        heading: "Authentication Error",
+        message: "Please log in to comment.",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    // Create optimistic comment for immediate UI feedback
+    const optimisticComment = {
+      id: `${Date.now()}_${currentUser.uid}`,
+      userId: currentUser.uid,
+      username: user?.name || "User",
+      userPhoto: user?.photo || "",
+      content: comment.trim(),
+      createdAt: new Date(),
+    };
+
+    // Add optimistic comment immediately
+    setSelectedReelForComment(prev =>
+      prev
+        ? { ...prev, comments: [...(prev.comments || []), optimisticComment] }
+        : null
+    );
+
+    try {
+      await addCommentToReel(selectedReelForComment.id, comment);
+      // The real-time listener will automatically update the state with the server response
+    } catch (error) {
+      // Remove optimistic comment on error
+      setSelectedReelForComment(prev =>
+        prev
+          ? {
+              ...prev,
+              comments:
+                prev.comments?.filter(c => c.id !== optimisticComment.id) || [],
+            }
+          : null
+      );
+
+      console.error("Error adding comment:", error);
+      showToaster({
+        type: "error",
+        heading: "Comment Failed",
+        message: "Failed to add comment. Please try again.",
+      });
+      throw error;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCloseCommentModal = () => {
+    setCommentModalVisible(false);
+    setSelectedReelForComment(null);
+
+    // Clean up the comment listener
+    if (commentListener) {
+      commentListener();
+      setCommentListener(null);
+    }
   };
 
   const pickStory = async () => {
@@ -242,57 +419,67 @@ export default function Home() {
         />
       </View>
 
-      {/* <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === "Make Friends" && styles.activeTab]}
-          onPress={() => setActiveTab("Make Friends")}
-        >
-          <RnText
-            style={[
-              styles.tabText,
-              activeTab === "Make Friends" && styles.activeTabText,
-            ]}
-          >
-            Make Friends
-          </RnText>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.tab,
-            activeTab === "Search Partners" && styles.activeTab,
-          ]}
-          onPress={() => setActiveTab("Search Partners")}
-        >
-          <RnText
-            style={[
-              styles.tabText,
-              activeTab === "Search Partners" && styles.activeTabText,
-            ]}
-          >
-            Search Partners
-          </RnText>
-        </TouchableOpacity>
-      </View> */}
-
       <FlatList
-        data={questions}
+        data={reels}
         keyExtractor={item => item.id}
-        style={{ flex: 1 }}
-        contentContainerStyle={{ paddingBottom: hp(10) }}
-        renderItem={({ item }: { item: Question }) => (
-          <QuestionCard
-            id={item.id}
-            category={item.category}
-            question={item.question}
-            user={item.user}
-            backgroundImage={item.backgroundImage}
-            onLike={() => handleCardAction("like", item.id)}
-            onComment={() => handleCardAction("comment", item.id)}
-            onMore={() => handleCardAction("more", item.id)}
-          />
-        )}
+        contentContainerStyle={{
+          flexGrow: 1,
+          paddingBottom: reels?.length > 0 ? hp(50) : hp(8),
+        }}
+        renderItem={({ item }: { item: Reel }) => {
+          const optimisticState = optimisticUpdates[item.id];
+          const currentUser = getAuth().currentUser;
+          const isLiked = currentUser
+            ? (item.likes || []).includes(currentUser.uid)
+            : false;
+          const isDisliked = currentUser
+            ? (item.dislikes || []).includes(currentUser.uid)
+            : false;
+
+          return (
+            <ReelCard
+              reel={item}
+              onLike={() => handleReelAction("like", item.id)}
+              onDislike={() => handleReelAction("dislike", item.id)}
+              onComment={() => handleReelAction("comment", item.id)}
+              onPress={() => handleReelPress(item)}
+              optimisticLikes={optimisticState?.likes}
+              optimisticDislikes={optimisticState?.dislikes}
+              isLiked={
+                optimisticState?.isLiked !== undefined
+                  ? optimisticState.isLiked
+                  : isLiked
+              }
+              isDisliked={
+                optimisticState?.isDisliked !== undefined
+                  ? optimisticState.isDisliked
+                  : isDisliked
+              }
+            />
+          );
+        }}
         showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <View
+            style={{
+              flex: 1,
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <RnText style={{ color: Colors[theme].tabIconDefault }}>
+              No reels available. Be the first to share a reel!
+            </RnText>
+          </View>
+        }
+      />
+
+      <CommentModal
+        visible={commentModalVisible}
+        onClose={handleCloseCommentModal}
+        comments={selectedReelForComment?.comments || []}
+        onAddComment={handleAddComment}
+        loading={isSubmitting}
       />
     </Container>
   );

@@ -14,20 +14,13 @@ import {
   fetchTags,
   getUserByUid,
   sendGroupInvitesByTags,
-  uploadImage,
 } from "@/firebase/auth";
-import {
-  fetchOneToOneChats,
-  fetchUserGroups,
-  setupChatListeners,
-} from "@/firebase/message";
+import { setupChatListeners } from "@/firebase/message";
 import { encodeImagePath, wp } from "@/utils";
 import { Ionicons } from "@expo/vector-icons";
 import { getAuth } from "@react-native-firebase/auth";
 import {
-  collection,
   doc,
-  getDoc,
   getFirestore,
   onSnapshot,
 } from "@react-native-firebase/firestore";
@@ -91,59 +84,6 @@ const recentMatches: RecentMatch[] = [
     name: "Match 3",
     image:
       "https://images.pexels.com/photos/1499327/pexels-photo-1499327.jpeg?auto=compress&cs=tinysrgb&w=150",
-  },
-];
-
-const messages: Message[] = [
-  {
-    id: "1",
-    name: "Jessica Parker, 23",
-    message: "What about that new jacket if I ...",
-    time: "09:18",
-    image:
-      "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150",
-    isOnline: true,
-    unread: false,
-  },
-  {
-    id: "2",
-    name: "Clara Hazel",
-    message: "I know right 😊",
-    time: "12:44",
-    image:
-      "https://images.pexels.com/photos/1499327/pexels-photo-1499327.jpeg?auto=compress&cs=tinysrgb&w=150",
-    isOnline: true,
-    unread: false,
-  },
-  {
-    id: "3",
-    name: "Brandon Aminoff",
-    message: "I've already registered, can't wai...",
-    time: "08:06",
-    image:
-      "https://images.pexels.com/photos/1674752/pexels-photo-1674752.jpeg?auto=compress&cs=tinysrgb&w=150",
-    isOnline: true,
-    unread: true,
-  },
-  {
-    id: "4",
-    name: "Amina Mina",
-    message: "It will have two lines of heading ...",
-    time: "09:32",
-    image:
-      "https://images.pexels.com/photos/1130626/pexels-photo-1130626.jpeg?auto=compress&cs=tinysrgb&w=150",
-    isOnline: false,
-    unread: true,
-  },
-  {
-    id: "5",
-    name: "Savanna Hall",
-    message: "It will have two lines of heading ...",
-    time: "06:21",
-    image:
-      "https://images.pexels.com/photos/1040880/pexels-photo-1040880.jpeg?auto=compress&cs=tinysrgb&w=150",
-    isOnline: false,
-    unread: true,
   },
 ];
 
@@ -271,58 +211,41 @@ export default function Messages() {
         const otherUserId = convo.participants.find(p => p !== currentUserId);
         if (!otherUserId) continue;
 
-        const user = await getUserByUid(otherUserId);
-        if (!user) continue;
+        // Set up real-time listener for user data
+        const unsubscribe = getUserByUid(otherUserId, user => {
+          if (!user) return;
 
-        const lastMessage = convo.messages?.[convo.messages.length - 1];
-        const timestamp =
-          lastMessage?.timestamp || convo.lastUpdated || new Date();
+          const lastMessage = convo.messages[convo.messages.length - 1];
 
-        const convoId = convo.id;
+          const chatData = {
+            id: convo.id,
+            groupName: user.name,
+            message: lastMessage?.text || "No message yet",
+            time: formatTimestamp(convo.lastUpdated),
+            image: encodeImagePath(user.photo) || null,
+            isOnline: user.isOnline || false,
+            unread: convo.unread || 0,
+            lastMessage: convo.lastMessage.content,
+          };
 
-        const status = chatStatusMap[convoId] || {
-          isConfirmed: false,
-          isRejected: false,
-        };
+          // Update the chat list with real-time data
+          setChatList(prevChats => {
+            const updatedChats = prevChats.filter(chat => chat.id !== convo.id);
+            return [...updatedChats, chatData].sort(
+              (a, b) => b.time?.seconds - a.time?.seconds
+            );
+          });
 
-        allChats.push({
-          id: convoId,
-          groupName: user.name,
-          message: lastMessage?.text || "No message yet",
-          time: formatTimestamp(timestamp),
-          rawTime: timestamp,
-          image: encodeImagePath(user.photo) || null,
-          isOnline: user.isOnline || false,
-          unread: convo.unread || 0,
-          lastMessage: lastMessage?.content || "No message yet",
-          type: "single",
-          ...status,
+          // Clean up the listener after getting the data
+          unsubscribe();
         });
 
         // Add Firestore listeners for this convo
         unsubListeners.push(...listenToMeetStatus(convoId, updateChatStatus));
       }
-
-      // Sort by latest message time
-      allChats.sort((a, b) => {
-        const getTime = t =>
-          t?.seconds
-            ? t.seconds * 1000
-            : t?.toDate
-            ? t.toDate().getTime()
-            : new Date(t).getTime();
-
-        return getTime(b.rawTime) - getTime(a.rawTime);
-      });
-
-      setChatList(allChats);
     };
 
     prepareChatList();
-
-    return () => {
-      unsubListeners.forEach(unsub => unsub());
-    };
   }, [groupList, oneToOneList, chatStatusMap]);
 
   useEffect(() => {

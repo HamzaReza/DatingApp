@@ -10,17 +10,19 @@ import RnModal from "@/components/RnModal";
 import RnText from "@/components/RnText";
 import showToaster from "@/components/RnToast";
 import RoundButton from "@/components/RoundButton";
+import { Borders } from "@/constants/Borders";
 import { Colors } from "@/constants/Colors";
+import { FontFamily } from "@/constants/FontFamily";
 import {
   fetchTags,
   getUserByUid,
   recordLike,
   updateUser,
-  uploadImage,
   uploadMultipleImages,
 } from "@/firebase/auth";
+import { deleteReelWithFiles, updateReel, uploadReel } from "@/firebase/reels";
 import { RootState } from "@/redux/store";
-import { encodeImagePath, hp } from "@/utils";
+import { encodeImagePath, hp, wp } from "@/utils";
 import getDistanceFromLatLonInMeters from "@/utils/Distance";
 import { Ionicons } from "@expo/vector-icons";
 import { doc, getDoc, getFirestore } from "@react-native-firebase/firestore";
@@ -41,6 +43,7 @@ import {
   useColorScheme,
   View,
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useSelector } from "react-redux";
 import * as Yup from "yup";
 
@@ -80,33 +83,64 @@ export default function Profile() {
   const [galleryLoading, setGalleryLoading] = useState(false);
   const [reelModalVisible, setReelModalVisible] = useState(false);
   const [selectedReel, setSelectedReel] = useState<string | null>(null);
+  const [reelUploadModalVisible, setReelUploadModalVisible] = useState(false);
+  const [selectedVideoUri, setSelectedVideoUri] = useState<string | null>(null);
+  const [selectedVideoThumbnail, setSelectedVideoThumbnail] = useState<
+    string | null
+  >(null);
+  const [deleteReelModalVisible, setDeleteReelModalVisible] = useState(false);
+  const [reelToDelete, setReelToDelete] = useState<string | null>(null);
+  const [deletingReel, setDeletingReel] = useState(false);
+  const reelFormikRef = useRef<FormikProps<any>>(null);
   const formikRef = useRef<FormikProps<any>>(null);
 
   useEffect(() => {
-    console.log("id", id);
     getUserDetails();
     if (user?.uid !== id) {
       setShowActionButtons(true);
     }
   }, []);
 
-  // Single useEffect to handle all video player state management
   useEffect(() => {
     if (reelModalVisible && selectedReel) {
-      // Modal is open and a reel is selected - play the video
-      player.currentTime = 0;
-      player.play();
+      try {
+        player.currentTime = 0;
+        player.play();
+      } catch (error) {
+        console.warn("Error playing video:", error);
+      }
     } else {
-      // Modal is closed or no reel selected - pause and cleanup
-      player.pause();
-      player.currentTime = 0;
+      try {
+        player.pause();
+        player.currentTime = 0;
+      } catch (error) {
+        console.warn("Error pausing video:", error);
+      }
 
-      // If modal is closed, clear the selected reel
       if (!reelModalVisible) {
         setSelectedReel(null);
       }
     }
   }, [reelModalVisible, selectedReel]);
+
+  // Clean up video player if selected reel is no longer in data
+  useEffect(() => {
+    if (selectedReel && profileData?.reels) {
+      const reelExists = profileData.reels.some(
+        (reel: any) => reel.videoUrl === selectedReel
+      );
+      if (!reelExists) {
+        try {
+          player.pause();
+          player.currentTime = 0;
+        } catch (error) {
+          console.warn("Error cleaning up player for deleted reel:", error);
+        }
+        setSelectedReel(null);
+        setReelModalVisible(false);
+      }
+    }
+  }, [profileData?.reels, selectedReel]);
 
   useEffect(() => {
     const getAddress = async () => {
@@ -132,7 +166,6 @@ export default function Profile() {
   }, []);
 
   useEffect(() => {
-    console.log("hello");
     setDropdownValue(
       (profileData?.interests?.split(",") || [])
         .map((i: string) => i.trim())
@@ -148,32 +181,42 @@ export default function Profile() {
   const getUserDetails = async () => {
     scrollY.setValue(0);
     setLoading(true);
-    const data = await getUserByUid(id as string);
-    setProfileData(data);
-    setLoading(false);
+
+    // Set up real-time listener for user data
+    const unsubscribe = getUserByUid(id as string, data => {
+      setProfileData(data);
+      setLoading(false);
+    });
+
+    // Store the unsubscribe function for cleanup
+    return unsubscribe;
   };
 
   const updateTrustScore = async (userId: string) => {
     try {
-      const currentUserData = await getUserByUid(userId);
+      // Use real-time listener to get current user data
+      const unsubscribe = getUserByUid(userId, async currentUserData => {
+        if (currentUserData) {
+          let newTrustScore: number;
 
-      if (currentUserData) {
-        let newTrustScore: number;
+          if (
+            currentUserData.trustScore !== undefined &&
+            currentUserData.trustScore !== null
+          ) {
+            // If trustScore exists, add 1 but don't go over 100
+            newTrustScore = Math.min(100, currentUserData.trustScore + 1);
+          } else {
+            // If trustScore doesn't exist, start with 1
+            newTrustScore = 1;
+          }
 
-        if (
-          currentUserData.trustScore !== undefined &&
-          currentUserData.trustScore !== null
-        ) {
-          // If trustScore exists, add 1 but don't go over 100
-          newTrustScore = Math.min(100, currentUserData.trustScore + 1);
-        } else {
-          // If trustScore doesn't exist, start with 1
-          newTrustScore = 1;
+          // Update user with new trust score
+          await updateUser(userId, { trustScore: newTrustScore });
+
+          // Clean up the listener after updating
+          unsubscribe();
         }
-
-        // Update user with new trust score
-        await updateUser(userId, { trustScore: newTrustScore });
-      }
+      });
     } catch (error) {
       console.error("Error updating trust score:", error);
     }
@@ -225,10 +268,7 @@ export default function Profile() {
     currentUserId: string,
     profileViewingUserId: string
   ) => {
-    console.log("hi");
-
     try {
-      console.log("hi");
       const db = getFirestore();
 
       // Check both possible match document ID formats
@@ -299,37 +339,22 @@ export default function Profile() {
     await getUserDetails();
   };
 
-  const handleReelUpload = async (uri: string) => {
+  const handleReelUpload = async (uri: string, caption: string) => {
     try {
       setGalleryLoading(true);
-      let reelUrl = await uploadImage(uri, "user", user.uid, "reel");
 
+      // Generate thumbnail from video
       const thumbnailUri = await generateThumbnail(uri);
 
-      let thumbnailUrl = null;
-      if (thumbnailUri) {
-        thumbnailUrl = await uploadImage(
-          thumbnailUri,
-          "user",
-          user.uid,
-          "gallery"
-        );
-      }
+      // Use the new uploadReel function
+      await uploadReel(uri, thumbnailUri || undefined, caption);
 
-      const newReel = {
-        reelUrl,
-        thumbnailUrl,
-        visibility: "private",
-        status: "approved",
-        likes: 0,
-        dislikes: 0,
-        comments: [],
-        createdAt: new Date(),
-      };
-      await updateUser(user.uid, {
-        reels: [...(profileData?.reels || []), newReel],
-      });
+      // Reset form and close modal
+      setReelUploadModalVisible(false);
+      setSelectedVideoUri(null);
+      setSelectedVideoThumbnail(null);
 
+      // Refresh user details to show the new reel
       await getUserDetails();
     } catch (error: any) {
       console.error("Error uploading reel:", error);
@@ -341,6 +366,72 @@ export default function Profile() {
     } finally {
       setGalleryLoading(false);
     }
+  };
+
+  const handleReelVisibilityToggle = async (
+    reelId: string,
+    currentVisibility: string
+  ) => {
+    try {
+      const newVisibility =
+        currentVisibility === "public" ? "private" : "public";
+      await updateReel(reelId, user.uid, {
+        visibility: newVisibility,
+      });
+
+      // Refresh user details to show the updated reel
+      await getUserDetails();
+    } catch (error) {
+      console.error("Error updating reel visibility:", error);
+      Alert.alert("Error", "Failed to update reel visibility");
+    }
+  };
+
+  const handleReelDelete = (reelId: string) => {
+    setReelToDelete(reelId);
+    setDeleteReelModalVisible(true);
+  };
+
+  const confirmDeleteReel = async () => {
+    if (!reelToDelete) return;
+
+    try {
+      setDeletingReel(true);
+
+      // Clean up video player before deleting
+      if (player && selectedReel) {
+        try {
+          player.pause();
+          player.currentTime = 0;
+        } catch (error) {
+          console.warn("Error cleaning up player before delete:", error);
+        }
+      }
+
+      // Close modal and clear selected reel
+      setReelModalVisible(false);
+      setSelectedReel(null);
+
+      await deleteReelWithFiles(reelToDelete, user.uid);
+
+      // Refresh user details to show the updated reels
+      await getUserDetails();
+
+      // Close modal and reset state
+      setDeleteReelModalVisible(false);
+      setReelToDelete(null);
+    } catch (error) {
+      console.error("Error deleting reel:", error);
+      Alert.alert("Error", "Failed to delete reel");
+    } finally {
+      setDeletingReel(false);
+    }
+  };
+
+  const cancelDeleteReel = () => {
+    setDeleteReelModalVisible(false);
+    setReelToDelete(null);
+    setDeletingReel(false);
   };
 
   // Image transform animations
@@ -512,7 +603,6 @@ export default function Profile() {
               <TouchableOpacity
                 style={styles.sendButton}
                 onPress={() => {
-                  console.log("Button pressed!"); // Test if this logs
                   handleSendPress(user.uid, id as string);
                 }}
               >
@@ -522,7 +612,6 @@ export default function Profile() {
                   iconColor={Colors[theme].primary}
                   backgroundColour={Colors[theme].background}
                   onPress={() => {
-                    console.log("Button pressed!"); // Test if this logs
                     handleSendPress(user.uid, id as string);
                   }}
                 />
@@ -615,22 +704,19 @@ export default function Profile() {
               showsHorizontalScrollIndicator={false}
               keyExtractor={(item, index) => index.toString()}
               renderItem={({ item, index }) => (
-                console.log("item", item),
-                (
-                  <TouchableOpacity
-                    style={
-                      index === 0
-                        ? styles.largeGalleryItem
-                        : styles.smallGalleryItem
-                    }
-                    onPress={() => {
-                      setSelectedImage(item);
-                      setGalleryModalVisible(true);
-                    }}
-                  >
-                    <Image source={{ uri: item }} style={styles.galleryImage} />
-                  </TouchableOpacity>
-                )
+                <TouchableOpacity
+                  style={
+                    index === 0
+                      ? styles.largeGalleryItem
+                      : styles.smallGalleryItem
+                  }
+                  onPress={() => {
+                    setSelectedImage(item);
+                    setGalleryModalVisible(true);
+                  }}
+                >
+                  <Image source={{ uri: item }} style={styles.galleryImage} />
+                </TouchableOpacity>
               )}
             />
           </View>
@@ -648,7 +734,17 @@ export default function Profile() {
                       quality: 0.7,
                     });
                     if (!result.canceled) {
-                      handleReelUpload(result.assets[0].uri);
+                      const videoUri = result.assets[0].uri;
+                      setSelectedVideoUri(videoUri);
+                      try {
+                        const thumbnailUri = await generateThumbnail(videoUri);
+                        setSelectedVideoThumbnail(thumbnailUri);
+                      } catch (error) {
+                        console.warn("Failed to generate thumbnail:", error);
+                        setSelectedVideoThumbnail(null);
+                      }
+
+                      setReelUploadModalVisible(true);
                     }
                   }}
                 >
@@ -663,33 +759,78 @@ export default function Profile() {
               showsHorizontalScrollIndicator={false}
               keyExtractor={(item, index) => index.toString()}
               renderItem={({ item, index }) => (
-                <TouchableOpacity
-                  style={styles.reelItem}
-                  onPress={() => {
-                    // Cleanup any existing player state
-                    if (player) {
-                      player.pause();
-                      player.currentTime = 0;
-                    }
-                    // Set new reel and open modal
-                    setSelectedReel(item.reelUrl);
-                    setReelModalVisible(true);
-                  }}
-                >
+                <View style={styles.reelItem}>
                   <Image
                     source={{
                       uri: item.thumbnailUrl,
                     }}
                     style={styles.galleryImage}
                   />
-                  <View style={styles.playButton}>
+
+                  {/* Top-left visibility toggle button */}
+                  {user.uid === id && (
+                    <TouchableOpacity
+                      style={styles.reelTopLeftButton}
+                      onPress={e => {
+                        e.stopPropagation();
+                        handleReelVisibilityToggle(
+                          item.id,
+                          item.visibility || "public"
+                        );
+                      }}
+                    >
+                      <Ionicons
+                        name={
+                          item.visibility === "public" ? "globe" : "lock-closed"
+                        }
+                        size={16}
+                        color={Colors[theme].whiteText}
+                      />
+                    </TouchableOpacity>
+                  )}
+
+                  {/* Top-right delete button */}
+                  {user.uid === id && (
+                    <TouchableOpacity
+                      style={styles.reelTopRightButton}
+                      onPress={e => {
+                        e.stopPropagation();
+                        handleReelDelete(item.id);
+                      }}
+                    >
+                      <Ionicons
+                        name="trash-outline"
+                        size={16}
+                        color={Colors[theme].redText}
+                      />
+                    </TouchableOpacity>
+                  )}
+
+                  {/* Center play button */}
+                  <TouchableOpacity
+                    style={styles.reelCenterPlayButton}
+                    onPress={() => {
+                      // Cleanup any existing player state
+                      if (player) {
+                        try {
+                          player.pause();
+                          player.currentTime = 0;
+                        } catch (error) {
+                          console.warn("Error cleaning up player:", error);
+                        }
+                      }
+                      // Set new reel and open modal
+                      setSelectedReel(item.videoUrl);
+                      setReelModalVisible(true);
+                    }}
+                  >
                     <Ionicons
                       name="play"
                       size={20}
                       color={Colors[theme].whiteText}
                     />
-                  </View>
-                </TouchableOpacity>
+                  </TouchableOpacity>
+                </View>
               )}
             />
           </View>
@@ -799,29 +940,25 @@ export default function Profile() {
           </Formik>
         </View>
       </RnModal>
-      <RnModal show={galleryLoading}>
-        <View
-          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-        >
-          <RnText
-            style={{ marginBottom: hp(2), color: Colors[theme].whiteText }}
-          >
-            Uploading...
-          </RnText>
-          <ActivityIndicator size="large" color={Colors[theme].primary} />
-        </View>
-      </RnModal>
       <RnModal
         show={reelModalVisible}
         backDrop={() => {
           setReelModalVisible(false);
-          player.pause();
-          player.currentTime = 0;
+          try {
+            player.pause();
+            player.currentTime = 0;
+          } catch (error) {
+            console.warn("Error pausing player on backdrop:", error);
+          }
         }}
         backButton={() => {
           setReelModalVisible(false);
-          player.pause();
-          player.currentTime = 0;
+          try {
+            player.pause();
+            player.currentTime = 0;
+          } catch (error) {
+            console.warn("Error pausing player on back button:", error);
+          }
         }}
       >
         {selectedReel && (
@@ -833,6 +970,135 @@ export default function Profile() {
             allowsPictureInPicture={false}
           />
         )}
+      </RnModal>
+
+      {/* Reel Upload Modal */}
+      <RnModal
+        show={reelUploadModalVisible}
+        backDrop={() => {
+          setReelUploadModalVisible(false);
+          setSelectedVideoUri(null);
+          setSelectedVideoThumbnail(null);
+        }}
+        backButton={() => {
+          setReelUploadModalVisible(false);
+          setSelectedVideoUri(null);
+          setSelectedVideoThumbnail(null);
+        }}
+      >
+        <View style={styles.reelUploadModal}>
+          <Formik
+            initialValues={{
+              caption: "",
+            }}
+            innerRef={reelFormikRef}
+            validationSchema={Yup.object({
+              caption: Yup.string()
+                .max(200, "Caption must be less than 200 characters")
+                .required("Caption is required"),
+            })}
+            onSubmit={async values => {
+              if (selectedVideoUri) {
+                await handleReelUpload(selectedVideoUri, values.caption);
+              }
+            }}
+          >
+            {({ handleChange, handleSubmit, values, errors }) => (
+              <KeyboardAwareScrollView
+                contentContainerStyle={{ flexGrow: 1, padding: wp(4) }}
+                keyboardShouldPersistTaps="handled"
+              >
+                <RnText style={styles.sectionTitle}>Upload Reel</RnText>
+
+                {selectedVideoThumbnail && (
+                  <Image
+                    source={{ uri: selectedVideoThumbnail }}
+                    style={{
+                      width: "100%",
+                      height: hp(20),
+                      borderRadius: Borders.radius2,
+                    }}
+                  />
+                )}
+
+                <RnText
+                  style={{
+                    marginVertical: hp(1),
+                    fontFamily: FontFamily.semiBold,
+                  }}
+                >
+                  Caption
+                </RnText>
+                <RnInput
+                  value={values.caption}
+                  onChangeText={handleChange("caption")}
+                  error={errors.caption as string}
+                  placeholder="Write a caption for your reel..."
+                  maxLength={200}
+                  multiline
+                  numberOfLines={3}
+                  inputContainerStyle={{ height: hp(10) }}
+                  style={{ height: hp(10), textAlignVertical: "top" }}
+                />
+
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    marginTop: hp(3),
+                  }}
+                >
+                  <RnButton
+                    title="Cancel"
+                    onPress={() => {
+                      setReelUploadModalVisible(false);
+                      setSelectedVideoUri(null);
+                      setSelectedVideoThumbnail(null);
+                    }}
+                    style={[[styles.reelButton, styles.cancelButton]]}
+                    disabled={galleryLoading}
+                  />
+                  <RnButton
+                    title="Upload"
+                    onPress={handleSubmit}
+                    loading={galleryLoading}
+                    style={[styles.reelButton]}
+                  />
+                </View>
+              </KeyboardAwareScrollView>
+            )}
+          </Formik>
+        </View>
+      </RnModal>
+
+      {/* Delete Reel Warning Modal */}
+      <RnModal
+        show={deleteReelModalVisible}
+        backDrop={cancelDeleteReel}
+        backButton={cancelDeleteReel}
+      >
+        <View style={styles.deleteModalContainer}>
+          <RnText style={styles.sectionTitle}>Delete Reel</RnText>
+          <RnText style={styles.deleteModalText}>
+            Are you sure you want to delete this reel? This action cannot be
+            undone.
+          </RnText>
+
+          <View style={styles.deleteModalButtons}>
+            <RnButton
+              title="Cancel"
+              onPress={cancelDeleteReel}
+              style={[[styles.reelButton, styles.cancelButton]]}
+              disabled={deletingReel}
+            />
+            <RnButton
+              title="Delete"
+              onPress={confirmDeleteReel}
+              loading={deletingReel}
+              style={[styles.reelButton]}
+            />
+          </View>
+        </View>
       </RnModal>
     </Container>
   );

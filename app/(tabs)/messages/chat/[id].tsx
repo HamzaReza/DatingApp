@@ -1,11 +1,15 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import createStyles from "@/app/tabStyles/chat.styles";
 import RnInput from "@/components/RnInput";
+import RnModal from "@/components/RnModal";
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
 import RoundButton from "@/components/RoundButton";
 import { Borders } from "@/constants/Borders";
 import { Colors } from "@/constants/Colors";
+import { FontFamily } from "@/constants/FontFamily";
 import { FontSize } from "@/constants/FontSize";
+import { getUserByUid } from "@/firebase/auth";
 import {
   checkAndUpdateMessageLimit,
   checkIfMeetRejected,
@@ -22,7 +26,6 @@ import {
   collection,
   doc,
   getDoc,
-  getDocs,
   getFirestore,
   onSnapshot,
   updateDoc,
@@ -32,62 +35,19 @@ import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   Alert,
   Animated,
-  Dimensions,
   FlatList,
   Image,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   StatusBar,
+  StyleSheet,
   TouchableOpacity,
   useColorScheme,
   View,
-  StyleSheet,
-  Modal,
 } from "react-native";
-import {
-  GestureHandlerRootView,
-  PanGestureHandler as RNGHPanGestureHandler,
-} from "react-native-gesture-handler";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { GroupMessage } from "../types";
-import RnModal from "@/components/RnModal";
-import { getUserByUid } from "@/firebase/auth";
-import { FontFamily } from "@/constants/FontFamily";
-
-const { height: SCREEN_HEIGHT } = Dimensions.get("window");
-
-type ChatMessage = {
-  id: string;
-  text: string;
-  time: string;
-  isOwn: boolean;
-};
-
-const chatMessages: ChatMessage[] = [
-  {
-    id: "1",
-    text: "Where are loem",
-    time: "10:25",
-    isOwn: true,
-  },
-  {
-    id: "2",
-    text: "Loem isn't here",
-    time: "10:23",
-    isOwn: false,
-  },
-  {
-    id: "3",
-    text: "Lorem Ipsum Here Doing",
-    time: "10:25",
-    isOwn: true,
-  },
-  {
-    id: "4",
-    text: "Lorem Ipsum Nothing",
-    time: "10:23",
-    isOwn: false,
-  },
-];
 
 export default function Chat() {
   const colorScheme = useColorScheme();
@@ -99,25 +59,23 @@ export default function Chat() {
 
   const [message, setMessage] = useState("");
   const translateY = useRef(new Animated.Value(0)).current;
-  const gestureRef = useRef<RNGHPanGestureHandler>(null);
   const [group, setGroup] = useState<any>(null);
   const [usersName, setUsersName] = useState<any[]>([]);
   const [messages, setMessages] = useState<GroupMessage[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showMemberList, setShowMemberList] = useState(false);
   const [reciverData, setReceiverData] = useState([]);
   const isSingleChat = chatType === "single";
   const flatListRef = useRef<FlatList>(null);
   const navigation = useNavigation();
-  const [statusMessage, setStatusMessage] = useState("");
+  const [statusMessage, setStatusMessage] = useState<any>(null);
   const [meetDataModalVisible, setMeetDataModalVisible] = useState(false);
 
   useEffect(() => {
     if (isSingleChat) {
       const unsubscribe = setupRealtimeChatStatus(
-        matchId,
+        matchId as string,
         currentUserId,
-        status => {
+        (status: any) => {
           setStatusMessage(status);
         }
       );
@@ -168,16 +126,6 @@ export default function Chat() {
   }, [navigation]);
 
   useEffect(() => {
-    if (isSingleChat) {
-      getUserByUid(otherUserId).then(userData => {
-        if (userData) {
-          setReceiverData(userData);
-        }
-      });
-    }
-  }, [matchId, isSingleChat, otherUserId]);
-
-  useEffect(() => {
     const fetchGroupWithUsers = async () => {
       if (isSingleChat) {
         return;
@@ -192,7 +140,7 @@ export default function Chat() {
 
         // Fetch user details for each user in the group
         const usersWithDetails = await Promise.all(
-          groupData.users.map(async (user: any) => {
+          groupData?.users.map(async (user: any) => {
             const userRef = doc(db, "users", user.uid);
             const userSnap = await getDoc(userRef);
 
@@ -222,14 +170,12 @@ export default function Chat() {
     let unsubscribe: () => void;
 
     if (isSingleChat) {
-      unsubscribe = setupDirectMessageListener(matchId, messages => {
+      unsubscribe = setupDirectMessageListener(matchId as string, messages => {
         setMessages(messages);
-        setLoading(false);
       });
     } else {
-      unsubscribe = setupGroupMessagesListener(id, group => {
+      unsubscribe = setupGroupMessagesListener(id as string, group => {
         setMessages(group.messages || []);
-        setLoading(false);
       });
     }
 
@@ -253,8 +199,6 @@ export default function Chat() {
     setUsersName(acceptedUsers);
   }, [group]);
 
-  const namesString = group?.users.map((user: any) => user.name).join(", ");
-
   const handleMorePress = () => {
     console.log("More options");
   };
@@ -264,11 +208,8 @@ export default function Chat() {
 
     try {
       if (isSingleChat) {
-        const participants = matchId.split("_");
-        const receiverId = participants.find(id => id !== currentUserId);
-
         const messageCount = await checkAndUpdateMessageLimit(
-          matchId,
+          matchId as string,
           currentUserId
         );
 
@@ -313,11 +254,11 @@ export default function Chat() {
           );
         }
 
-        await sendDirectMessage(matchId, currentUserId, message);
+        await sendDirectMessage(matchId as string, currentUserId, message);
       } else {
         await sendGroupMessage({
           senderId: currentUserId,
-          groupId: id,
+          groupId: id as string,
           content: message,
           messageType: "text",
         });
@@ -413,6 +354,25 @@ export default function Chat() {
       minute: "2-digit",
     });
   };
+
+  useEffect(() => {
+    let unsubscribe: () => void;
+
+    if (isSingleChat) {
+      // Set up real-time listener for receiver data
+      unsubscribe = getUserByUid(otherUserId as string, userData => {
+        if (userData) {
+          setReceiverData(userData); // Save to state to show name/photo etc.
+        }
+      });
+    }
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, [matchId, isSingleChat, otherUserId]);
 
   const renderMessage = ({ item }: { item: GroupMessage }) => {
     const isOwn = item.senderId === currentUserId;

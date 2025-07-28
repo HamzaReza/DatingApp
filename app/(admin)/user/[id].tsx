@@ -4,7 +4,7 @@ import RnContainer from "@/components/RnContainer";
 import RnText from "@/components/RnText";
 import RoundButton from "@/components/RoundButton";
 import { Colors } from "@/constants/Colors";
-import { getUserByUid, updateUser } from "@/firebase/auth";
+import { getUserByUidAsync, updateUser } from "@/firebase/auth";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { UserStatus } from "@/types/Admin";
 import { encodeImagePath, wp } from "@/utils";
@@ -29,7 +29,7 @@ export default function UserProfile() {
 
   const getSelectedUser = async () => {
     try {
-      const data = await getUserByUid(id);
+      const data = await getUserByUidAsync(id);
       if (data) {
         setUser(data);
         setUserStatus(data.status || "pending");
@@ -65,7 +65,6 @@ export default function UserProfile() {
       // Update Firestore
       if (user?.uid) {
         await updateUser(user.uid, { status });
-        console.log("Status updated successfully");
       } else {
         console.warn("User UID not found");
       }

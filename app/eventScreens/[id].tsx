@@ -4,7 +4,7 @@ import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
 import RoundButton from "@/components/RoundButton";
 import { Colors } from "@/constants/Colors";
-import { getUserByUid, updateUser } from "@/firebase/auth";
+import { getUserByUidAsync, updateUser } from "@/firebase/auth";
 import { fetchEventById, updateEvent } from "@/firebase/event";
 import { RootState } from "@/redux/store";
 import { wp } from "@/utils";
@@ -60,7 +60,7 @@ const EventDetails = () => {
     const fetchCurrentUserData = async () => {
       if (user?.uid) {
         try {
-          const userData = await getUserByUid(user.uid);
+          const userData = await getUserByUidAsync(user.uid);
           setCurrentUserData(userData);
         } catch (error) {
           console.error("Error fetching current user data:", error);

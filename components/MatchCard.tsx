@@ -1,5 +1,6 @@
 import { Borders } from "@/constants/Borders";
 import { Colors } from "@/constants/Colors";
+import { FontFamily } from "@/constants/FontFamily";
 import { FontSize } from "@/constants/FontSize";
 import { encodeImagePath, hp, wp } from "@/utils";
 import React from "react";
@@ -11,9 +12,6 @@ import {
   View,
 } from "react-native";
 import RnText from "./RnText";
-import { FontFamily } from "@/constants/FontFamily";
-import { boolean } from "yup";
-import { isPending } from "@reduxjs/toolkit";
 
 interface MatchCardProps {
   id: string;
@@ -40,8 +38,6 @@ const MatchCard: React.FC<MatchCardProps> = ({
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
-
-  console.log("isPending", isPending);
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress}>

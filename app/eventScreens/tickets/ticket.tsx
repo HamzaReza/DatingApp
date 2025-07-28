@@ -111,7 +111,6 @@ const TicketScreen = () => {
         quality: 0.9,
         result: "tmpfile",
       });
-      console.log(localUri);
       if (!localUri.startsWith("file:///")) {
         localUri = "file://" + localUri;
       }

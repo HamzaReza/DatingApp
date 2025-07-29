@@ -1,10 +1,10 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import createStyles from "@/app/tabStyles/discover.styles";
 import InterestTag from "@/components/InterestTag";
+import RnBottomSheet from "@/components/RnBottomSheet";
 import RnButton from "@/components/RnButton";
 import RnDropdown from "@/components/RnDropdown";
 import RnHeader from "@/components/RnHeader";
-import RnModal from "@/components/RnModal";
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnSlider from "@/components/RnSlider";
 import RnText from "@/components/RnText";
@@ -382,7 +382,17 @@ export default function Discover() {
         )}
       </View>
 
-      <RnModal show={filterModal} backButton={() => setFilterModal(false)}>
+      <RnBottomSheet
+        isVisible={filterModal}
+        onClose={() => setFilterModal(false)}
+        scroll={true}
+        snapPoints={["85%"]}
+        backgroundStyle={{
+          backgroundColor: "transparent",
+        }}
+        enablePanDownToClose={false}
+        enableContentPanningGesture={false}
+      >
         <LinearGradient
           colors={["#FECFD2", "#C2FFEA"]}
           style={styles.filterModalContainer}
@@ -391,7 +401,6 @@ export default function Discover() {
         >
           <KeyboardAwareScrollView
             contentContainerStyle={{ flexGrow: 1 }}
-            style={{ maxHeight: hp(80) }}
             showsVerticalScrollIndicator={false}
             bounces={false}
           >
@@ -575,7 +584,7 @@ export default function Discover() {
             />
           </KeyboardAwareScrollView>
         </LinearGradient>
-      </RnModal>
+      </RnBottomSheet>
     </ScrollContainer>
   );
 }

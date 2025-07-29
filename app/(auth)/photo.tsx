@@ -93,7 +93,7 @@ export default function Photo() {
                   // Upload image and get download URL
                   setIsLoading(true);
                   const imageUrl = await uploadImage(
-                    image.uri,
+                    (image as { uri: string }).uri,
                     "user",
                     currentUser.uid,
                     "profile"

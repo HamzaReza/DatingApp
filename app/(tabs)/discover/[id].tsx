@@ -14,6 +14,7 @@ import { Borders } from "@/constants/Borders";
 import { Colors } from "@/constants/Colors";
 import { FontFamily } from "@/constants/FontFamily";
 import {
+  deleteUser,
   fetchTags,
   getUserByUid,
   recordLike,
@@ -21,6 +22,7 @@ import {
   uploadMultipleImages,
 } from "@/firebase/auth";
 import { deleteReelWithFiles, updateReel, uploadReel } from "@/firebase/reels";
+import { setToken } from "@/redux/slices/userSlice";
 import { RootState } from "@/redux/store";
 import { encodeImagePath, hp, wp } from "@/utils";
 import getDistanceFromLatLonInMeters from "@/utils/Distance";
@@ -44,7 +46,7 @@ import {
   View,
 } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import * as Yup from "yup";
 
 const IMAGE_HEIGHT = hp(60);
@@ -59,6 +61,8 @@ export default function Profile() {
   const colorScheme = useColorScheme() || "light";
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
+
+  const dispatch = useDispatch();
 
   const { user } = useSelector((state: RootState) => state.user);
 
@@ -91,6 +95,9 @@ export default function Profile() {
   const [deleteReelModalVisible, setDeleteReelModalVisible] = useState(false);
   const [reelToDelete, setReelToDelete] = useState<string | null>(null);
   const [deletingReel, setDeletingReel] = useState(false);
+  const [deleteAccountModalVisible, setDeleteAccountModalVisible] =
+    useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
   const reelFormikRef = useRef<FormikProps<any>>(null);
   const formikRef = useRef<FormikProps<any>>(null);
 
@@ -144,10 +151,11 @@ export default function Profile() {
 
   useEffect(() => {
     const getAddress = async () => {
-      if (!profileData?.location) return;
+      if (!profileData?.location?.latitude || !profileData?.location?.longitude)
+        return;
       const addressData = await reverseGeocodeAsync({
-        latitude: profileData.location.latitude,
-        longitude: profileData.location.longitude,
+        latitude: profileData?.location?.latitude,
+        longitude: profileData?.location?.longitude,
       });
       setAddress(`${addressData[0].city}, ${addressData[0].region}`);
     };
@@ -434,6 +442,46 @@ export default function Profile() {
     setDeletingReel(false);
   };
 
+  const handleDeletePress = async () => {
+    setDeleteAccountModalVisible(true);
+  };
+
+  const confirmDeleteAccount = async () => {
+    try {
+      if (!user?.uid) {
+        Alert.alert("Error", "User not found");
+        return;
+      }
+
+      setDeletingAccount(true);
+
+      const result = await deleteUser(user.uid);
+
+      if (result.success) {
+        setDeleteAccountModalVisible(false);
+        setDeletingAccount(false);
+      } else {
+        setDeletingAccount(false);
+        Alert.alert(
+          "Deletion Failed",
+          result.error || "Failed to delete account. Please try again."
+        );
+      }
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      setDeletingAccount(false);
+      Alert.alert(
+        "Error",
+        "An unexpected error occurred while deleting your account. Please try again."
+      );
+    }
+  };
+
+  const cancelDeleteAccount = () => {
+    setDeleteAccountModalVisible(false);
+    setDeletingAccount(false);
+  };
+
   // Image transform animations
   const imageTranslateY = scrollY.interpolate({
     inputRange: [0, IMAGE_HEIGHT],
@@ -475,10 +523,10 @@ export default function Profile() {
   }
 
   const distance = getDistanceFromLatLonInMeters(
-    profileData.location.latitude,
-    profileData.location.longitude,
-    user.location.latitude,
-    user.location.longitude
+    profileData.location?.latitude,
+    profileData.location?.longitude,
+    user?.location?.latitude,
+    user?.location?.longitude
   );
 
   const formatDistance = (distanceInMeters: number) => {
@@ -511,15 +559,39 @@ export default function Profile() {
           backgroundColour={Colors[theme].whiteText}
           onPress={() => router.back()}
         />
-        {user.uid === id && (
-          <RoundButton
-            iconName="edit"
-            iconSize={22}
-            iconColor={Colors[theme].primary}
-            backgroundColour={Colors[theme].whiteText}
-            onPress={handleEditPress}
-          />
-        )}
+        <View style={styles.headerIconContainer}>
+          {user.uid === id && (
+            <RoundButton
+              iconName="edit"
+              iconSize={22}
+              iconColor={Colors[theme].primary}
+              backgroundColour={Colors[theme].whiteText}
+              onPress={handleEditPress}
+            />
+          )}
+          {user.uid === id && (
+            <RoundButton
+              iconName="logout"
+              iconSize={22}
+              iconColor={Colors[theme].primary}
+              backgroundColour={Colors[theme].whiteText}
+              onPress={() => {
+                router.dismissAll();
+                router.replace("/onboarding");
+                dispatch(setToken(null));
+              }}
+            />
+          )}
+          {user.uid === id && (
+            <RoundButton
+              iconName="delete"
+              iconSize={22}
+              iconColor={Colors[theme].redText}
+              backgroundColour={Colors[theme].whiteText}
+              onPress={handleDeletePress}
+            />
+          )}
+        </View>
       </View>
 
       {/* Animated Profile Image */}
@@ -1095,6 +1167,37 @@ export default function Profile() {
               title="Delete"
               onPress={confirmDeleteReel}
               loading={deletingReel}
+              style={[styles.reelButton]}
+            />
+          </View>
+        </View>
+      </RnModal>
+
+      {/* Delete Account Confirmation Modal */}
+      <RnModal
+        show={deleteAccountModalVisible}
+        backDrop={cancelDeleteAccount}
+        backButton={cancelDeleteAccount}
+      >
+        <View style={styles.deleteModalContainer}>
+          <RnText style={styles.sectionTitle}>Delete Account</RnText>
+          <RnText style={styles.deleteModalText}>
+            Are you sure you want to delete your account?{"\n\n"}This action
+            cannot be undone and will permanently remove all your data including
+            profile, matches, messages, reels, and stories.
+          </RnText>
+
+          <View style={styles.deleteModalButtons}>
+            <RnButton
+              title="Cancel"
+              onPress={cancelDeleteAccount}
+              style={[[styles.reelButton, styles.cancelButton]]}
+              disabled={deletingAccount}
+            />
+            <RnButton
+              title="Delete"
+              onPress={confirmDeleteAccount}
+              loading={deletingAccount}
               style={[styles.reelButton]}
             />
           </View>

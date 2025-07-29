@@ -3,6 +3,7 @@ import { store } from "@/redux/store";
 import getDistanceFromLatLonInMeters from "@/utils/Distance";
 import { calculateMatchScore } from "@/utils/MatchScore";
 import {
+  deleteUser as deleteFirebaseAuthUser,
   getAuth,
   GoogleAuthProvider,
   signInWithCredential,
@@ -27,6 +28,7 @@ import {
   deleteObject,
   getDownloadURL,
   getStorage,
+  listAll,
   putFile,
   ref,
 } from "@react-native-firebase/storage";
@@ -637,7 +639,7 @@ export const sendGroupInvitesByTags = async (
     const usersSnapshot = await getDocs(collection(db, "users"));
 
     const matchingUsers = usersSnapshot.docs
-      .filter(userDoc => {
+      .filter((userDoc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
         const data = userDoc.data();
 
         // Skip inviter (already added later)
@@ -674,7 +676,7 @@ export const sendGroupInvitesByTags = async (
         return hasMatchingTag && genderMatch && ageMatch;
       })
       .slice(0, maxParticipants)
-      .map(userDoc => ({
+      .map((userDoc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => ({
         uid: userDoc.id,
         name: userDoc.data().name || "User",
       }));
@@ -723,7 +725,7 @@ export const sendGroupInvitesByTags = async (
           status: "accepted",
           invitedAt,
         },
-        ...matchingUsers.map(user => ({
+        ...matchingUsers.map((user: { uid: string; name: string }) => ({
           uid: user.uid,
           name: user.name,
           status: "pending",
@@ -767,7 +769,7 @@ export const sendGroupInvitesByTags = async (
     return { success: true };
   } catch (error) {
     console.error("Error sending group invites:", error);
-    return { success: false, error: error.message };
+    return { success: false, error: (error as Error).message };
   }
 };
 export const getUserNotifications = async (userId: string) => {
@@ -1287,11 +1289,158 @@ const fetchQuestionnaires = (callback: (questionnaires: any[]) => void) => {
   }
 };
 
+const deleteUser = async (
+  userId: string
+): Promise<{ success: boolean; error?: string }> => {
+  try {
+    const db = getFirestore();
+    const batch = writeBatch(db);
+
+    // 1. Delete user's likes
+    const userLikesRef = collection(db, "users", userId, "likes");
+    const userLikesSnapshot = await getDocs(userLikesRef);
+    userLikesSnapshot.docs.forEach((doc: any) => {
+      batch.delete(doc.ref);
+    });
+
+    // 2. Delete likes from other users that target this user
+    const allUsersSnapshot = await getDocs(collection(db, "users"));
+    for (const userDoc of allUsersSnapshot.docs) {
+      if (userDoc.id !== userId) {
+        const otherUserLikeRef = doc(db, "users", userDoc.id, "likes", userId);
+        const otherUserLikeDoc = await getDoc(otherUserLikeRef);
+        if (otherUserLikeDoc.exists()) {
+          batch.delete(otherUserLikeRef);
+        }
+      }
+    }
+
+    // 3. Delete matches involving this user
+    const matchesRef = collection(db, "matches");
+    const matchesSnapshot = await getDocs(matchesRef);
+    matchesSnapshot.docs.forEach((doc: any) => {
+      const matchData = doc.data();
+      if (matchData.users && matchData.users.includes(userId)) {
+        batch.delete(doc.ref);
+      }
+    });
+
+    // 4. Delete user's stories
+    const userStoriesRef = doc(db, "stories", userId);
+    const userStoriesDoc = await getDoc(userStoriesRef);
+    if (userStoriesDoc.exists()) {
+      batch.delete(userStoriesRef);
+    }
+
+    // 5. Delete user's notifications
+    const userNotificationsRef = doc(db, "notifications", userId);
+    const userNotificationsDoc = await getDoc(userNotificationsRef);
+    if (userNotificationsDoc.exists()) {
+      batch.delete(userNotificationsRef);
+    }
+
+    // 6. Delete user's reels
+    const reelsRef = collection(db, "reels");
+    const userReelsSnapshot = await getDocs(
+      query(reelsRef, where("userId", "==", userId))
+    );
+    userReelsSnapshot.docs.forEach((doc: any) => {
+      batch.delete(doc.ref);
+    });
+
+    // 7. Delete user's messages/chats
+    const messagesRef = collection(db, "messages");
+    const userMessagesSnapshot = await getDocs(messagesRef);
+    userMessagesSnapshot.docs.forEach((doc: any) => {
+      const messageData = doc.data();
+      // Delete if user is part of this chat/group
+      if (messageData.users && Array.isArray(messageData.users)) {
+        const userInChat = messageData.users.find(
+          (user: any) => user.uid === userId
+        );
+        if (userInChat) {
+          // If it's a group chat, remove the user from the group
+          if (messageData.type === "group") {
+            const updatedUsers = messageData.users.filter(
+              (user: any) => user.uid !== userId
+            );
+            if (updatedUsers.length === 0) {
+              batch.delete(doc.ref);
+            } else {
+              batch.update(doc.ref, { users: updatedUsers });
+            }
+          } else {
+            // For direct messages, delete the entire chat
+            batch.delete(doc.ref);
+          }
+        }
+      }
+    });
+
+    // 8. Delete user document
+    batch.delete(doc(db, "users", userId));
+
+    // 9. Delete user's Firebase Auth account
+    try {
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if (user && user.uid === userId) {
+        await deleteFirebaseAuthUser(user);
+        await auth.currentUser?.delete();
+      }
+    } catch (error) {
+      console.warn("Failed to delete Firebase Auth account:", error);
+    }
+
+    // 10. Delete all user files from Firebase Storage (including nested directories)
+    try {
+      const userStorageRef = ref(storage, `users/${userId}`);
+      console.log(
+        "🚀 ~ auth.ts:1348 ~ deleteUser ~ userStorageRef:",
+        userStorageRef
+      );
+
+      const deleteAllFilesRecursively = async (directoryRef: any) => {
+        const result = await listAll(directoryRef);
+
+        const fileDeletePromises = result.items.map(itemRef =>
+          deleteObject(itemRef)
+        );
+
+        const subdirectoryDeletePromises = result.prefixes.map(prefixRef =>
+          deleteAllFilesRecursively(prefixRef)
+        );
+
+        await Promise.all([
+          ...fileDeletePromises,
+          ...subdirectoryDeletePromises,
+        ]);
+      };
+
+      await deleteAllFilesRecursively(userStorageRef);
+      console.log(`✅ Deleted all files and subdirectories from user storage`);
+    } catch (error) {
+      console.warn("Failed to delete user storage files:", error);
+    }
+
+    await batch.commit();
+
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error deleting user:", error);
+    return {
+      success: false,
+      error: error.message || "Failed to delete user and associated data",
+    };
+  }
+};
+
 export {
   authenticateWithPhone,
   checkForMatch,
   checkUserExistsForSignup,
   deleteImage,
+  deleteUser,
   fetchAllUsers,
   fetchAllUserStories,
   fetchGenders,

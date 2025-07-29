@@ -51,6 +51,7 @@ export default function Religion() {
 
       const updatedUserData = {
         ...params,
+        location: JSON.parse(params.location as string),
         religion: values.religion,
         role: "user",
         status: "pending",

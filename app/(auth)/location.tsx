@@ -52,7 +52,13 @@ export default function LocationScreen() {
       });
       router.push({
         pathname: "/profession",
-        params: { ...params, location: formikRef.current?.values.location },
+        params: {
+          ...params,
+          location: JSON.stringify({
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+          }),
+        },
       });
     } catch (error) {
       console.error(error);

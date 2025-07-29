@@ -98,6 +98,7 @@ export default function SwipeProfile() {
   };
 
   const handleRefreshPress = async () => {
+    setLoading(true);
     try {
       if (!currentUser?.uid) return;
 
@@ -107,10 +108,13 @@ export default function SwipeProfile() {
       }
     } catch (error) {
       console.error("Error refreshing user:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleLikePress = async () => {
+    setLoading(true);
     try {
       if (!currentUser?.uid || !profileData?.id) return;
 
@@ -135,10 +139,13 @@ export default function SwipeProfile() {
       }
     } catch (error) {
       console.error("Error handling like:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleDislikePress = async () => {
+    setLoading(true);
     try {
       if (!currentUser?.uid || !profileData?.id) return;
 
@@ -154,10 +161,13 @@ export default function SwipeProfile() {
       }
     } catch (error) {
       console.error("Error handling dislike:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleSuperLikePress = async () => {
+    setLoading(true);
     try {
       if (!currentUser?.uid || !profileData?.id) return;
 
@@ -182,18 +192,30 @@ export default function SwipeProfile() {
       }
     } catch (error) {
       console.error("Error handling super like:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
   if (loading) {
     return (
       <Container customStyle={styles.container}>
-        <View
-          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        <LinearGradient
+          colors={[
+            "rgba(118,202,187,0.8)",
+            "rgba(118,202,187,0.8)",
+            "rgba(118,202,187,0)",
+          ]}
+          style={{ flex: 1 }}
+          start={{ x: 0.5, y: 1 }}
+          end={{ x: 0.5, y: 0.3 }}
         >
-          <ActivityIndicator size="large" color={Colors[theme].primary} />
-          <RnText style={{ marginTop: 10 }}>Loading profile...</RnText>
-        </View>
+          <View
+            style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+          >
+            <ActivityIndicator size="large" color={Colors[theme].primary} />
+          </View>
+        </LinearGradient>
       </Container>
     );
   }

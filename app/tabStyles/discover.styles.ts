@@ -108,13 +108,12 @@ export default (theme: "light" | "dark") =>
     filterModalContainer: {
       backgroundColor: Colors[theme].background,
       borderRadius: Borders.radius2,
-      padding: wp(4),
+      paddingHorizontal: wp(4),
+      paddingBottom: hp(2),
     },
     applyFilterButton: {
       backgroundColor: Colors[theme].redText,
       borderRadius: Borders.circle,
-      paddingVertical: hp(2),
-      paddingHorizontal: wp(8),
       width: wp(80),
       alignItems: "center",
       justifyContent: "center",

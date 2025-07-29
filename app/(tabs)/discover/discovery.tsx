@@ -392,6 +392,7 @@ export default function Discover() {
         }}
         enablePanDownToClose={false}
         enableContentPanningGesture={false}
+        pressBehavior={"none"}
       >
         <LinearGradient
           colors={["#FECFD2", "#C2FFEA"]}
@@ -410,7 +411,7 @@ export default function Discover() {
               leftComponent={
                 <TouchableOpacity onPress={() => setFilterModal(false)}>
                   <Ionicons
-                    name="arrow-back"
+                    name="close"
                     size={28}
                     color={Colors[theme].redText}
                   />

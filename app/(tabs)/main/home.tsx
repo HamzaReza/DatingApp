@@ -37,7 +37,7 @@ import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { FlatList, Platform, TouchableOpacity, View } from "react-native";
+import { FlatList, TouchableOpacity, View } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 
 type Story = {
@@ -108,18 +108,13 @@ export default function Home() {
     getStories();
     const unsubscribe = getReels();
 
-    // Set up real-time listener for current user to detect deletion
     let userListener: (() => void) | null = null;
     if (user?.uid) {
       userListener = getUserByUid(user.uid, userData => {
         if (!userData) {
-          // User has been deleted, log them out
-          console.log("User has been deleted, logging out...", Platform.OS);
           dispatch(setToken(null));
           router.dismissAll();
           router.replace("/onboarding");
-        } else {
-          console.log("User is still here", Platform.OS, user.uid);
         }
       });
     }

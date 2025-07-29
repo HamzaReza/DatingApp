@@ -1395,10 +1395,6 @@ const deleteUser = async (
     // 10. Delete all user files from Firebase Storage (including nested directories)
     try {
       const userStorageRef = ref(storage, `users/${userId}`);
-      console.log(
-        "🚀 ~ auth.ts:1348 ~ deleteUser ~ userStorageRef:",
-        userStorageRef
-      );
 
       const deleteAllFilesRecursively = async (directoryRef: any) => {
         const result = await listAll(directoryRef);
@@ -1418,7 +1414,6 @@ const deleteUser = async (
       };
 
       await deleteAllFilesRecursively(userStorageRef);
-      console.log(`✅ Deleted all files and subdirectories from user storage`);
     } catch (error) {
       console.warn("Failed to delete user storage files:", error);
     }

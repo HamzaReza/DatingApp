@@ -267,7 +267,7 @@ export default function LookingFor() {
               onPress={() => {
                 calculateProfileScore(selectedScales);
               }}
-              disabled={isLoading || Object.values(selectedScales).length < 4}
+              disabled={isLoading || Object?.values(selectedScales)?.length < 4}
               loading={isLoading}
             />
           )}

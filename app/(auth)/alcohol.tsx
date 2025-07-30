@@ -1,22 +1,29 @@
 import createStyles from "@/app/authStyles/alcohol.styles";
 import RnButton from "@/components/RnButton";
-import Container from "@/components/RnContainer";
 import RnProgressBar from "@/components/RnProgressBar";
+import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { AlcoholValues } from "@/types";
-import { wp } from "@/utils";
+import { hp, wp } from "@/utils";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { Formik } from "formik";
 import { useState } from "react";
-import { Pressable, View } from "react-native";
+import { FlatList, Pressable, View } from "react-native";
 import * as Yup from "yup";
 
 const alcoholSchema = Yup.object().shape({
   alcohol: Yup.string().required("Please select your alcohol preference"),
 });
+
+const alcoholOptions = [
+  { value: "drink", label: "Drink alcohol" },
+  { value: "dont_drink", label: "Don't drink" },
+  { value: "occasionally", label: "Occasionally" },
+  { value: "socially", label: "Socially" },
+];
 
 export default function Alcohol() {
   const colorScheme = useColorScheme();
@@ -41,28 +48,27 @@ export default function Alcohol() {
   };
 
   const renderOption = (
-    value: "drink" | "dont_drink" | "occasionally" | "socially",
-    label: string,
+    item: { value: string; label: string },
     selectedOption: string,
     setFieldValue: (field: string, value: any) => void
   ) => {
-    const isSelected = selectedOption === value;
+    const isSelected = selectedOption === item.value;
     return (
       <Pressable
-        onPress={() => setFieldValue("alcohol", isSelected ? "" : value)}
+        onPress={() => setFieldValue("alcohol", isSelected ? "" : item.value)}
         style={[styles.option, isSelected && styles.optionSelected]}
       >
         <RnText
           style={[styles.optionText, isSelected && styles.optionTextSelected]}
         >
-          {label}
+          {item.label}
         </RnText>
       </Pressable>
     );
   };
 
   return (
-    <Container
+    <ScrollContainer
       topBar={
         <View
           style={{
@@ -94,30 +100,19 @@ export default function Alcohol() {
             </RnText>
 
             <View style={styles.optionsContainer}>
-              {renderOption(
-                "drink",
-                "Drink alcohol",
-                values.alcohol,
-                setFieldValue
-              )}
-              {renderOption(
-                "dont_drink",
-                "Don't drink",
-                values.alcohol,
-                setFieldValue
-              )}
-              {renderOption(
-                "occasionally",
-                "Occasionally",
-                values.alcohol,
-                setFieldValue
-              )}
-              {renderOption(
-                "socially",
-                "Socially",
-                values.alcohol,
-                setFieldValue
-              )}
+              <FlatList
+                data={alcoholOptions}
+                renderItem={({ item }) =>
+                  renderOption(item, values.alcohol, setFieldValue)
+                }
+                keyExtractor={item => item.value}
+                numColumns={2}
+                showsVerticalScrollIndicator={false}
+                columnWrapperStyle={{ justifyContent: "space-between" }}
+                ItemSeparatorComponent={() => (
+                  <View style={{ height: hp(2) }} />
+                )}
+              />
             </View>
 
             {errors.alcohol && (
@@ -134,6 +129,6 @@ export default function Alcohol() {
           </View>
         )}
       </Formik>
-    </Container>
+    </ScrollContainer>
   );
 }

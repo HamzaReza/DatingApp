@@ -23,11 +23,11 @@ export interface HeightValues {
 }
 
 export interface AlcoholValues {
-  alcohol: "yes" | "no" | "";
+  alcohol: "drink" | "dont_drink" | "occasionally" | "socially" | "";
 }
 
 export interface SmokingValues {
-  smoking: "yes" | "no" | "";
+  smoking: "smoke" | "dont_smoke" | "occasionally" | "socially" | "";
 }
 
 export type LookingForValues = {
@@ -47,6 +47,7 @@ export type LocationValues = {
     latitude: number;
     longitude: number;
   } | null;
+  country: string;
 };
 
 export type ProfessionValues = {

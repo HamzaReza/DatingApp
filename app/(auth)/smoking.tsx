@@ -1,7 +1,7 @@
 import createStyles from "@/app/authStyles/smoking.styles";
 import RnButton from "@/components/RnButton";
-import Container from "@/components/RnContainer";
 import RnProgressBar from "@/components/RnProgressBar";
+import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
@@ -11,12 +11,19 @@ import { FontAwesome6 } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { Formik } from "formik";
 import { useState } from "react";
-import { Pressable, View } from "react-native";
+import { FlatList, Pressable, View } from "react-native";
 import * as Yup from "yup";
 
 const smokingSchema = Yup.object().shape({
   smoking: Yup.string().required("Please select your smoking preference"),
 });
+
+const smokingOptions = [
+  { value: "smoke", label: "Smoke" },
+  { value: "dont_smoke", label: "Don't smoke" },
+  { value: "occasionally", label: "Occasionally" },
+  { value: "socially", label: "Socially" },
+];
 
 export default function Smoking() {
   const colorScheme = useColorScheme();
@@ -41,28 +48,27 @@ export default function Smoking() {
   };
 
   const renderOption = (
-    value: "smoke" | "dont_smoke" | "occasionally" | "socially",
-    label: string,
+    item: { value: string; label: string },
     selectedOption: string,
     setFieldValue: (field: string, value: any) => void
   ) => {
-    const isSelected = selectedOption === value;
+    const isSelected = selectedOption === item.value;
     return (
       <Pressable
-        onPress={() => setFieldValue("smoking", isSelected ? "" : value)}
+        onPress={() => setFieldValue("smoking", isSelected ? "" : item.value)}
         style={[styles.option, isSelected && styles.optionSelected]}
       >
         <RnText
           style={[styles.optionText, isSelected && styles.optionTextSelected]}
         >
-          {label}
+          {item.label}
         </RnText>
       </Pressable>
     );
   };
 
   return (
-    <Container
+    <ScrollContainer
       topBar={
         <View
           style={{
@@ -94,25 +100,16 @@ export default function Smoking() {
             </RnText>
 
             <View style={styles.optionsContainer}>
-              {renderOption("smoke", "Smoke", values.smoking, setFieldValue)}
-              {renderOption(
-                "dont_smoke",
-                "Don't smoke",
-                values.smoking,
-                setFieldValue
-              )}
-              {renderOption(
-                "occasionally",
-                "Occasionally",
-                values.smoking,
-                setFieldValue
-              )}
-              {renderOption(
-                "socially",
-                "Socially",
-                values.smoking,
-                setFieldValue
-              )}
+              <FlatList
+                data={smokingOptions}
+                renderItem={({ item }) =>
+                  renderOption(item, values.smoking, setFieldValue)
+                }
+                keyExtractor={item => item.value}
+                numColumns={2}
+                showsVerticalScrollIndicator={false}
+                columnWrapperStyle={{ justifyContent: "space-between" }}
+              />
             </View>
 
             {errors.smoking && (
@@ -129,6 +126,6 @@ export default function Smoking() {
           </View>
         )}
       </Formik>
-    </Container>
+    </ScrollContainer>
   );
 }

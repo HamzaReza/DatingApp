@@ -1,3 +1,5 @@
+import { Borders } from "@/constants/Borders";
+import { Colors } from "@/constants/Colors";
 import { FontFamily } from "@/constants/FontFamily";
 import { FontSize } from "@/constants/FontSize";
 import { hp, wp } from "@/utils";
@@ -27,41 +29,38 @@ export default (theme: "light" | "dark") =>
       marginBottom: hp(3),
     },
     optionsContainer: {
-      flexDirection: "row",
-      justifyContent: "center",
-      alignItems: "center",
       marginTop: hp(5),
-      gap: wp(8),
+      paddingHorizontal: wp(5),
     },
     option: {
-      width: wp(25),
-      height: wp(25),
-      borderRadius: wp(12.5),
-      borderWidth: 2,
-      borderColor: "#E8E6EA",
-      justifyContent: "center",
       alignItems: "center",
+      padding: hp(2),
+      marginBottom: hp(2),
+      justifyContent: "center",
+      width: wp(32),
+      height: wp(32),
+      borderRadius: Borders.circle,
+      borderWidth: 2,
+      borderColor: Colors[theme].primary,
       backgroundColor: "transparent",
     },
     optionSelected: {
-      borderColor: "#76CABB",
-      backgroundColor: "#76CABB",
+      backgroundColor: Colors[theme].primary,
     },
     optionText: {
-      fontSize: FontSize.medium,
       fontFamily: FontFamily.medium,
-      color: "#000",
+      textAlign: "center",
     },
     optionTextSelected: {
-      color: "#FFF",
+      color: Colors[theme].whiteText,
     },
     button: {
       marginTop: hp(5),
     },
     errorText: {
-      color: "#DB4437",
-      fontSize: FontSize.small,
+      color: Colors[theme].redText,
+      fontSize: FontSize.extraSmall,
       textAlign: "center",
-      marginTop: hp(2),
+      marginBottom: hp(1),
     },
   });

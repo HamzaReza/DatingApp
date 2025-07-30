@@ -11,8 +11,10 @@ import {
   recordLike,
   updateUser,
 } from "@/firebase/auth";
+import { sendInAppNotification } from "@/helpers/notificationHelper";
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { RootState } from "@/redux/store";
+import { resetViewedUsers } from "@/redux/slices/swipeSlice";
+import { RootState, store } from "@/redux/store";
 import { encodeImagePath } from "@/utils";
 import getDistanceFromLatLonInMeters from "@/utils/Distance";
 import { calculateMatchScore } from "@/utils/MatchScore";
@@ -21,6 +23,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router, useFocusEffect } from "expo-router";
 import React, { useState } from "react";
 import { ActivityIndicator, Image, TouchableOpacity, View } from "react-native";
+import Toast from "react-native-toast-message";
 import { useSelector } from "react-redux";
 
 export default function SwipeProfile() {
@@ -43,6 +46,8 @@ export default function SwipeProfile() {
   const initializeSwipeProfile = async () => {
     try {
       setLoading(true);
+      // Reset viewed users when initializing
+      store.dispatch(resetViewedUsers());
 
       const currentUserData = reduxUser || (await getCurrentAuth()).currentUser;
       setCurrentUser(currentUserData);
@@ -100,14 +105,46 @@ export default function SwipeProfile() {
   const handleRefreshPress = async () => {
     setLoading(true);
     try {
-      if (!currentUser?.uid) return;
+      if (!currentUser?.uid) {
+        console.log("Refresh aborted: No current user ID");
+        return;
+      }
 
+      // Get state before fetching
+      const preState = store.getState();
+      const preViewedIds = preState.swipe.viewedUserIds;
       const nextUser = await getNextUserForSwipe(currentUser.uid, likedUserIds);
+
       if (nextUser) {
+        // Get state after fetching
+        const postState = store.getState();
+        const postViewedIds = postState.swipe.viewedUserIds;
+
         setProfileData(nextUser);
+
+        if (postViewedIds.length === 1 && preViewedIds.length > 0) {
+          Toast.show({
+            type: "info",
+            text1: "Showing profiles from the beginning",
+            visibilityTime: 2000,
+          });
+        }
+      } else {
+        Toast.show({
+          type: "info",
+          text1: "No more profiles available",
+          text2: "Please try again later",
+          visibilityTime: 2000,
+        });
       }
     } catch (error) {
-      console.error("Error refreshing user:", error);
+      console.error("Refresh error:", error);
+      Toast.show({
+        type: "error",
+        text1: "Error loading profile",
+        text2: "Please try again",
+        visibilityTime: 2000,
+      });
     } finally {
       setLoading(false);
     }
@@ -128,6 +165,16 @@ export default function SwipeProfile() {
       if (isMatch) {
         router.push("/(tabs)/matches");
         return;
+      } else {
+        await sendInAppNotification({
+          toUserId: profileData.id,
+          title: "You got a Like!",
+          subtitle: "John liked your profile",
+          type: "like",
+          data: {
+            fromUserId: currentUser.uid,
+          },
+        });
       }
 
       const nextUser = await getNextUserForSwipe(currentUser.uid, [

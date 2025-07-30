@@ -1,3 +1,5 @@
+import { addViewedUser, resetViewedUsers } from "@/redux/slices/swipeSlice";
+import { store } from "@/redux/store";
 import getDistanceFromLatLonInMeters from "@/utils/Distance";
 import { calculateMatchScore } from "@/utils/MatchScore";
 import {
@@ -952,7 +954,7 @@ const getRandomUser = async (
     const snapshot = await getDocs(usersRef);
 
     const availableUsers = snapshot.docs
-      .map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => ({
+      .map(doc => ({
         id: doc.id,
         ...doc.data(),
       }))
@@ -967,9 +969,13 @@ const getRandomUser = async (
       return null;
     }
 
-    // Get a random user
     const randomIndex = Math.floor(Math.random() * availableUsers.length);
-    return availableUsers[randomIndex];
+    const selectedUser = availableUsers[randomIndex];
+
+    // Add to viewed users in Redux
+    store.dispatch(addViewedUser(selectedUser.id));
+
+    return selectedUser;
   } catch (error) {
     console.error("Error fetching random user:", error);
     throw error;
@@ -1045,17 +1051,28 @@ const getNextUserForSwipe = async (
     const usersRef = collection(db, "users");
     const snapshot = await getDocs(usersRef);
 
-    // Get users that haven't been liked by current user
+    // DEBUG: Log all users first
+    const allUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    // Get current state
+    const state = store.getState();
+    const viewedUserIds = state.swipe.viewedUserIds || [];
+    // Get liked users
     const currentUserLikesRef = collection(db, "users", currentUserId, "likes");
     const likesSnapshot = await getDocs(currentUserLikesRef);
-    const likedUserIds = likesSnapshot.docs.map((doc: any) => doc.id);
+    const likedUserIds = likesSnapshot.docs.map(doc => doc.id);
 
-    const availableUsers = snapshot.docs
-      .map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => ({
-        id: doc.id,
-        ...doc.data(),
-      }))
-      .filter(
+    const availableUsers = allUsers.filter(
+      (user: any) =>
+        user.id !== currentUserId &&
+        !excludeUserIds.includes(user.id) &&
+        !likedUserIds.includes(user.id) &&
+        !viewedUserIds.includes(user.id) &&
+        user.isProfileComplete === true
+    );
+
+    if (availableUsers.length === 0) {
+      const anyEligibleUsers = allUsers.filter(
         (user: any) =>
           user.id !== currentUserId &&
           !excludeUserIds.includes(user.id) &&
@@ -1063,152 +1080,185 @@ const getNextUserForSwipe = async (
           user.isProfileComplete === true
       );
 
-    if (availableUsers.length === 0) {
-      return null;
+      if (anyEligibleUsers.length === 0) {
+        return null;
+      }
+
+      store.dispatch(resetViewedUsers());
+      return getNextUserForSwipe(currentUserId, excludeUserIds);
     }
 
-    // Get a random user
     const randomIndex = Math.floor(Math.random() * availableUsers.length);
-    return availableUsers[randomIndex];
+    const nextUser = availableUsers[randomIndex];
+
+    store.dispatch(addViewedUser(nextUser.id));
+    return nextUser;
   } catch (error) {
-    console.error("Error fetching next user for swipe:", error);
+    console.error("Error:", error);
     throw error;
   }
 };
 
-const fetchUserMatches = async (currentUserId: string) => {
+let unsubscribeLikes: (() => void) | null = null;
+let unsubscribeMatches: (() => void) | null = null;
+
+const fetchUserMatches = async (
+  currentUserId: string,
+  onUpdate: (matches: any[]) => void
+) => {
   try {
     const db = getFirestore();
 
-    // 1. Get mutual matches
     const matchesRef = collection(db, "matches");
-    const matchesSnapshot = await getDocs(matchesRef);
-
-    const mutualMatches: any[] = [];
-    const matchedUserIds: string[] = [];
-
-    matchesSnapshot.forEach((doc: any) => {
-      const matchData = doc.data();
-      if (matchData.users.includes(currentUserId) && matchData.isActive) {
-        const otherUserId = matchData.users.find(
-          (id: string) => id !== currentUserId
-        );
-        if (otherUserId) {
-          mutualMatches.push({
-            id: doc.id,
-            otherUserId,
-            matchedAt: matchData.matchedAt,
-            status: "matched",
-          });
-          matchedUserIds.push(otherUserId);
-        }
-      }
-    });
-
-    // 2. Get pending likes
     const currentUserLikesRef = collection(db, "users", currentUserId, "likes");
-    const currentUserLikesSnapshot = await getDocs(currentUserLikesRef);
 
-    const pendingMatches: any[] = [];
-
-    await Promise.all(
-      currentUserLikesSnapshot.docs.map(async likeDoc => {
-        const likedUserId = likeDoc.id;
-
-        if (matchedUserIds.includes(likedUserId)) return;
-
-        const theirLikeRef = doc(
-          db,
-          "users",
-          likedUserId,
-          "likes",
-          currentUserId
-        );
-        const theirLikeDoc = await getDoc(theirLikeRef);
-
-        if (!theirLikeDoc.exists()) {
-          pendingMatches.push({
-            id: `pending_${currentUserId}_${likedUserId}`,
-            otherUserId: likedUserId,
-            likedAt: likeDoc.data().likedAt,
-            status: "pending",
-          });
-        }
-      })
-    );
-
-    const allMatches = [...mutualMatches, ...pendingMatches];
-
-    // ✅ Fetch current user's profile
     const currentUserDoc = await getDoc(doc(db, "users", currentUserId));
     if (!currentUserDoc.exists()) throw new Error("Current user not found");
     const currentUserData = currentUserDoc.data();
 
-    // 3. Fetch user details with location and calculated match percentage
-    const matchesWithUserData = await Promise.all(
-      allMatches.map(async match => {
-        try {
-          const userDoc = await getDoc(doc(db, "users", match.otherUserId));
-          if (userDoc.exists()) {
-            const userData = userDoc.data() as any;
+    // 🔄 Listen to matches
+    unsubscribeMatches = onSnapshot(matchesRef, async matchesSnapshot => {
+      const mutualMatches: any[] = [];
+      const matchedUserIds: string[] = [];
 
-            const distance = `${(Math.random() * 10 + 0.5).toFixed(1)} km away`;
-
-            // ✅ Calculate real match percentage
-            const matchPercentage = calculateMatchScore(
-              {
-                userId: currentUserId,
-                intent: currentUserData.lookingFor,
-                profileScore: currentUserData.profileScore,
-              },
-              {
-                userId: match.otherUserId,
-                intent: userData.lookingFor,
-                profileScore: userData.profileScore,
-              }
-            );
-
-            let locationString = "UNKNOWN";
-            if (userData.location) {
-              if (typeof userData.location === "string") {
-                locationString = userData.location;
-              } else if (userData.location.city) {
-                locationString = userData.location.city;
-              } else if (
-                userData.location.latitude &&
-                userData.location.longitude
-              ) {
-                locationString = "LOCATION";
-              }
-            }
-
-            return {
-              id: match.id,
-              userId: match.otherUserId,
-              name: userData.name || "Unknown",
-              age: userData.age || 25,
-              location: locationString,
-              distance,
-              image: userData.photo,
-              matchPercentage,
-              timestamp: match.matchedAt || match.likedAt,
-              status: match.status,
-              isPending: match.status === "pending",
-            };
+      matchesSnapshot.forEach(docSnap => {
+        const matchData = docSnap.data();
+        if (matchData.users.includes(currentUserId) && matchData.isActive) {
+          const otherUserId = matchData.users.find(
+            (id: string) => id !== currentUserId
+          );
+          if (otherUserId) {
+            mutualMatches.push({
+              id: docSnap.id,
+              otherUserId,
+              matchedAt: matchData.matchedAt,
+              status: "matched",
+            });
+            matchedUserIds.push(otherUserId);
           }
-          return null;
-        } catch (error) {
-          console.error("Error fetching user data:", error);
-          return null;
         }
-      })
-    );
+      });
 
-    return matchesWithUserData.filter(match => match !== null);
+      // 🔄 Listen to likes
+      if (unsubscribeLikes) unsubscribeLikes(); // clear old listener
+
+      unsubscribeLikes = onSnapshot(
+        currentUserLikesRef,
+        async likesSnapshot => {
+          const pendingMatches: any[] = [];
+
+          await Promise.all(
+            likesSnapshot.docs.map(async likeDoc => {
+              const likedUserId = likeDoc.id;
+
+              if (matchedUserIds.includes(likedUserId)) return;
+
+              const theirLikeRef = doc(
+                db,
+                "users",
+                likedUserId,
+                "likes",
+                currentUserId
+              );
+              const theirLikeDoc = await getDoc(theirLikeRef);
+
+              if (!theirLikeDoc.exists()) {
+                pendingMatches.push({
+                  id: `pending_${currentUserId}_${likedUserId}`,
+                  otherUserId: likedUserId,
+                  likedAt: likeDoc.data().likedAt,
+                  status: "pending",
+                });
+              }
+            })
+          );
+
+          const allMatches = [...mutualMatches, ...pendingMatches];
+
+          const matchesWithUserData = await Promise.all(
+            allMatches.map(async match => {
+              try {
+                const userDoc = await getDoc(
+                  doc(db, "users", match.otherUserId)
+                );
+                if (userDoc.exists()) {
+                  const userData = userDoc.data() as any;
+
+                  const distanceInMeters = getDistanceFromLatLonInMeters(
+                    currentUserData.location.latitude,
+                    currentUserData.location.longitude,
+                    userData.location.latitude,
+                    userData.location.longitude
+                  );
+
+                  const distance =
+                    distanceInMeters > 1000
+                      ? `${(distanceInMeters / 1000).toFixed(1)} km away`
+                      : `${Math.round(distanceInMeters)} m away`;
+
+                  const matchPercentage = calculateMatchScore(
+                    {
+                      userId: currentUserId,
+                      intent: currentUserData.lookingFor,
+                      profileScore: currentUserData.profileScore,
+                    },
+                    {
+                      userId: match.otherUserId,
+                      intent: userData.lookingFor,
+                      profileScore: userData.profileScore,
+                    }
+                  );
+
+                  let locationString = "UNKNOWN";
+                  if (userData.location) {
+                    if (typeof userData.location === "string") {
+                      locationString = userData.location;
+                    } else if (userData.location.city) {
+                      locationString = userData.location.city;
+                    } else if (
+                      userData.location.latitude &&
+                      userData.location.longitude
+                    ) {
+                      locationString = "LOCATION";
+                    }
+                  }
+
+                  return {
+                    id: match.id,
+                    userId: match.otherUserId,
+                    name: userData.name || "Unknown",
+                    age: userData.age || 25,
+                    location: locationString,
+                    distance,
+                    image: userData.photo,
+                    matchPercentage,
+                    timestamp: match.matchedAt || match.likedAt,
+                    status: match.status,
+                    isPending: match.status === "pending",
+                  };
+                }
+                return null;
+              } catch (error) {
+                console.error("Error fetching user data:", error);
+                return null;
+              }
+            })
+          );
+
+          const validMatches = matchesWithUserData.filter(m => m !== null);
+          onUpdate(validMatches); // 🔁 Push result to your component
+        }
+      );
+    });
   } catch (error) {
     console.error("Error fetching matches:", error);
-    return [];
+    onUpdate([]);
   }
+};
+
+export const unsubscribeUserMatches = () => {
+  if (unsubscribeMatches) unsubscribeMatches();
+  if (unsubscribeLikes) unsubscribeLikes();
 };
 
 const fetchQuestionnaires = (callback: (questionnaires: any[]) => void) => {

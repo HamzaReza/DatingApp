@@ -1,5 +1,10 @@
-export default function getDistanceFromLatLonInMeters(lat1:number, lon1:number, lat2:number, lon2:number) {
-  const R = 6371000; 
+export default function getDistanceFromLatLonInMeters(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+) {
+  const R = 6371000;
   const dLat = (lat2 - lat1) * (Math.PI / 180);
   const dLon = (lon2 - lon1) * (Math.PI / 180);
   const a =
@@ -11,10 +16,14 @@ export default function getDistanceFromLatLonInMeters(lat1:number, lon1:number, 
 
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   const distance = R * c;
-  return distance; 
+  return distance;
 }
 
-export async function getNearbyHangoutUsers(currentLat: number, currentLon: number, allUsers: any[]) {
+export async function getNearbyHangoutUsers(
+  currentLat: number,
+  currentLon: number,
+  allUsers: any[]
+) {
   return allUsers.filter(user => {
     const distance = getDistanceFromLatLonInMeters(
       currentLat,
@@ -25,5 +34,3 @@ export async function getNearbyHangoutUsers(currentLat: number, currentLon: numb
     return distance <= 10000; // 10 km
   });
 }
-
-

@@ -73,9 +73,9 @@ export const smokingPreferenceOptions = [
 ];
 
 export const relationshipIntentOptions = [
-  { label: "Serious", value: "serious" },
+  { label: "Relationship", value: "relationship" },
   { label: "Casual", value: "casual" },
-  { label: "Friendship", value: "friendship" },
+  { label: "Marriage", value: "marriage" },
   { label: "Not Sure", value: "not_sure" },
 ];
 

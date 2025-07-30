@@ -4,7 +4,11 @@ import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
 import RoundButton from "@/components/RoundButton";
 import { Colors } from "@/constants/Colors";
-import { fetchUserMatches, getCurrentAuth } from "@/firebase/auth";
+import {
+  fetchUserMatches,
+  getCurrentAuth,
+  unsubscribeUserMatches,
+} from "@/firebase/auth";
 import { wp } from "@/utils";
 import { Ionicons } from "@expo/vector-icons";
 import {
@@ -39,24 +43,24 @@ export default function Matches() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadMatches = async () => {
-      try {
-        setLoading(true);
-        const currentUser = await getCurrentAuth();
-        if (currentUser?.currentUser?.uid) {
-          const userMatches = await fetchUserMatches(
-            currentUser.currentUser.uid
-          );
-          setMatches(userMatches);
-        }
-      } catch (error) {
-        console.error("Error loading matches:", error);
-      } finally {
-        setLoading(false);
-      }
+    const init = async () => {
+      const auth = await getCurrentAuth();
+      const uid = auth?.currentUser?.uid;
+      if (!uid) return;
+
+      await fetchUserMatches(uid, liveMatches => {
+        setMatches(liveMatches); // realtime update here
+      });
     };
 
-    loadMatches();
+    init();
+
+    return () => {
+      unsubscribeUserMatches(); // cleanup listener
+    };
+  }, []);
+
+  useEffect(() => {
     loadCounts();
   }, []);
 
@@ -74,8 +78,8 @@ export default function Matches() {
 
     // 2. Filter only those who liked the current user
     const likedByUsers = allLikesSnap.docs
-      .filter(doc => doc.id === currentUserId)
-      .map(doc => doc.ref.parent.parent?.id)
+      .filter((doc: any) => doc.id === currentUserId)
+      .map((doc: any) => doc.ref.parent.parent?.id)
       .filter(Boolean) as string[]; // Remove nulls
 
     let mutualConnections = 0;

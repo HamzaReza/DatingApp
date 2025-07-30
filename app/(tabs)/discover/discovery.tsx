@@ -29,8 +29,16 @@ import {
 import { RootState } from "@/redux/store";
 import { encodeImagePath, hp } from "@/utils";
 import getDistanceFromLatLonInMeters from "@/utils/Distance";
+import { filterUsers } from "@/utils/Filter";
 import { requestLocationPermission } from "@/utils/Permission";
 import { Ionicons } from "@expo/vector-icons";
+import { getAuth } from "@react-native-firebase/auth";
+import {
+  collection,
+  doc,
+  getDoc,
+  getFirestore,
+} from "@react-native-firebase/firestore";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Location from "expo-location";
 import { router } from "expo-router";
@@ -122,10 +130,12 @@ export default function Discover() {
     }
 
     const filtered = usersList.filter(user => {
-      const userInterests = user.interests?.split(",").map(i => i.trim()) || [];
+      const userInterests =
+        user.interests?.split(",").map(i => i.trim().toLowerCase()) || [];
 
       const hasAllSelectedInterests = selectedInterests.every(
-        (selectedInterest: string) => userInterests.includes(selectedInterest)
+        (selectedInterest: string) =>
+          userInterests.includes(selectedInterest.toLowerCase())
       );
 
       return hasAllSelectedInterests;
@@ -562,7 +572,7 @@ export default function Discover() {
               zIndexInverse={8000}
             />
 
-            <RnText style={styles.modalOptionText}>
+            {/* <RnText style={styles.modalOptionText}>
               Casual Dating And Matrimony
             </RnText>
             <RnDropdown
@@ -576,12 +586,33 @@ export default function Discover() {
               style={styles.filterInput}
               zIndex={900}
               zIndexInverse={8100}
-            />
+            /> */}
 
             <RnButton
               title="Apply Filter"
               style={[styles.applyFilterButton]}
-              onPress={() => setFilterModal(false)}
+              onPress={() => {
+                const filtered = filterUsers({
+                  users: usersList,
+                  age,
+                  height: heightValue,
+                  maritalStatus: maritalStatusValue,
+                  location: locationValue,
+                  distance,
+                  interests: selectedInterests,
+                  alcoholPreference: alcoholPreferenceValue,
+                  smokingPreference: smokingPreferenceValue,
+                  relationshipIntent: relationshipIntentValue,
+                  casualDatingAndMatrimony: casualDatingAndMatrimonyValue,
+                  deviceLocation: deviceLocation?.coords && {
+                    latitude: deviceLocation.coords.latitude,
+                    longitude: deviceLocation.coords.longitude,
+                  },
+                });
+
+                setFilteredUsers(filtered);
+                setFilterModal(false);
+              }}
             />
           </KeyboardAwareScrollView>
         </LinearGradient>

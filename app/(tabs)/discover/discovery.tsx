@@ -445,33 +445,6 @@ export default function Discover() {
               Manage and set your preferences to find the best matches for you,
               keep enjoying!
             </RnText>
-            <RnButton
-              title="Apply Filter"
-              style={[styles.applyFilterButton]}
-              onPress={() => {
-                const filtered = filterUsers({
-                  currentUser,
-                  users: usersList,
-                  age,
-                  height: heightValue,
-                  maritalStatus: maritalStatusValue,
-                  location: locationValue,
-                  distance,
-                  interests: interestMatchValue,
-                  alcoholPreference: alcoholPreferenceValue,
-                  smokingPreference: smokingPreferenceValue,
-                  relationshipIntent: relationshipIntentValue,
-                  casualDatingAndMatrimony: casualDatingAndMatrimonyValue,
-                  deviceLocation: deviceLocation?.coords && {
-                    latitude: deviceLocation.coords.latitude,
-                    longitude: deviceLocation.coords.longitude,
-                  },
-                });
-
-                setFilteredUsers(filtered);
-                setFilterModal(false);
-              }}
-            />
 
             <View style={styles.rowContainer}>
               <RnText style={styles.modalOptionText}>Age</RnText>

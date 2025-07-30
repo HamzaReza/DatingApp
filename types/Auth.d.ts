@@ -18,6 +18,18 @@ export interface AgeValues {
   age: number;
 }
 
+export interface HeightValues {
+  height: string;
+}
+
+export interface AlcoholValues {
+  alcohol: "yes" | "no" | "";
+}
+
+export interface SmokingValues {
+  smoking: "yes" | "no" | "";
+}
+
 export type LookingForValues = {
   lookingFor: "relationship" | "casual" | "notSure" | "marriage";
 };

@@ -57,7 +57,7 @@ export default function LookingFor() {
     setIsLoading(true);
     try {
       router.push({
-        pathname: "/interests",
+        pathname: "/alcohol",
         params: {
           ...params,
           lookingFor: values.lookingFor,
@@ -144,7 +144,7 @@ export default function LookingFor() {
             style={{ marginLeft: wp(5) }}
             onPress={() => router.dismissAll()}
           />
-          <RnProgressBar progress={8 / 12} />
+          <RnProgressBar progress={9 / 15} />
         </View>
       }
     >

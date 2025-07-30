@@ -117,7 +117,7 @@ export default function OtpScreen() {
             style={{ marginLeft: wp(5) }}
             onPress={() => router.dismissAll()}
           />
-          {!login && <RnProgressBar progress={2 / 12} />}
+          {!login && <RnProgressBar progress={2 / 15} />}
         </View>
       }
     >

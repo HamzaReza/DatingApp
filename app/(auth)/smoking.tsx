@@ -1,11 +1,11 @@
-import createStyles from "@/app/authStyles/profession.styles";
+import createStyles from "@/app/authStyles/smoking.styles";
 import RnButton from "@/components/RnButton";
+import Container from "@/components/RnContainer";
 import RnProgressBar from "@/components/RnProgressBar";
-import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { ProfessionValues } from "@/types";
+import { SmokingValues } from "@/types";
 import { wp } from "@/utils";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
@@ -14,45 +14,24 @@ import { useState } from "react";
 import { Pressable, View } from "react-native";
 import * as Yup from "yup";
 
-const professionSchema = Yup.object().shape({
-  profession: Yup.string()
-    .oneOf(
-      [
-        "IT & Software",
-        "Doctor / Healthcare",
-        "Engineer",
-        "Business Owner",
-        "Teacher / Professor",
-        "Artist / Designer",
-      ],
-      "Please select a valid option"
-    )
-    .required("Please select an option"),
+const smokingSchema = Yup.object().shape({
+  smoking: Yup.string().required("Please select your smoking preference"),
 });
 
-const PROFESSIONS = [
-  { value: "IT & Software", label: "IT & Software" },
-  { value: "Doctor / Healthcare", label: "Doctor / Healthcare" },
-  { value: "Engineer", label: "Engineer" },
-  { value: "Business Owner", label: "Business Owner" },
-  { value: "Teacher / Professor", label: "Teacher / Professor" },
-  { value: "Artist / Designer", label: "Artist / Designer" },
-] as const;
-
-export default function Profession() {
+export default function Smoking() {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
   const [isLoading, setIsLoading] = useState(false);
   const params = useLocalSearchParams();
 
-  const handleProfessionSubmit = async (values: ProfessionValues) => {
-    if (!values.profession) return;
+  const handleSmokingSubmit = async (values: SmokingValues) => {
+    if (!values.smoking) return;
     setIsLoading(true);
     try {
       router.push({
-        pathname: "/religion",
-        params: { ...params, profession: values.profession },
+        pathname: "/interests",
+        params: { ...params, smoking: values.smoking },
       });
     } catch (error) {
       console.error(error);
@@ -62,30 +41,28 @@ export default function Profession() {
   };
 
   const renderOption = (
-    option: (typeof PROFESSIONS)[number],
+    value: "smoke" | "dont_smoke" | "occasionally" | "socially",
+    label: string,
     selectedOption: string,
     setFieldValue: (field: string, value: any) => void
   ) => {
-    const isSelected = selectedOption === option.value;
+    const isSelected = selectedOption === value;
     return (
       <Pressable
-        key={option.value}
-        onPress={() =>
-          setFieldValue("profession", isSelected ? "" : option.value)
-        }
+        onPress={() => setFieldValue("smoking", isSelected ? "" : value)}
         style={[styles.option, isSelected && styles.optionSelected]}
       >
         <RnText
           style={[styles.optionText, isSelected && styles.optionTextSelected]}
         >
-          {option.label}
+          {label}
         </RnText>
       </Pressable>
     );
   };
 
   return (
-    <ScrollContainer
+    <Container
       topBar={
         <View
           style={{
@@ -100,35 +77,51 @@ export default function Profession() {
             style={{ marginLeft: wp(5) }}
             onPress={() => router.dismissAll()}
           />
-          <RnProgressBar progress={14 / 15} />
+          <RnProgressBar progress={11 / 15} />
         </View>
       }
     >
       <Formik
-        initialValues={{ profession: "" }}
-        validationSchema={professionSchema}
-        onSubmit={handleProfessionSubmit}
+        initialValues={{ smoking: "" }}
+        validationSchema={smokingSchema}
+        onSubmit={handleSmokingSubmit}
       >
         {({ values, setFieldValue, handleSubmit, errors }) => (
           <View style={styles.innerContainer}>
-            <RnText style={styles.title}>What Is Your Profession?</RnText>
+            <RnText style={styles.title}>Do You Smoke?</RnText>
             <RnText style={styles.subtitle}>
-              Let others know what you do for a living
+              This helps us match you with compatible people
             </RnText>
 
             <View style={styles.optionsContainer}>
-              {PROFESSIONS.map(option =>
-                renderOption(option, values.profession, setFieldValue)
+              {renderOption("smoke", "Smoke", values.smoking, setFieldValue)}
+              {renderOption(
+                "dont_smoke",
+                "Don't smoke",
+                values.smoking,
+                setFieldValue
+              )}
+              {renderOption(
+                "occasionally",
+                "Occasionally",
+                values.smoking,
+                setFieldValue
+              )}
+              {renderOption(
+                "socially",
+                "Socially",
+                values.smoking,
+                setFieldValue
               )}
             </View>
 
-            {errors.profession && (
-              <RnText style={styles.errorText}>{errors.profession}</RnText>
+            {errors.smoking && (
+              <RnText style={styles.errorText}>{errors.smoking}</RnText>
             )}
 
             <RnButton
               title="Continue"
-              style={styles.button}
+              style={[styles.button]}
               onPress={handleSubmit}
               disabled={isLoading}
               loading={isLoading}
@@ -136,6 +129,6 @@ export default function Profession() {
           </View>
         )}
       </Formik>
-    </ScrollContainer>
+    </Container>
   );
 }

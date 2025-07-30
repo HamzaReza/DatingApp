@@ -78,7 +78,7 @@ export default function Signup() {
             style={{ marginLeft: wp(5) }}
             onPress={() => router.dismissAll()}
           />
-          <RnProgressBar progress={1 / 12} />
+          <RnProgressBar progress={1 / 15} />
         </View>
       }
     >

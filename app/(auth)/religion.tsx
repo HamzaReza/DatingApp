@@ -108,7 +108,7 @@ export default function Religion() {
             style={{ marginLeft: wp(5) }}
             onPress={() => router.dismissAll()}
           />
-          <RnProgressBar progress={12 / 12} />
+          <RnProgressBar progress={15 / 15} />
         </View>
       }
     >

@@ -58,7 +58,7 @@ export default function Photo() {
             style={{ marginLeft: wp(5) }}
             onPress={() => router.dismissAll()}
           />
-          <RnProgressBar progress={10 / 12} />
+          <RnProgressBar progress={13 / 15} />
         </View>
       }
     >

@@ -3,6 +3,7 @@ import { store } from "@/redux/store";
 import getDistanceFromLatLonInMeters from "@/utils/Distance";
 import { calculateMatchScore } from "@/utils/MatchScore";
 import {
+  FirebaseAuthTypes,
   getAuth,
   GoogleAuthProvider,
   signInWithCredential,
@@ -27,6 +28,7 @@ import {
   deleteObject,
   getDownloadURL,
   getStorage,
+  listAll,
   putFile,
   ref,
 } from "@react-native-firebase/storage";
@@ -479,11 +481,9 @@ export const fetchUsersWithLocation = async () => {
   );
 };
 
-const fetchAllUserStories = async () => {
+const fetchAllUserStories = async (userId: string) => {
   try {
     const db = getFirestore();
-    const auth = getAuth();
-    const userId = auth.currentUser?.uid;
 
     const [usersSnapshot, storiesSnapshot] = await Promise.all([
       getDocs(collection(db, "users")),
@@ -616,7 +616,7 @@ export const sendGroupInvitesByTags = async (
   image: string,
   groupName: string,
   groupDescription: string,
-  selectedGender: "male" | "female" | "non-binary" | "mixed",
+  selectedGender: string,
   minAge: number,
   maxAge: number,
   eventDate: any
@@ -637,7 +637,7 @@ export const sendGroupInvitesByTags = async (
     const usersSnapshot = await getDocs(collection(db, "users"));
 
     const matchingUsers = usersSnapshot.docs
-      .filter(userDoc => {
+      .filter((userDoc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
         const data = userDoc.data();
 
         // Skip inviter (already added later)
@@ -674,7 +674,7 @@ export const sendGroupInvitesByTags = async (
         return hasMatchingTag && genderMatch && ageMatch;
       })
       .slice(0, maxParticipants)
-      .map(userDoc => ({
+      .map((userDoc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => ({
         uid: userDoc.id,
         name: userDoc.data().name || "User",
       }));
@@ -723,7 +723,7 @@ export const sendGroupInvitesByTags = async (
           status: "accepted",
           invitedAt,
         },
-        ...matchingUsers.map(user => ({
+        ...matchingUsers.map((user: { uid: string; name: string }) => ({
           uid: user.uid,
           name: user.name,
           status: "pending",
@@ -767,7 +767,7 @@ export const sendGroupInvitesByTags = async (
     return { success: true };
   } catch (error) {
     console.error("Error sending group invites:", error);
-    return { success: false, error: error.message };
+    return { success: false, error: (error as Error).message };
   }
 };
 export const getUserNotifications = async (userId: string) => {
@@ -1287,11 +1287,267 @@ const fetchQuestionnaires = (callback: (questionnaires: any[]) => void) => {
   }
 };
 
+const deleteUser = async (
+  user: FirebaseAuthTypes.User
+): Promise<{ success: boolean; error?: string }> => {
+  try {
+    const db = getFirestore();
+    const batch = writeBatch(db);
+
+    // 1. Delete user's likes
+    const userLikesRef = collection(db, "users", user.uid, "likes");
+    const userLikesSnapshot = await getDocs(userLikesRef);
+    userLikesSnapshot.docs.forEach((doc: any) => {
+      batch.delete(doc.ref);
+    });
+
+    // 2. Delete likes from other users that target this user
+    const allUsersSnapshot = await getDocs(collection(db, "users"));
+    for (const userDoc of allUsersSnapshot.docs) {
+      if (userDoc.id !== user.uid) {
+        const otherUserLikeRef = doc(
+          db,
+          "users",
+          userDoc.id,
+          "likes",
+          user.uid
+        );
+        const otherUserLikeDoc = await getDoc(otherUserLikeRef);
+        if (otherUserLikeDoc.exists()) {
+          batch.delete(otherUserLikeRef);
+        }
+      }
+    }
+
+    // 3. Delete matches involving this user
+    const matchesRef = collection(db, "matches");
+    const matchesSnapshot = await getDocs(matchesRef);
+    matchesSnapshot.docs.forEach((doc: any) => {
+      const matchData = doc.data();
+      if (matchData.users && matchData.users.includes(user.uid)) {
+        batch.delete(doc.ref);
+      }
+    });
+
+    // 4. Delete user's stories
+    const userStoriesRef = doc(db, "stories", user.uid);
+    const userStoriesDoc = await getDoc(userStoriesRef);
+    if (userStoriesDoc.exists()) {
+      batch.delete(userStoriesRef);
+    }
+
+    // 5. Delete user's notifications
+    const userNotificationsRef = doc(db, "notifications", user.uid);
+    const userNotificationsDoc = await getDoc(userNotificationsRef);
+    if (userNotificationsDoc.exists()) {
+      batch.delete(userNotificationsRef);
+    }
+
+    // 6. Delete user's reels
+    const reelsRef = collection(db, "reels");
+    const userReelsSnapshot = await getDocs(
+      query(reelsRef, where("userId", "==", user.uid))
+    );
+    userReelsSnapshot.docs.forEach((doc: any) => {
+      batch.delete(doc.ref);
+    });
+
+    // 7. Delete user's messages/chats
+    const messagesRef = collection(db, "messages");
+    const userMessagesSnapshot = await getDocs(messagesRef);
+    userMessagesSnapshot.docs.forEach((doc: any) => {
+      const messageData = doc.data();
+      // Delete if user is part of this chat/group
+      if (messageData.users && Array.isArray(messageData.users)) {
+        const userInChat = messageData.users.find(
+          (i: any) => i.uid === user.uid
+        );
+        if (userInChat) {
+          // If it's a group chat, remove the user from the group
+          if (messageData.type === "group") {
+            const updatedUsers = messageData.users.filter(
+              (i: any) => i.uid !== user.uid
+            );
+            if (updatedUsers.length === 0) {
+              batch.delete(doc.ref);
+            } else {
+              batch.update(doc.ref, { users: updatedUsers });
+            }
+          } else {
+            // For direct messages, delete the entire chat
+            batch.delete(doc.ref);
+          }
+        }
+      }
+    });
+
+    // 8. Delete user document
+    batch.delete(doc(db, "users", user.uid));
+
+    // 9. Delete guardian document (if exists)
+    const guardianRef = doc(db, "guardian", user.uid);
+    const guardianDoc = await getDoc(guardianRef);
+    if (guardianDoc.exists()) {
+      batch.delete(guardianRef);
+    }
+
+    // 10. Delete all user files from Firebase Storage (including nested directories)
+    try {
+      const userStorageRef = ref(storage, `users/${user.uid}`);
+
+      const deleteAllFilesRecursively = async (directoryRef: any) => {
+        const result = await listAll(directoryRef);
+
+        const fileDeletePromises = result.items.map(itemRef =>
+          deleteObject(itemRef)
+        );
+
+        const subdirectoryDeletePromises = result.prefixes.map(prefixRef =>
+          deleteAllFilesRecursively(prefixRef)
+        );
+
+        await Promise.all([
+          ...fileDeletePromises,
+          ...subdirectoryDeletePromises,
+        ]);
+      };
+
+      await deleteAllFilesRecursively(userStorageRef);
+    } catch (error) {
+      console.warn("Failed to delete user storage files:", error);
+    }
+
+    await batch.commit();
+
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error deleting user:", error);
+    return {
+      success: false,
+      error: error.message || "Failed to delete user and associated data",
+    };
+  }
+};
+
+const addGuardianMobileNumber = async (
+  phoneNumber: string
+): Promise<{ success: boolean; error: string }> => {
+  try {
+    const db = getFirestore();
+
+    // Check if number already exists
+    const existingGuardian = await checkGuardianMobileNumber(phoneNumber);
+    if (existingGuardian.exists) {
+      if (existingGuardian.inGuardian) {
+        return {
+          success: false,
+          error: "Mobile number already is a registered guardian",
+        };
+      } else if (existingGuardian.inUsers) {
+        return {
+          success: false,
+          error: "Mobile number already exists as a user",
+        };
+      }
+    }
+
+    // Add to guardian collection
+
+    const auth = getAuth();
+    const user = auth.currentUser;
+
+    const guardianRef = doc(db, "guardian", user?.uid || "");
+    await setDoc(guardianRef, {
+      phoneNumber,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    return { success: true, error: "" };
+  } catch (error: any) {
+    console.error("Error adding guardian mobile number:", error);
+    return {
+      success: false,
+      error: error.message || "Failed to add guardian mobile number",
+    };
+  }
+};
+
+const checkGuardianMobileNumber = async (
+  mobileNumber: string
+): Promise<{
+  exists: boolean;
+  error?: string;
+  inGuardian?: boolean;
+  inUsers?: boolean;
+}> => {
+  try {
+    const db = getFirestore();
+
+    const guardianRef = collection(db, "guardian");
+    const guardianQuery = query(
+      guardianRef,
+      where("phoneNumber", "==", mobileNumber)
+    );
+    const guardianSnapshot = await getDocs(guardianQuery);
+
+    const usersRef = collection(db, "users");
+    const usersQuery = query(
+      usersRef,
+      where("phoneNumber", "==", mobileNumber)
+    );
+    const usersSnapshot = await getDocs(usersQuery);
+
+    const existsInGuardian = !guardianSnapshot.empty;
+    const existsInUsers = !usersSnapshot.empty;
+
+    return {
+      exists: existsInGuardian || existsInUsers,
+      inGuardian: existsInGuardian,
+      inUsers: existsInUsers,
+    };
+  } catch (error: any) {
+    console.error("Error checking guardian mobile number:", error);
+    return {
+      exists: false,
+      error: error.message || "Failed to check guardian mobile number",
+    };
+  }
+};
+
+const getUserByGuardianPhone = async (guardianPhoneNumber: string) => {
+  try {
+    const db = getFirestore();
+
+    const usersRef = collection(db, "users");
+    const q = query(
+      usersRef,
+      where("guardianPhone", "==", guardianPhoneNumber)
+    );
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      return null;
+    }
+
+    const userData = querySnapshot.docs[0].data();
+    return userData;
+  } catch (error: any) {
+    console.error("Error getting user data by guardian phone number:", error);
+    throw new Error(
+      `Failed to get user data by guardian phone: ${error.message}`
+    );
+  }
+};
+
 export {
+  addGuardianMobileNumber,
   authenticateWithPhone,
   checkForMatch,
+  checkGuardianMobileNumber,
   checkUserExistsForSignup,
   deleteImage,
+  deleteUser,
   fetchAllUsers,
   fetchAllUserStories,
   fetchGenders,
@@ -1304,6 +1560,7 @@ export {
   getNextUserForSwipe,
   getRandomUser,
   getUserByEmail,
+  getUserByGuardianPhone,
   getUserByUid,
   getUserByUidAsync,
   getUserLocation,

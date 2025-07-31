@@ -1,4 +1,4 @@
-import createStyles from "@/app/authStyles/age.styles";
+import createStyles from "@/app/authStyles/height.styles";
 import RnButton from "@/components/RnButton";
 import RnProgressBar from "@/components/RnProgressBar";
 import ScrollContainer from "@/components/RnScrollContainer";
@@ -6,7 +6,7 @@ import RnText from "@/components/RnText";
 import RnWheelPicker from "@/components/RnWheelPicker";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
-import { AgeValues } from "@/types";
+import { HeightValues } from "@/types";
 import { wp } from "@/utils";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
@@ -15,32 +15,37 @@ import { useState } from "react";
 import { View } from "react-native";
 import * as Yup from "yup";
 
-const ageSchema = Yup.object().shape({
-  age: Yup.number()
-    .min(18, "Must be at least 18")
-    .max(100, "Must be at most 100")
-    .required("Age is required"),
+const heightSchema = Yup.object().shape({
+  height: Yup.string().required("Height is required"),
 });
 
-const AGE_MIN = 18;
-const AGE_MAX = 100;
-const ageOptions = Array.from({ length: AGE_MAX - AGE_MIN + 1 }, (_, i) =>
-  (AGE_MIN + i).toString()
-);
+// Generate height options from 5'0" to 7'0"
+const generateHeightOptions = () => {
+  const options = [];
+  for (let feet = 5; feet <= 7; feet++) {
+    for (let inches = 0; inches < 12; inches++) {
+      if (feet === 7 && inches > 0) break; // Stop at 7'0"
+      options.push(`${feet}'${inches.toString().padStart(2, "0")}"`);
+    }
+  }
+  return options;
+};
 
-export default function Age() {
+const heightOptions = generateHeightOptions();
+
+export default function Height() {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
   const [isLoading, setIsLoading] = useState(false);
   const params = useLocalSearchParams();
 
-  const handleAgeSubmit = async (values: AgeValues) => {
+  const handleHeightSubmit = async (values: HeightValues) => {
     setIsLoading(true);
     try {
       router.push({
-        pathname: "/height",
-        params: { ...params, age: values.age },
+        pathname: "/gender",
+        params: { ...params, height: values.height },
       });
     } catch (error) {
       console.error(error);
@@ -65,29 +70,29 @@ export default function Age() {
             style={{ marginLeft: wp(5) }}
             onPress={() => router.dismissAll()}
           />
-          <RnProgressBar progress={6 / 15} />
+          <RnProgressBar progress={7 / 15} />
         </View>
       }
     >
       <Formik
-        initialValues={{ age: 25 }}
-        validationSchema={ageSchema}
-        onSubmit={handleAgeSubmit}
+        initialValues={{ height: "5'06\"" }}
+        validationSchema={heightSchema}
+        onSubmit={handleHeightSubmit}
         validateOnChange
         validateOnMount={false}
       >
         {({ setFieldValue, handleSubmit, values }) => (
           <View style={styles.innerContainer}>
             <View>
-              <RnText style={styles.title}>How Old Are You?</RnText>
+              <RnText style={styles.title}>How Tall Are You?</RnText>
               <RnText style={styles.subtitle}>
-                Please provide your age in years
+                Please provide your height in feet and inches
               </RnText>
               <View style={styles.pickerContainer}>
                 <RnWheelPicker
-                  dataSource={ageOptions}
-                  selectedIndex={values.age - AGE_MIN}
-                  onValueChange={item => setFieldValue("age", item)}
+                  dataSource={heightOptions}
+                  selectedIndex={heightOptions.indexOf(values.height)}
+                  onValueChange={item => setFieldValue("height", item)}
                   renderItem={data => (
                     <RnText style={{ fontSize: 28, textAlign: "center" }}>
                       {data}

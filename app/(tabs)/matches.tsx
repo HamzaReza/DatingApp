@@ -181,10 +181,7 @@ export default function Matches() {
                 distance={item.distance}
                 image={item.image}
                 matchPercentage={item.matchPercentage}
-                // onPress={() =>
-                //   // handleMatchPress(item.userId, item.status, item.id)'\
-                //   conso
-                // }
+                onPress={() => router.push(`/discover/${item.id}`)}
                 isPending={item.status == "pending"}
               />
             )}

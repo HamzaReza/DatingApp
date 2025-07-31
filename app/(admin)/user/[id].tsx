@@ -125,7 +125,7 @@ export default function UserProfile() {
           <View style={styles.iconContainer}>
             <Ionicons name="call" size={wp(4)} color={Colors[theme].pink} />
           </View>
-          <RnText style={styles.contactText}>{user.phoneNumber}</RnText>
+          <RnText style={styles.contactText}>{user.phone}</RnText>
         </View>
         <View style={styles.contactRow}>
           <View style={styles.iconContainer}>

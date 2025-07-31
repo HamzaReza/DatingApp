@@ -140,7 +140,7 @@ export default function Interests() {
             style={{ marginLeft: wp(5) }}
             onPress={() => router.dismissAll()}
           />
-          <RnProgressBar progress={9 / 12} />
+          <RnProgressBar progress={12 / 15} />
         </View>
       }
     >

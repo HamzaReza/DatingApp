@@ -99,7 +99,7 @@ export default function Gender() {
             style={{ marginLeft: wp(5) }}
             onPress={() => router.dismissAll()}
           />
-          <RnProgressBar progress={7 / 12} />
+          <RnProgressBar progress={8 / 15} />
         </View>
       }
     >

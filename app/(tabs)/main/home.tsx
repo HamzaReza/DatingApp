@@ -12,6 +12,7 @@ import { Colors } from "@/constants/Colors";
 import {
   fetchAllUserStories,
   fetchStoriesForUser,
+  getUserByUid,
   handleStoryUpload,
   updateUser,
 } from "@/firebase/auth";
@@ -31,7 +32,6 @@ import {
 import { RootState } from "@/redux/store";
 import { encodeImagePath, hp, wp } from "@/utils";
 import { requestLocationPermission } from "@/utils/Permission";
-import { getAuth } from "@react-native-firebase/auth";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import { router } from "expo-router";
@@ -82,10 +82,8 @@ export default function Home() {
         const location = await Location.getCurrentPositionAsync({});
         dispatch(setDeviceLocation(location));
 
-        const currentUser = getAuth().currentUser?.uid;
-
-        if (currentUser) {
-          await updateUser(currentUser, {
+        if (user?.uid) {
+          await updateUser(user.uid, {
             location: {
               latitude: location.coords.latitude,
               longitude: location.coords.longitude,
@@ -107,6 +105,17 @@ export default function Home() {
     getStories();
     const unsubscribe = getReels();
 
+    let userListener: (() => void) | null = null;
+    if (user?.uid) {
+      userListener = getUserByUid(user.uid, userData => {
+        if (!userData) {
+          dispatch(setToken(null));
+          router.dismissAll();
+          router.replace("/onboarding");
+        }
+      });
+    }
+
     const interval = setInterval(() => {
       getCurrentLocation();
     }, 60000);
@@ -115,13 +124,16 @@ export default function Home() {
       if (unsubscribe) {
         unsubscribe();
       }
+      if (userListener) {
+        userListener();
+      }
       clearInterval(interval);
       // Clean up comment listener if it exists
       if (commentListener) {
         commentListener();
       }
     };
-  }, []);
+  }, [user?.uid]);
 
   useEffect(() => {
     setOptimisticUpdates({});
@@ -129,7 +141,7 @@ export default function Home() {
 
   const getStories = async () => {
     try {
-      const stories = await fetchAllUserStories();
+      const stories = await fetchAllUserStories(user?.uid);
       setAllStories(stories);
     } catch (error) {
       console.log("error when fetch stories", error);
@@ -165,8 +177,7 @@ export default function Home() {
 
   const handleReelAction = async (action: string, reelId: string) => {
     try {
-      const currentUser = getAuth().currentUser;
-      if (!currentUser) {
+      if (!user) {
         return;
       }
 
@@ -176,8 +187,8 @@ export default function Home() {
 
         const currentLikes = currentReel.likes || [];
         const currentDislikes = currentReel.dislikes || [];
-        const isCurrentlyLiked = currentLikes.includes(currentUser.uid);
-        const isCurrentlyDisliked = currentDislikes.includes(currentUser.uid);
+        const isCurrentlyLiked = currentLikes.includes(user.uid);
+        const isCurrentlyDisliked = currentDislikes.includes(user.uid);
         const currentLikeCount = currentLikes.length;
         const currentDislikeCount = currentDislikes.length;
 
@@ -231,11 +242,7 @@ export default function Home() {
         }));
 
         try {
-          await likeDislikeReel(
-            reelId,
-            currentUser.uid,
-            action as "like" | "dislike"
-          );
+          await likeDislikeReel(reelId, user.uid, action as "like" | "dislike");
 
           // Optimistic update successful, keep the state
         } catch (error) {
@@ -285,8 +292,7 @@ export default function Home() {
   const handleAddComment = async (comment: string) => {
     if (!selectedReelForComment) return;
 
-    const currentUser = getAuth().currentUser;
-    if (!currentUser) {
+    if (!user) {
       showToaster({
         type: "error",
         heading: "Authentication Error",
@@ -299,8 +305,8 @@ export default function Home() {
 
     // Create optimistic comment for immediate UI feedback
     const optimisticComment = {
-      id: `${Date.now()}_${currentUser.uid}`,
-      userId: currentUser.uid,
+      id: `${Date.now()}_${user.uid}`,
+      userId: user.uid,
       username: user?.name || "User",
       userPhoto: user?.photo || "",
       content: comment.trim(),
@@ -315,7 +321,7 @@ export default function Home() {
     );
 
     try {
-      await addCommentToReel(selectedReelForComment.id, comment);
+      await addCommentToReel(selectedReelForComment.id, comment, user);
       // The real-time listener will automatically update the state with the server response
     } catch (error) {
       // Remove optimistic comment on error
@@ -369,16 +375,7 @@ export default function Home() {
   return (
     <Container>
       <View style={styles.titleContainer}>
-        <RnText
-          style={styles.titleText}
-          onPress={() => {
-            router.dismissAll();
-            router.replace("/onboarding");
-            dispatch(setToken(null));
-          }}
-        >
-          XYZ
-        </RnText>
+        <RnText style={styles.titleText}>XYZ</RnText>
         <View style={styles.headerIconContainer}>
           <RoundButton
             iconName="notifications-none"
@@ -428,12 +425,9 @@ export default function Home() {
         }}
         renderItem={({ item }: { item: Reel }) => {
           const optimisticState = optimisticUpdates[item.id];
-          const currentUser = getAuth().currentUser;
-          const isLiked = currentUser
-            ? (item.likes || []).includes(currentUser.uid)
-            : false;
-          const isDisliked = currentUser
-            ? (item.dislikes || []).includes(currentUser.uid)
+          const isLiked = user ? (item.likes || []).includes(user.uid) : false;
+          const isDisliked = user
+            ? (item.dislikes || []).includes(user.uid)
             : false;
 
           return (

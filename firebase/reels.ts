@@ -1,4 +1,4 @@
-import { getAuth } from "@react-native-firebase/auth";
+import { FirebaseAuthTypes } from "@react-native-firebase/auth";
 import {
   addDoc,
   arrayUnion,
@@ -188,23 +188,21 @@ const likeDislikeReel = async (
 
 const addCommentToReel = async (
   reelId: string,
-  content: string
+  content: string,
+  user: FirebaseAuthTypes.User
 ): Promise<void> => {
   try {
     if (!reelId || !content) {
       throw new Error("Reel ID and comment content are required");
     }
 
-    const auth = getAuth();
-    const currentUser = auth.currentUser;
-
-    if (!currentUser) {
+    if (!user?.uid) {
       throw new Error("User must be authenticated to add a comment");
     }
 
     const db = getFirestore();
     const reelRef = doc(db, "reels", reelId);
-    const userRef = doc(db, "users", currentUser.uid);
+    const userRef = doc(db, "users", user.uid);
 
     const reelDoc = await getDoc(reelRef);
     if (!reelDoc.exists()) {
@@ -222,8 +220,8 @@ const addCommentToReel = async (
     const userData = userDoc.data();
 
     const newComment: ReelComment = {
-      id: `${Date.now()}_${currentUser.uid}`,
-      userId: currentUser.uid,
+      id: `${Date.now()}_${user.uid}`,
+      userId: user.uid,
       username: userData?.name || "User",
       userPhoto: userData?.photo || "",
       content: content.trim(),
@@ -304,14 +302,12 @@ const listenToReelComments = (
 
 const uploadReel = async (
   videoUri: string,
+  user: FirebaseAuthTypes.User,
   thumbnailUri?: string,
   caption?: string
 ): Promise<string> => {
   try {
-    const auth = getAuth();
-    const currentUser = auth.currentUser;
-
-    if (!currentUser) {
+    if (!user?.uid) {
       throw new Error("User must be authenticated to upload a reel");
     }
 
@@ -326,7 +322,7 @@ const uploadReel = async (
       throw new Error("Firebase Storage is not initialized");
     }
 
-    const userRef = doc(db, "users", currentUser.uid);
+    const userRef = doc(db, "users", user.uid);
     const userDoc = await getDoc(userRef);
 
     if (!userDoc.exists()) {
@@ -339,7 +335,7 @@ const uploadReel = async (
     const thumbnailExtension = thumbnailUri?.split(".").pop() || "jpg";
 
     const videoFilename = `reel_${timestamp}.${videoExtension}`;
-    const videoStoragePath = `users/${currentUser.uid}/reels/${videoFilename}`;
+    const videoStoragePath = `users/${user.uid}/reels/${videoFilename}`;
     const videoStorageRef = ref(storage, videoStoragePath);
 
     await putFile(videoStorageRef, videoUri);
@@ -349,7 +345,7 @@ const uploadReel = async (
 
     if (thumbnailUri) {
       const thumbnailFilename = `thumbnail_${timestamp}.${thumbnailExtension}`;
-      const thumbnailStoragePath = `users/${currentUser.uid}/reels/${thumbnailFilename}`;
+      const thumbnailStoragePath = `users/${user.uid}/reels/${thumbnailFilename}`;
       const thumbnailStorageRef = ref(storage, thumbnailStoragePath);
 
       await putFile(thumbnailStorageRef, thumbnailUri);
@@ -358,7 +354,7 @@ const uploadReel = async (
 
     const reelsRef = collection(db, "reels");
     const newReel = {
-      userId: currentUser.uid,
+      userId: user.uid,
       username: userData?.name || "User",
       userPhoto: userData?.photo || "",
       videoUrl: videoDownloadURL,

@@ -18,6 +18,18 @@ export interface AgeValues {
   age: number;
 }
 
+export interface HeightValues {
+  height: string;
+}
+
+export interface AlcoholValues {
+  alcohol: "drink" | "dont_drink" | "occasionally" | "socially" | "";
+}
+
+export interface SmokingValues {
+  smoking: "smoke" | "dont_smoke" | "occasionally" | "socially" | "";
+}
+
 export type LookingForValues = {
   lookingFor: "relationship" | "casual" | "notSure" | "marriage";
 };
@@ -35,6 +47,7 @@ export type LocationValues = {
     latitude: number;
     longitude: number;
   } | null;
+  country: string;
 };
 
 export type ProfessionValues = {

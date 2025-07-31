@@ -1,7 +1,6 @@
 import { User } from "@/app/(tabs)/messages/types";
-import { getAuth } from "@react-native-firebase/auth";
+import { FirebaseAuthTypes } from "@react-native-firebase/auth";
 import {
-  addDoc,
   arrayUnion,
   collection,
   deleteDoc,
@@ -19,7 +18,6 @@ import {
   updateDoc,
   where,
 } from "@react-native-firebase/firestore";
-import { router } from "expo-router";
 import { Alert } from "react-native";
 
 // Types for message data
@@ -647,18 +645,15 @@ export const listenToOneToOneChats = (
 
 export const setupChatListeners = (
   onGroupsUpdate: (groups: any[]) => void,
-  onOneToOneUpdate: (chats: any[]) => void
+  onOneToOneUpdate: (chats: any[]) => void,
+  user: FirebaseAuthTypes.User
 ) => {
-  const currentUserId = getAuth().currentUser?.uid;
-  if (!currentUserId) {
+  if (!user?.uid) {
     throw new Error("No authenticated user found");
   }
 
-  const unsubscribeGroups = listenToUserGroups(currentUserId, onGroupsUpdate);
-  const unsubscribeOneToOne = listenToOneToOneChats(
-    currentUserId,
-    onOneToOneUpdate
-  );
+  const unsubscribeGroups = listenToUserGroups(user.uid, onGroupsUpdate);
+  const unsubscribeOneToOne = listenToOneToOneChats(user.uid, onOneToOneUpdate);
 
   return {
     unsubscribe: () => {
@@ -670,11 +665,11 @@ export const setupChatListeners = (
   };
 };
 export {
-  fetchMeetData,
-  sendDirectMessage,
   deleteMessage,
+  fetchMeetData,
   fetchMessagesBetweenUsers,
   fetchUserConversations,
   markConversationAsRead,
   markMessagesAsRead,
+  sendDirectMessage,
 };

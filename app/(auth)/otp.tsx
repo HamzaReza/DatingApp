@@ -8,6 +8,8 @@ import showToaster from "@/components/RnToast";
 import { Colors } from "@/constants/Colors";
 import {
   authenticateWithPhone,
+  checkGuardianMobileNumber,
+  getUserByGuardianPhone,
   getUserByUidAsync,
   saveUserToDatabase,
   verifyCode,
@@ -40,7 +42,6 @@ export default function OtpScreen() {
   const styles = createStyles(theme);
   const { phone, login } = useLocalSearchParams();
   const [isLoading, setIsLoading] = useState(false);
-  const phoneNumber = phone;
 
   const handleVerify = async (values: { otp: string }) => {
     setIsLoading(true);
@@ -74,15 +75,51 @@ export default function OtpScreen() {
                 }
               } else {
                 AsyncStorage.clear();
-                router.replace("/name");
+                router.push({ pathname: "/name", params: { phone: phone } });
               }
             } else {
-              await saveUserToDatabase(user.uid, {
-                phoneNumber: phoneNumber as string,
-              }).then(() => {
-                AsyncStorage.clear();
-                router.replace("/name");
-              });
+              await checkGuardianMobileNumber(phone as string).then(
+                async res => {
+                  if (res.inGuardian) {
+                    getUserByGuardianPhone(phone as string)
+                      .then((userWithGuardian: any) => {
+                        if (userWithGuardian.status === "pending") {
+                          showToaster({
+                            type: "error",
+                            message: "Waiting for approval",
+                          });
+                        } else if (userWithGuardian.status === "rejected") {
+                          showToaster({
+                            type: "error",
+                            message: "Account blocked. Contact support",
+                          });
+                        } else {
+                          AsyncStorage.clear();
+                          router.dismissAll();
+                          router.push("/main/home");
+                          dispatch(setToken(true));
+                          dispatch(setUser(userWithGuardian));
+                        }
+                      })
+                      .catch(() => {
+                        showToaster({
+                          type: "error",
+                          message: "Error retrieving user account",
+                        });
+                      });
+                  } else {
+                    await saveUserToDatabase(user.uid, {
+                      phone: phone as string,
+                    }).then(() => {
+                      AsyncStorage.clear();
+                      router.push({
+                        pathname: "/name",
+                        params: { phone: phone },
+                      });
+                    });
+                  }
+                }
+              );
             }
           }
         })
@@ -97,7 +134,7 @@ export default function OtpScreen() {
   };
 
   const handleResend = async () => {
-    const confirmation = await authenticateWithPhone(phoneNumber as string);
+    const confirmation = await authenticateWithPhone(phone as string);
     dispatch(setConfirmation(confirmation));
   };
 
@@ -117,7 +154,7 @@ export default function OtpScreen() {
             style={{ marginLeft: wp(5) }}
             onPress={() => router.dismissAll()}
           />
-          {!login && <RnProgressBar progress={2 / 12} />}
+          {!login && <RnProgressBar progress={2 / 15} />}
         </View>
       }
     >
@@ -133,7 +170,7 @@ export default function OtpScreen() {
             <RnText style={styles.title}>Verification Code</RnText>
             <RnText style={styles.subtitle}>
               Please enter code we just send to {"\n"}
-              <RnText style={styles.phoneNumber}>{phoneNumber}</RnText>
+              <RnText style={styles.phoneNumber}>{phone}</RnText>
             </RnText>
             <RnOtp
               value={values.otp}

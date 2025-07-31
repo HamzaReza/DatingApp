@@ -3,7 +3,7 @@ import { Colors } from "@/constants/Colors";
 import { FontSize } from "@/constants/FontSize";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { persistor, store } from "@/redux/store";
-import { wp } from "@/utils/Dimensions";
+import { hp, wp } from "@/utils/Dimensions";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import {
   DarkTheme,
@@ -62,14 +62,20 @@ export default function RootLayout() {
     successToast: {
       borderLeftColor: Colors[theme].primary,
       borderLeftWidth: wp(3),
+      marginTop: hp(2),
+      height: hp(9),
     },
     errorToast: {
       borderLeftColor: Colors[theme].pink,
       borderLeftWidth: wp(3),
+      marginTop: hp(2),
+      height: hp(9),
     },
     infoToast: {
       borderLeftColor: Colors[theme].primary,
       borderLeftWidth: wp(3),
+      marginTop: hp(2),
+      height: hp(9),
     },
   });
 

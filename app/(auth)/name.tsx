@@ -56,7 +56,7 @@ export default function Name() {
             style={{ marginLeft: wp(5) }}
             onPress={() => router.dismissAll()}
           />
-          <RnProgressBar progress={3 / 12} />
+          <RnProgressBar progress={3 / 15} />
         </View>
       }
     >

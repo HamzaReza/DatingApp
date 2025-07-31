@@ -62,7 +62,7 @@ export default function Email() {
             style={{ marginLeft: wp(5) }}
             onPress={() => router.dismissAll()}
           />
-          <RnProgressBar progress={4 / 12} />
+          <RnProgressBar progress={4 / 15} />
         </View>
       }
     >

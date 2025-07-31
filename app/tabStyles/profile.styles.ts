@@ -28,6 +28,10 @@ export default (theme: "dark" | "light") =>
       zIndex: 20,
       paddingHorizontal: wp(4),
     },
+    headerIconContainer: {
+      flexDirection: "row",
+      gap: wp(2),
+    },
     titleContainer: {
       flexDirection: "row",
       marginBottom: hp(2),
@@ -358,7 +362,6 @@ export default (theme: "dark" | "light") =>
       backgroundColor: Colors[theme].background,
       padding: wp(4),
       borderRadius: Borders.radius2,
-      minWidth: wp(80),
     },
     deleteModalText: {
       fontSize: FontSize.regular,

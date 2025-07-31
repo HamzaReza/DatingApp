@@ -52,6 +52,7 @@ export const useMeetingData = (matchId: string): UseMeetingDataReturn => {
   const [loading, setLoading] = useState(true);
 
   const { user } = useSelector((state: RootState) => state.user);
+  console.log("user", user);
 
   // Initialize otherUid
   useEffect(() => {
@@ -82,6 +83,8 @@ export const useMeetingData = (matchId: string): UseMeetingDataReturn => {
         checkFixedMeetDetails(matchId),
         checkRejectionStatus(matchId, user.uid),
       ]);
+
+      console.log("currentUserData", currentUserData);
 
       setUserData(currentUserData);
       setOtherUserData(otherUserProfileData);

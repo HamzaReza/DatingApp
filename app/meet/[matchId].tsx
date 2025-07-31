@@ -45,6 +45,7 @@ import { useSelector } from "react-redux";
 
 export default function MeetSetupScreen() {
   const { matchId } = useLocalSearchParams();
+  console.log("matchId", matchId);
   const colorScheme = useColorScheme();
   const theme = colorScheme === "light" ? "light" : "dark";
   const styles = createStyles(theme);
@@ -61,6 +62,8 @@ export default function MeetSetupScreen() {
     loading: dataLoading,
     refreshData,
   } = useMeetingData(matchId as string);
+
+  console.log("firasdsadsdadst", userData, otherUserMeet);
 
   const {
     selectedPlaces,
@@ -315,7 +318,7 @@ export default function MeetSetupScreen() {
         <View style={styles.usersSection}>
           <View style={styles.userProfile}>
             <Image
-              source={{ uri: encodeImagePath(userData.photo) }}
+              source={{ uri: encodeImagePath(userData?.photo) }}
               style={styles.userAvatar}
             />
             <RnText style={styles.userName}>
@@ -331,10 +334,10 @@ export default function MeetSetupScreen() {
 
           <View style={styles.userProfile}>
             <Image
-              source={{ uri: encodeImagePath(otherUserData.photo) }}
+              source={{ uri: encodeImagePath(otherUserData?.photo) }}
               style={styles.userAvatar}
             />
-            <RnText style={styles.userName}>{otherUserData.name}</RnText>
+            <RnText style={styles.userName}>{otherUserData?.name}</RnText>
           </View>
         </View>
 
@@ -348,7 +351,7 @@ export default function MeetSetupScreen() {
                 color={Colors.light.primary}
               />
               <RnText style={styles.preferencesTitle}>
-                {`${otherUserData.name}'s Preferences`}
+                {`${otherUserData?.name}'s Preferences`}
               </RnText>
             </View>
 

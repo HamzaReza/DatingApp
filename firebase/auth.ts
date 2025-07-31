@@ -3,7 +3,6 @@ import { store } from "@/redux/store";
 import getDistanceFromLatLonInMeters from "@/utils/Distance";
 import { calculateMatchScore } from "@/utils/MatchScore";
 import {
-  deleteUser as deleteFirebaseAuthUser,
   FirebaseAuthTypes,
   getAuth,
   GoogleAuthProvider,
@@ -1386,14 +1385,11 @@ const deleteUser = async (
     // 8. Delete user document
     batch.delete(doc(db, "users", user.uid));
 
-    // 9. Delete user's Firebase Auth account
-    try {
-      if (user) {
-        await deleteFirebaseAuthUser(user);
-        await auth.currentUser?.delete();
-      }
-    } catch (error) {
-      console.warn("Failed to delete Firebase Auth account:", error);
+    // 9. Delete guardian document (if exists)
+    const guardianRef = doc(db, "guardian", user.uid);
+    const guardianDoc = await getDoc(guardianRef);
+    if (guardianDoc.exists()) {
+      batch.delete(guardianRef);
     }
 
     // 10. Delete all user files from Firebase Storage (including nested directories)

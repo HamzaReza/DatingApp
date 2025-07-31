@@ -77,7 +77,6 @@ export default function Onboarding({ navigation }: any) {
                 role: "admin",
               })
             );
-
             router.push("/dashboard");
           }}
           noRightIcon

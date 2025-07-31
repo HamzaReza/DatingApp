@@ -129,9 +129,13 @@ export default function Login() {
                   type="apple"
                   light
                   onPress={() => {
-                    router.dismissAll();
-                    router.push("/main/home");
                     dispatch(setToken(true));
+                    dispatch(
+                      setUser({
+                        role: "admin",
+                      })
+                    );
+                    router.push("/dashboard");
                   }}
                   disabled={googleLoading}
                 />

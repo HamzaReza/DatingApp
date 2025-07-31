@@ -44,10 +44,6 @@ export default function Religion() {
     try {
       const auth = await getCurrentAuth();
       const currentUser = auth.currentUser;
-      console.log(
-        "🚀 ~ religion.tsx:47 ~ handleReligionSubmit ~ currentUser:",
-        currentUser.uid
-      );
 
       if (!currentUser) {
         throw new Error("No authenticated user found");
@@ -110,7 +106,7 @@ export default function Religion() {
             size={24}
             color={Colors[theme].primary}
             style={{ marginLeft: wp(5) }}
-            onPress={() => router.back()}
+            onPress={() => router.dismissAll()}
           />
           <RnProgressBar progress={15 / 15} />
         </View>

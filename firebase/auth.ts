@@ -408,7 +408,7 @@ const getCurrentAuth = async () => {
   return getAuth();
 };
 
-const fetchAllUsers = async () => {
+const fetchAllUsers = (callback: (users: any[]) => void) => {
   try {
     const db = getFirestore();
     const usersRef = collection(db, "users");
@@ -419,36 +419,44 @@ const fetchAllUsers = async () => {
       where("status", "==", "approved")
     );
 
-    const snapshot = await getDocs(q);
+    const unsubscribe = onSnapshot(
+      q,
+      snapshot => {
+        const now = new Date();
+        const threeDaysAgo = new Date();
+        threeDaysAgo.setDate(now.getDate() - 3);
 
-    const now = new Date();
-    const threeDaysAgo = new Date();
-    threeDaysAgo.setDate(now.getDate() - 3);
+        const users = snapshot.docs.map(
+          (doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
+            const data = doc.data();
 
-    const users = snapshot.docs.map(
-      (doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
-        const data = doc.data();
+            let createdAt: Date = new Date(0);
 
-        let createdAt: Date = new Date(0);
+            if (data.createdAt instanceof Timestamp) {
+              createdAt = data.createdAt.toDate();
+            } else if (
+              typeof data.createdAt === "string" ||
+              typeof data.createdAt === "number"
+            ) {
+              createdAt = new Date(data.createdAt);
+            }
 
-        if (data.createdAt instanceof Timestamp) {
-          createdAt = data.createdAt.toDate();
-        } else if (
-          typeof data.createdAt === "string" ||
-          typeof data.createdAt === "number"
-        ) {
-          createdAt = new Date(data.createdAt);
-        }
+            return {
+              id: doc.id,
+              ...data,
+              isNew: createdAt > threeDaysAgo,
+            };
+          }
+        );
 
-        return {
-          id: doc.id,
-          ...data,
-          isNew: createdAt > threeDaysAgo,
-        };
+        callback(users);
+      },
+      error => {
+        console.error("❌ Error in users listener:", error);
       }
     );
 
-    return users;
+    return unsubscribe;
   } catch (error) {
     console.error("❌ Error fetching users:", error);
     throw error;

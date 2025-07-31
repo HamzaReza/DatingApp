@@ -1,7 +1,4 @@
-import { getAuth } from "@react-native-firebase/auth";
 import getDistanceFromLatLonInMeters from "./Distance";
-import { useSelector } from "react-redux";
-import { RootState } from "@/redux/store";
 import { calculateMatchScore } from "./MatchScore";
 
 export function filterUsers({
@@ -16,12 +13,9 @@ export function filterUsers({
   alcoholPreference,
   smokingPreference,
   relationshipIntent,
-  casualDatingAndMatrimony,
   deviceLocation,
 }: any): any[] {
   // Toggle filters ON/OFF for testing
-  const enableAgeFilter = true;
-  const enableDistanceFilter = false;
 
   function heightToInches(heightStr: string): number {
     const match = heightStr.match(/^(\d+)'(\d{1,2})"?$/);

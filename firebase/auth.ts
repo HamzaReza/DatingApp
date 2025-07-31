@@ -4,6 +4,7 @@ import getDistanceFromLatLonInMeters from "@/utils/Distance";
 import { calculateMatchScore } from "@/utils/MatchScore";
 import {
   deleteUser as deleteFirebaseAuthUser,
+  FirebaseAuthTypes,
   getAuth,
   GoogleAuthProvider,
   signInWithCredential,
@@ -185,6 +186,7 @@ const saveUserToDatabase = async (userId: string, userData: any) => {
 };
 
 const updateUser = async (userId: string, updateData: any) => {
+  console.log("🚀 ~ auth.ts:186 ~ updateUser ~ userId:", userId);
   try {
     const db = getFirestore();
 
@@ -481,11 +483,9 @@ export const fetchUsersWithLocation = async () => {
   );
 };
 
-const fetchAllUserStories = async () => {
+const fetchAllUserStories = async (userId: string) => {
   try {
     const db = getFirestore();
-    const auth = getAuth();
-    const userId = auth.currentUser?.uid;
 
     const [usersSnapshot, storiesSnapshot] = await Promise.all([
       getDocs(collection(db, "users")),
@@ -618,7 +618,7 @@ export const sendGroupInvitesByTags = async (
   image: string,
   groupName: string,
   groupDescription: string,
-  selectedGender: "male" | "female" | "non-binary" | "mixed",
+  selectedGender: string,
   minAge: number,
   maxAge: number,
   eventDate: any
@@ -1290,14 +1290,14 @@ const fetchQuestionnaires = (callback: (questionnaires: any[]) => void) => {
 };
 
 const deleteUser = async (
-  userId: string
+  user: FirebaseAuthTypes.User
 ): Promise<{ success: boolean; error?: string }> => {
   try {
     const db = getFirestore();
     const batch = writeBatch(db);
 
     // 1. Delete user's likes
-    const userLikesRef = collection(db, "users", userId, "likes");
+    const userLikesRef = collection(db, "users", user.uid, "likes");
     const userLikesSnapshot = await getDocs(userLikesRef);
     userLikesSnapshot.docs.forEach((doc: any) => {
       batch.delete(doc.ref);
@@ -1306,8 +1306,14 @@ const deleteUser = async (
     // 2. Delete likes from other users that target this user
     const allUsersSnapshot = await getDocs(collection(db, "users"));
     for (const userDoc of allUsersSnapshot.docs) {
-      if (userDoc.id !== userId) {
-        const otherUserLikeRef = doc(db, "users", userDoc.id, "likes", userId);
+      if (userDoc.id !== user.uid) {
+        const otherUserLikeRef = doc(
+          db,
+          "users",
+          userDoc.id,
+          "likes",
+          user.uid
+        );
         const otherUserLikeDoc = await getDoc(otherUserLikeRef);
         if (otherUserLikeDoc.exists()) {
           batch.delete(otherUserLikeRef);
@@ -1320,20 +1326,20 @@ const deleteUser = async (
     const matchesSnapshot = await getDocs(matchesRef);
     matchesSnapshot.docs.forEach((doc: any) => {
       const matchData = doc.data();
-      if (matchData.users && matchData.users.includes(userId)) {
+      if (matchData.users && matchData.users.includes(user.uid)) {
         batch.delete(doc.ref);
       }
     });
 
     // 4. Delete user's stories
-    const userStoriesRef = doc(db, "stories", userId);
+    const userStoriesRef = doc(db, "stories", user.uid);
     const userStoriesDoc = await getDoc(userStoriesRef);
     if (userStoriesDoc.exists()) {
       batch.delete(userStoriesRef);
     }
 
     // 5. Delete user's notifications
-    const userNotificationsRef = doc(db, "notifications", userId);
+    const userNotificationsRef = doc(db, "notifications", user.uid);
     const userNotificationsDoc = await getDoc(userNotificationsRef);
     if (userNotificationsDoc.exists()) {
       batch.delete(userNotificationsRef);
@@ -1342,7 +1348,7 @@ const deleteUser = async (
     // 6. Delete user's reels
     const reelsRef = collection(db, "reels");
     const userReelsSnapshot = await getDocs(
-      query(reelsRef, where("userId", "==", userId))
+      query(reelsRef, where("userId", "==", user.uid))
     );
     userReelsSnapshot.docs.forEach((doc: any) => {
       batch.delete(doc.ref);
@@ -1356,13 +1362,13 @@ const deleteUser = async (
       // Delete if user is part of this chat/group
       if (messageData.users && Array.isArray(messageData.users)) {
         const userInChat = messageData.users.find(
-          (user: any) => user.uid === userId
+          (i: any) => i.uid === user.uid
         );
         if (userInChat) {
           // If it's a group chat, remove the user from the group
           if (messageData.type === "group") {
             const updatedUsers = messageData.users.filter(
-              (user: any) => user.uid !== userId
+              (i: any) => i.uid !== user.uid
             );
             if (updatedUsers.length === 0) {
               batch.delete(doc.ref);
@@ -1378,13 +1384,11 @@ const deleteUser = async (
     });
 
     // 8. Delete user document
-    batch.delete(doc(db, "users", userId));
+    batch.delete(doc(db, "users", user.uid));
 
     // 9. Delete user's Firebase Auth account
     try {
-      const auth = getAuth();
-      const user = auth.currentUser;
-      if (user && user.uid === userId) {
+      if (user) {
         await deleteFirebaseAuthUser(user);
         await auth.currentUser?.delete();
       }
@@ -1394,7 +1398,7 @@ const deleteUser = async (
 
     // 10. Delete all user files from Firebase Storage (including nested directories)
     try {
-      const userStorageRef = ref(storage, `users/${userId}`);
+      const userStorageRef = ref(storage, `users/${user.uid}`);
 
       const deleteAllFilesRecursively = async (directoryRef: any) => {
         const result = await listAll(directoryRef);
@@ -1430,9 +1434,122 @@ const deleteUser = async (
   }
 };
 
+const addGuardianMobileNumber = async (
+  phoneNumber: string
+): Promise<{ success: boolean; error: string }> => {
+  try {
+    const db = getFirestore();
+
+    // Check if number already exists
+    const existingGuardian = await checkGuardianMobileNumber(phoneNumber);
+    if (existingGuardian.exists) {
+      if (existingGuardian.inGuardian) {
+        return {
+          success: false,
+          error: "Mobile number already is a registered guardian",
+        };
+      } else if (existingGuardian.inUsers) {
+        return {
+          success: false,
+          error: "Mobile number already exists as a user",
+        };
+      }
+    }
+
+    // Add to guardian collection
+
+    const auth = getAuth();
+    const user = auth.currentUser;
+
+    const guardianRef = doc(db, "guardian", user?.uid || "");
+    await setDoc(guardianRef, {
+      phoneNumber,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    return { success: true, error: "" };
+  } catch (error: any) {
+    console.error("Error adding guardian mobile number:", error);
+    return {
+      success: false,
+      error: error.message || "Failed to add guardian mobile number",
+    };
+  }
+};
+
+const checkGuardianMobileNumber = async (
+  mobileNumber: string
+): Promise<{
+  exists: boolean;
+  error?: string;
+  inGuardian?: boolean;
+  inUsers?: boolean;
+}> => {
+  try {
+    const db = getFirestore();
+
+    const guardianRef = collection(db, "guardian");
+    const guardianQuery = query(
+      guardianRef,
+      where("phoneNumber", "==", mobileNumber)
+    );
+    const guardianSnapshot = await getDocs(guardianQuery);
+
+    const usersRef = collection(db, "users");
+    const usersQuery = query(
+      usersRef,
+      where("phoneNumber", "==", mobileNumber)
+    );
+    const usersSnapshot = await getDocs(usersQuery);
+
+    const existsInGuardian = !guardianSnapshot.empty;
+    const existsInUsers = !usersSnapshot.empty;
+
+    return {
+      exists: existsInGuardian || existsInUsers,
+      inGuardian: existsInGuardian,
+      inUsers: existsInUsers,
+    };
+  } catch (error: any) {
+    console.error("Error checking guardian mobile number:", error);
+    return {
+      exists: false,
+      error: error.message || "Failed to check guardian mobile number",
+    };
+  }
+};
+
+const getUserByGuardianPhone = async (guardianPhoneNumber: string) => {
+  try {
+    const db = getFirestore();
+
+    const usersRef = collection(db, "users");
+    const q = query(
+      usersRef,
+      where("guardianPhone", "==", guardianPhoneNumber)
+    );
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      return null;
+    }
+
+    const userData = querySnapshot.docs[0].data();
+    return userData;
+  } catch (error: any) {
+    console.error("Error getting user data by guardian phone number:", error);
+    throw new Error(
+      `Failed to get user data by guardian phone: ${error.message}`
+    );
+  }
+};
+
 export {
+  addGuardianMobileNumber,
   authenticateWithPhone,
   checkForMatch,
+  checkGuardianMobileNumber,
   checkUserExistsForSignup,
   deleteImage,
   deleteUser,
@@ -1448,6 +1565,7 @@ export {
   getNextUserForSwipe,
   getRandomUser,
   getUserByEmail,
+  getUserByGuardianPhone,
   getUserByUid,
   getUserByUidAsync,
   getUserLocation,

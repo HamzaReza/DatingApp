@@ -1,14 +1,16 @@
-import { useState, useEffect } from "react";
-import { getAuth } from "@react-native-firebase/auth";
+/* eslint-disable react-hooks/exhaustive-deps */
 import { getUserByUid } from "@/firebase/auth";
 import {
-  fetchUserMeetingData,
-  getOtherUserId,
   checkFixedMeetDetails,
   checkRejectionStatus,
-  MeetingData,
+  fetchUserMeetingData,
   FixedMeetDetails,
+  getOtherUserId,
+  MeetingData,
 } from "@/firebase/meet";
+import { RootState } from "@/redux/store";
+import { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
 
 interface UseMeetingDataReturn {
   // User data
@@ -49,19 +51,19 @@ export const useMeetingData = (matchId: string): UseMeetingDataReturn => {
   });
   const [loading, setLoading] = useState(true);
 
-  const currentUser = getAuth().currentUser;
+  const { user } = useSelector((state: RootState) => state.user);
 
   // Initialize otherUid
   useEffect(() => {
-    if (matchId && currentUser?.uid) {
-      const otherUserId = getOtherUserId(matchId, currentUser.uid);
+    if (matchId && user?.uid) {
+      const otherUserId = getOtherUserId(matchId, user.uid);
       setOtherUid(otherUserId);
     }
-  }, [matchId, currentUser?.uid]);
+  }, [matchId, user?.uid]);
 
   // Load all data
   const loadData = async () => {
-    if (!matchId || !currentUser?.uid || !otherUid) return;
+    if (!matchId || !user?.uid || !otherUid) return;
 
     setLoading(true);
 
@@ -74,11 +76,11 @@ export const useMeetingData = (matchId: string): UseMeetingDataReturn => {
         fixedMeetDetails,
         rejectionData,
       ] = await Promise.all([
-        getUserByUid(currentUser.uid),
+        getUserByUid(user.uid),
         getUserByUid(otherUid.trim()),
         fetchUserMeetingData(matchId, otherUid),
         checkFixedMeetDetails(matchId),
-        checkRejectionStatus(matchId, currentUser.uid),
+        checkRejectionStatus(matchId, user.uid),
       ]);
 
       setUserData(currentUserData);
@@ -98,7 +100,7 @@ export const useMeetingData = (matchId: string): UseMeetingDataReturn => {
     if (otherUid) {
       loadData();
     }
-  }, [matchId, currentUser?.uid, otherUid]);
+  }, [matchId, user?.uid, otherUid]);
 
   const refreshData = async () => {
     await loadData();

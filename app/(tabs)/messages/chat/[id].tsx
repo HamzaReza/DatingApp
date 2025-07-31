@@ -18,9 +18,9 @@ import {
   setupDirectMessageListener,
   setupGroupMessagesListener,
 } from "@/firebase/message";
+import { RootState } from "@/redux/store";
 import { encodeImagePath, hp, wp } from "@/utils";
 import { MaterialIcons } from "@expo/vector-icons";
-import { getAuth } from "@react-native-firebase/auth";
 import {
   arrayRemove,
   collection,
@@ -47,13 +47,14 @@ import {
   View,
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { useSelector } from "react-redux";
 import { GroupMessage } from "../types";
 
 export default function Chat() {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
-  const currentUserId = getAuth().currentUser?.uid;
+  const { user } = useSelector((state: RootState) => state.user);
   const { id, matchId, otherUserId, chatType } = useLocalSearchParams();
   const groupId = Array.isArray(id) ? id[0] : id;
 
@@ -74,7 +75,6 @@ export default function Chat() {
     if (isSingleChat) {
       const unsubscribe = setupRealtimeChatStatus(
         matchId as string,
-        currentUserId,
         (status: any) => {
           setStatusMessage(status);
         }
@@ -82,12 +82,12 @@ export default function Chat() {
 
       return () => unsubscribe(); // Cleanup on unmount
     }
-  }, [matchId, currentUserId]);
+  }, [matchId, user?.uid]);
 
   useEffect(() => {
     if (isSingleChat) {
       const fetchRejection = async () => {
-        const rejection = await checkIfMeetRejected(matchId, currentUserId);
+        const rejection = await checkIfMeetRejected(matchId, user?.uid);
         console.log("rejectionData", rejection);
       };
 
@@ -180,21 +180,18 @@ export default function Chat() {
     }
 
     return () => unsubscribe();
-  }, [id, isSingleChat, currentUserId]);
+  }, [id, isSingleChat, user?.uid]);
   useEffect(() => {
     if (!group || !group.users) return;
 
-    const getAcceptedUsersString = (users: any, currentUserId: any) => {
+    const getAcceptedUsersString = (users: any) => {
       return users
-        .filter((user: any) => user.status === "accepted")
-        .map((user: any) => (user.uid === currentUserId ? "You" : user.name))
+        .filter((i: any) => i.status === "accepted")
+        .map((c: any) => (c.uid === user?.uid ? "You" : c.name))
         .join(", ");
     };
 
-    const acceptedUsers = getAcceptedUsersString(
-      group.users,
-      getAuth().currentUser?.uid
-    );
+    const acceptedUsers = getAcceptedUsersString(group.users);
 
     setUsersName(acceptedUsers);
   }, [group]);
@@ -204,13 +201,13 @@ export default function Chat() {
   };
 
   const handleSendMessage = async () => {
-    if (!message.trim() || !currentUserId) return;
+    if (!message.trim() || !user?.uid) return;
 
     try {
       if (isSingleChat) {
         const messageCount = await checkAndUpdateMessageLimit(
           matchId as string,
-          currentUserId
+          user?.uid
         );
 
         if (messageCount > 5) {
@@ -254,10 +251,10 @@ export default function Chat() {
           );
         }
 
-        await sendDirectMessage(matchId as string, currentUserId, message);
+        await sendDirectMessage(matchId as string, user?.uid, message);
       } else {
         await sendGroupMessage({
-          senderId: currentUserId,
+          senderId: user?.uid,
           groupId: id as string,
           content: message,
           messageType: "text",
@@ -285,22 +282,20 @@ export default function Chat() {
   };
 
   const confirmLeaveGroup = async () => {
-    if (!groupId || !currentUserId) return;
+    if (!groupId || !user?.uid) return;
 
     try {
       const db = getFirestore();
       const groupRef = doc(db, "messages", groupId);
-      const currentUser = group?.users?.find(
-        (u: any) => u.uid === currentUserId
-      );
+      const userInGroup = group?.users?.find((i: any) => i.uid === user?.uid);
 
-      if (!currentUser) {
+      if (!userInGroup) {
         Alert.alert("Error", "User not found in group");
         return;
       }
 
       await updateDoc(groupRef, {
-        users: arrayRemove(currentUser),
+        users: arrayRemove(userInGroup),
       });
 
       Alert.alert("Success", "You have left the group");
@@ -375,7 +370,7 @@ export default function Chat() {
   }, [matchId, isSingleChat, otherUserId]);
 
   const renderMessage = ({ item }: { item: GroupMessage }) => {
-    const isOwn = item.senderId === currentUserId;
+    const isOwn = item.senderId === user?.uid;
 
     const time = new Date(item.timestamp).toLocaleTimeString([], {
       hour: "2-digit",
@@ -425,7 +420,7 @@ export default function Chat() {
     );
   };
 
-  const setupRealtimeChatStatus = (groupId, currentUserId, callback) => {
+  const setupRealtimeChatStatus = (groupId, callback) => {
     const db = getFirestore();
     const meetRef = collection(db, "messages", groupId, "meet");
 
@@ -460,7 +455,7 @@ export default function Chat() {
           callback({
             type: "text",
             message:
-              rejectionData?.userId === currentUserId
+              rejectionData?.userId === user?.uid
                 ? "You declined the meeting preferences"
                 : "The other person declined your meeting preferences",
           });
@@ -645,16 +640,16 @@ export default function Chat() {
             <View style={styles.memberModalContainer}>
               <RnText style={styles.memberModalTitle}>Group Members</RnText>
 
-              {group?.users?.map((user: any) => (
-                <View key={user.uid} style={styles.memberItem}>
+              {group?.users?.map((c: any) => (
+                <View key={c.uid} style={styles.memberItem}>
                   <Image
-                    source={{ uri: user.photo }}
+                    source={{ uri: c.photo }}
                     style={styles.memberAvatar}
                   />
                   <View style={styles.memberInfo}>
                     <RnText style={styles.memberName}>
-                      {currentUserId === group.invitedBy ? "You" : user.name}
-                      {currentUserId === group.invitedBy && " (Admin)"}
+                      {c?.uid === group.invitedBy ? "You" : c.name}
+                      {c?.uid === group.invitedBy && " (Admin)"}
                     </RnText>
                     <RnText
                       style={[
@@ -662,26 +657,25 @@ export default function Chat() {
                         { color: Colors[theme].primary },
                       ]}
                     >
-                      {user.status}
+                      {c.status}
                     </RnText>
                   </View>
 
-                  {currentUserId === group.invitedBy &&
-                    user.uid !== currentUserId && (
-                      <TouchableOpacity
-                        style={styles.removeButton}
-                        onPress={() => handleRemoveUser(user)}
-                      >
-                        <MaterialIcons
-                          name="person-remove"
-                          size={24}
-                          color={Colors[theme].redText}
-                        />
-                      </TouchableOpacity>
-                    )}
+                  {c?.uid === group.invitedBy && c.uid !== user?.uid && (
+                    <TouchableOpacity
+                      style={styles.removeButton}
+                      onPress={() => handleRemoveUser(c)}
+                    >
+                      <MaterialIcons
+                        name="person-remove"
+                        size={24}
+                        color={Colors[theme].redText}
+                      />
+                    </TouchableOpacity>
+                  )}
                 </View>
               ))}
-              {currentUserId !== group?.invitedBy && (
+              {user?.uid !== group?.invitedBy && (
                 <TouchableOpacity
                   style={styles.leftButton}
                   onPress={handleLeaveGroup}

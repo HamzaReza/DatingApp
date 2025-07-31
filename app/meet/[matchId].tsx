@@ -1,28 +1,22 @@
+import ScrollContainer from "@/components/RnScrollContainer";
+import RnText from "@/components/RnText";
+import { Colors } from "@/constants/Colors";
+import { encodeImagePath } from "@/utils";
+import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
 import {
-  View,
-  TouchableOpacity,
-  StyleSheet,
-  FlatList,
+  ActivityIndicator,
   Alert,
+  FlatList,
   Image,
   Platform,
   TextInput,
-  Text,
+  TouchableOpacity,
   useColorScheme,
-  ActivityIndicator,
+  View,
 } from "react-native";
-import { useLocalSearchParams, router } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
-import DateTimePicker from "@react-native-community/datetimepicker";
-import ScrollContainer from "@/components/RnScrollContainer";
-import RnText from "@/components/RnText";
-import { FontSize } from "@/constants/FontSize";
-import { encodeImagePath, hp, wp } from "@/utils";
-import { Colors } from "@/constants/Colors";
-import { getAuth } from "@react-native-firebase/auth";
-import { FontFamily } from "@/constants/FontFamily";
-import { Borders } from "@/constants/Borders";
 import createStyles from "./styles";
 
 // Custom hooks
@@ -32,27 +26,29 @@ import { useRejectModal } from "@/hooks/useRejectModal";
 
 // Utility functions
 import {
-  handleMutualSelection,
-  createFinalMeet,
-  saveUserMeetingPreferences,
-  handleReject,
-  checkIsFirstEntry,
   checkFixedMeetDetails,
+  checkIsFirstEntry,
+  createFinalMeet,
+  handleMutualSelection,
+  handleReject,
+  saveUserMeetingPreferences,
 } from "@/firebase/meet";
 import {
-  formatDate,
-  validateMeetingForm,
-  timeSlots,
   districtPlaces,
+  formatDate,
   mockUsers,
+  timeSlots,
+  validateMeetingForm,
 } from "@/helpers/meetHelpers";
+import { RootState } from "@/redux/store";
+import { useSelector } from "react-redux";
 
 export default function MeetSetupScreen() {
   const { matchId } = useLocalSearchParams();
   const colorScheme = useColorScheme();
-  const theme = colorScheme == "light" ? "light" : "dark";
+  const theme = colorScheme === "light" ? "light" : "dark";
   const styles = createStyles(theme);
-  const currentUser = getAuth().currentUser;
+  const { user } = useSelector((state: RootState) => state.user);
 
   // Custom hooks
   const {
@@ -102,7 +98,7 @@ export default function MeetSetupScreen() {
       return;
     }
 
-    if (!currentUser?.uid) {
+    if (!user?.uid) {
       Alert.alert("Error", "User not authenticated");
       return;
     }
@@ -112,7 +108,7 @@ export default function MeetSetupScreen() {
       // Save current user's preferences
       await saveUserMeetingPreferences(
         matchId as string,
-        currentUser.uid,
+        user.uid,
         selectedPlaces,
         selectedDates,
         selectedTimes
@@ -120,7 +116,7 @@ export default function MeetSetupScreen() {
 
       const isFirstEntry = await checkIsFirstEntry(
         matchId as string,
-        currentUser.uid,
+        user.uid,
         otherUid
       );
 
@@ -136,7 +132,7 @@ export default function MeetSetupScreen() {
       // Check for mutual selections
       const hasMutual = await handleMutualSelection(
         matchId as string,
-        currentUser.uid,
+        user.uid,
         selectedPlaces,
         selectedDates,
         selectedTimes
@@ -187,7 +183,7 @@ export default function MeetSetupScreen() {
       return;
     }
 
-    if (!currentUser?.uid) {
+    if (!user?.uid) {
       Alert.alert("Error", "User not authenticated");
       return;
     }
@@ -195,7 +191,7 @@ export default function MeetSetupScreen() {
     try {
       await handleReject({
         matchId: matchId as string,
-        currentUserId: currentUser.uid,
+        currentUserId: user.uid,
         unavailable: [rejectModal.category],
         reason: rejectModal.reason,
       });
@@ -352,7 +348,7 @@ export default function MeetSetupScreen() {
                 color={Colors.light.primary}
               />
               <RnText style={styles.preferencesTitle}>
-                {otherUserData.name}'s Preferences
+                {`${otherUserData.name}'s Preferences`}
               </RnText>
             </View>
 
@@ -445,7 +441,7 @@ export default function MeetSetupScreen() {
               <RnText style={styles.sectionTitle}>Choose Places</RnText>
             </View>
             <RnText style={styles.sectionSubtitle}>
-              Select places you'd like to meet. Hearts show mutual interests!
+              {`Select places you'd like to meet. Hearts show mutual interests!`}
             </RnText>
 
             <FlatList
@@ -483,7 +479,7 @@ export default function MeetSetupScreen() {
               <RnText style={styles.addDateText}>Add Available Date</RnText>
             </TouchableOpacity>
 
-            {otherUserMeet?.dates?.length > 0 && (
+            {otherUserMeet?.dates && otherUserMeet?.dates?.length > 0 && (
               <View style={styles.selectedDatesContainer}>
                 {otherUserMeet.dates.map((date: string) => (
                   <View

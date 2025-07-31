@@ -355,7 +355,7 @@ export default function Profile() {
       const thumbnailUri = await generateThumbnail(uri);
 
       // Use the new uploadReel function
-      await uploadReel(uri, thumbnailUri || undefined, caption);
+      await uploadReel(uri, user, thumbnailUri || undefined, caption);
 
       // Reset form and close modal
       setReelUploadModalVisible(false);
@@ -455,7 +455,7 @@ export default function Profile() {
 
       setDeletingAccount(true);
 
-      const result = await deleteUser(user.uid);
+      const result = await deleteUser(user);
 
       if (result.success) {
         setDeleteAccountModalVisible(false);

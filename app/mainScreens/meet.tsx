@@ -1,24 +1,20 @@
+import { Colors } from "@/constants/Colors";
+import { FontSize } from "@/constants/FontSize";
+import { RootState } from "@/redux/store";
+import { hp, wp } from "@/utils";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { doc, getFirestore, setDoc } from "@react-native-firebase/firestore";
+import { router, useLocalSearchParams } from "expo-router";
+import React, { useState } from "react";
 import {
-  View,
+  Alert,
+  FlatList,
+  StyleSheet,
   Text,
   TouchableOpacity,
-  StyleSheet,
-  FlatList,
-  Alert,
+  View,
 } from "react-native";
-import React, { useEffect, useState } from "react";
-import { useLocalSearchParams, router } from "expo-router";
-import { getAuth } from "@react-native-firebase/auth";
-import {
-  doc,
-  getDoc,
-  setDoc,
-  getFirestore,
-} from "@react-native-firebase/firestore";
-import DateTimePicker from "@react-native-community/datetimepicker";
-import { FontSize } from "@/constants/FontSize";
-import { hp, wp } from "@/utils";
-import { Colors } from "@/constants/Colors";
+import { useSelector } from "react-redux";
 
 const timeSlots = [
   "9:00 AM",
@@ -43,7 +39,7 @@ const districtPlaces = ["Place 1", "Place 2", "Place 3", "Place 4", "Place 5"]; 
 
 export default function MeetSetupScreen() {
   const { groupId } = useLocalSearchParams();
-  const currentUser = getAuth().currentUser;
+  const { user } = useSelector((state: RootState) => state.user);
   const db = getFirestore();
 
   const [selectedPlaces, setSelectedPlaces] = useState<string[]>([]);
@@ -66,15 +62,9 @@ export default function MeetSetupScreen() {
     }
 
     try {
-      const meetRef = doc(
-        db,
-        "messages",
-        String(groupId),
-        "meet",
-        currentUser?.uid!
-      );
+      const meetRef = doc(db, "messages", String(groupId), "meet", user?.uid!);
       await setDoc(meetRef, {
-        userId: currentUser?.uid,
+        userId: user?.uid,
         places: selectedPlaces,
         date: selectedDate.toISOString(),
         time: selectedTime,

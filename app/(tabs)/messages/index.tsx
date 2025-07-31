@@ -16,9 +16,9 @@ import {
   sendGroupInvitesByTags,
 } from "@/firebase/auth";
 import { setupChatListeners } from "@/firebase/message";
+import { RootState } from "@/redux/store";
 import { encodeImagePath, wp } from "@/utils";
 import { Ionicons } from "@expo/vector-icons";
-import { getAuth } from "@react-native-firebase/auth";
 import {
   doc,
   getFirestore,
@@ -40,6 +40,7 @@ import {
   useColorScheme,
   View,
 } from "react-native";
+import { useSelector } from "react-redux";
 
 type RecentMatch = {
   id: string;
@@ -102,6 +103,8 @@ export default function Messages() {
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
 
+  const { user } = useSelector((state: RootState) => state.user);
+
   const [isBottomSheetVisible, setIsBottomSheetVisible] = React.useState(false);
 
   const [tagsOpen, setTagsOpen] = useState(false);
@@ -136,16 +139,12 @@ export default function Messages() {
   const [receiverId, setRecieverId] = useState("");
   const [chatStatusMap, setChatStatusMap] = useState({});
 
-  const currentUserId = getAuth().currentUser?.uid;
-
   // Replace this useEffect with the new listener setup
   useEffect(() => {
-    const currentUserId = getAuth().currentUser?.uid as string;
-    console.log("currentUserId", currentUserId);
-
     const { unsubscribe } = setupChatListeners(
       groups => setGroupList(groups),
-      chats => setOneToOneList(chats)
+      chats => setOneToOneList(chats),
+      user
     );
 
     return () => unsubscribe();
@@ -208,7 +207,7 @@ export default function Messages() {
 
       // One-to-One Chats
       for (const convo of oneToOneList) {
-        const otherUserId = convo.participants.find(p => p !== currentUserId);
+        const otherUserId = convo.participants.find(p => p !== user?.uid);
         if (!otherUserId) continue;
 
         // Set up real-time listener for user data
@@ -290,9 +289,8 @@ export default function Messages() {
 
   const handleCreateHangout = async () => {
     try {
-      const currentUserId = getAuth().currentUser?.uid as string;
       await sendGroupInvitesByTags(
-        currentUserId,
+        user?.uid,
         selectedTags,
         participantCount,
         pickedImageUri as string,

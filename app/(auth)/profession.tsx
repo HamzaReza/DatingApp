@@ -45,6 +45,7 @@ export default function Profession() {
   const styles = createStyles(theme);
   const [isLoading, setIsLoading] = useState(false);
   const params = useLocalSearchParams();
+  console.log("🚀 ~ profession.tsx:48 ~ Profession ~ params:", params);
 
   const handleProfessionSubmit = async (values: ProfessionValues) => {
     if (!values.profession) return;
@@ -98,7 +99,7 @@ export default function Profession() {
             size={24}
             color={Colors[theme].primary}
             style={{ marginLeft: wp(5) }}
-            onPress={() => router.dismissAll()}
+            onPress={() => router.back()}
           />
           <RnProgressBar progress={14 / 15} />
         </View>

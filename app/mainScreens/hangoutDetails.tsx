@@ -1,33 +1,26 @@
+import { Ionicons } from "@expo/vector-icons";
+import { doc, getDoc, getFirestore } from "@react-native-firebase/firestore";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
 import {
-  View,
-  Image,
-  TouchableOpacity,
-  StyleSheet,
   ActivityIndicator,
   Alert,
+  Image,
+  TouchableOpacity,
   useColorScheme,
+  View,
 } from "react-native";
-import {
-  doc,
-  getDoc,
-  getFirestore,
-  updateDoc,
-} from "@react-native-firebase/firestore";
-import { useRoute, useNavigation } from "@react-navigation/native";
-import { Ionicons } from "@expo/vector-icons";
 
+import createStyles from "@/app/mainScreens/styles/hangoutDetails.styles";
+import PrimaryHeader from "@/components/PrimaryHeader";
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
 import { Colors } from "@/constants/Colors";
-import { FontSize } from "@/constants/FontSize";
-import { hp, wp } from "@/utils";
-import PrimaryHeader from "@/components/PrimaryHeader";
 import { respondToGroupInvite } from "@/firebase/auth";
-import { getAuth } from "@react-native-firebase/auth";
-import { FontFamily } from "@/constants/FontFamily";
+import { RootState } from "@/redux/store";
+import { wp } from "@/utils";
 import { router } from "expo-router";
-import createStyles from "@/app/mainScreens/styles/hangoutDetails.styles";
+import { useSelector } from "react-redux";
 
 interface User {
   uid: string;
@@ -58,11 +51,11 @@ const GroupDetailsScreen = () => {
   const route = useRoute<any>();
   const navigation = useNavigation();
   const { groupId } = route.params;
+  const { user } = useSelector((state: RootState) => state.user);
 
   const [group, setGroup] = useState<GroupData | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
-  const currentUserId = getAuth().currentUser?.uid;
   const [currentUserStatus, setCurrentUserStatus] = useState<
     "pending" | "accepted" | "rejected"
   >("pending");
@@ -83,9 +76,9 @@ const GroupDetailsScreen = () => {
         setGroup(groupData);
 
         // Find current user's status
-        const user = groupData.users.find(u => u.uid === currentUserId);
-        if (user) {
-          setCurrentUserStatus(user.status);
+        const tempUser = groupData.users.find(u => u.uid === user?.uid);
+        if (tempUser) {
+          setCurrentUserStatus(tempUser.status);
         }
       } catch (error) {
         console.error("Error fetching group:", error);
@@ -100,11 +93,11 @@ const GroupDetailsScreen = () => {
   }, [groupId]);
 
   const handleResponse = async (accept: boolean) => {
-    if (!currentUserId || !groupId) return;
+    if (!user?.uid || !groupId) return;
 
     setActionLoading(true);
     try {
-      await respondToGroupInvite(groupId, currentUserId, accept);
+      await respondToGroupInvite(groupId, user?.uid, accept);
       setCurrentUserStatus(accept ? "accepted" : "rejected");
 
       Alert.alert(

@@ -1,14 +1,15 @@
+import createStyles from "@/app/tabStyles/notification.styles";
 import Container from "@/components/RnContainer";
 import RnText from "@/components/RnText";
 import RoundButton from "@/components/RoundButton";
 import { Colors } from "@/constants/Colors";
+import { getUserNotifications, respondToGroupInvite } from "@/firebase/auth";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { RootState } from "@/redux/store";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Alert, FlatList, Image, TouchableOpacity, View } from "react-native";
-import createStyles from "../../tabStyles/notification.styles";
-import { getAuth } from "@react-native-firebase/auth";
-import { getUserNotifications, respondToGroupInvite } from "@/firebase/auth";
+import { useSelector } from "react-redux";
 
 export type NotificationItem = {
   id: string;
@@ -19,57 +20,18 @@ export type NotificationItem = {
   read: boolean;
 };
 
-const notifications: NotificationItem[] = [
-  {
-    id: "1",
-    title: "New Match!",
-    description: "You have a new match with Clara.",
-    time: "2m ago",
-    image:
-      "https://images.pexels.com/photos/1499327/pexels-photo-1499327.jpeg?auto=compress&cs=tinysrgb&w=100",
-    read: false,
-  },
-  {
-    id: "2",
-    title: "Event Reminder",
-    description: "Designers Meetup 2022 starts in 1 hour.",
-    time: "1h ago",
-    image:
-      "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=100",
-    read: false,
-  },
-  {
-    id: "3",
-    title: "Message Received",
-    description: "Selena sent you a new message.",
-    time: "3h ago",
-    image:
-      "https://images.pexels.com/photos/1130626/pexels-photo-1130626.jpeg?auto=compress&cs=tinysrgb&w=100",
-    read: true,
-  },
-  {
-    id: "4",
-    title: "Event Update",
-    description: "Basketball Final Match location changed.",
-    time: "Yesterday",
-    image:
-      "https://images.pexels.com/photos/1040880/pexels-photo-1040880.jpeg?auto=compress&cs=tinysrgb&w=100",
-    read: true,
-  },
-];
-
 export default function NotificationScreen() {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const currentUser = getAuth().currentUser;
+  const { user } = useSelector((state: RootState) => state.user);
 
   useEffect(() => {
     const fetchNotifications = async () => {
-      if (currentUser) {
+      if (user?.uid) {
         try {
-          const notifs = await getUserNotifications(currentUser.uid);
+          const notifs = await getUserNotifications(user.uid);
 
           const formattedNotifications = notifs.map(notif => {
             const defaultImage = "https://example.com/default-user.png";
@@ -98,7 +60,7 @@ export default function NotificationScreen() {
     };
 
     fetchNotifications();
-  }, [currentUser]);
+  }, [user]);
 
   const formatTime = (date?: Date) => {
     if (!date) return "Just now";
@@ -114,9 +76,9 @@ export default function NotificationScreen() {
 
   const handleResponse = async (groupId: string, accept: boolean) => {
     try {
-      if (!currentUser) return;
+      if (!user?.uid) return;
 
-      await respondToGroupInvite(groupId, currentUser.uid, accept);
+      await respondToGroupInvite(groupId, user.uid, accept);
 
       // Update local state
       setNotifications(prev =>

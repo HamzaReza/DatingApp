@@ -208,6 +208,7 @@ export default function Messages() {
       // One-to-One Chats
       for (const convo of oneToOneList) {
         const otherUserId = convo.participants.find(p => p !== user?.uid);
+        setRecieverId(otherUserId);
         if (!otherUserId) continue;
 
         // Set up real-time listener for user data

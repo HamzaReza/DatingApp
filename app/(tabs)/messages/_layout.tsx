@@ -14,7 +14,7 @@ export default function MessagesLayout() {
       <Stack.Screen
         name="chat/[id]"
         options={{
-          presentation: "transparentModal",
+          // presentation: "transparentModal",
           animation: "slide_from_bottom",
           headerShown: false,
           contentStyle: {

@@ -66,7 +66,7 @@ export default function Profile() {
 
   const { user } = useSelector((state: RootState) => state.user);
 
-  const { id } = useLocalSearchParams();
+  const { id, isFriend } = useLocalSearchParams();
   const [galleryModalVisible, setGalleryModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [showFullAbout, setShowFullAbout] = useState(false);
@@ -103,7 +103,7 @@ export default function Profile() {
 
   useEffect(() => {
     getUserDetails();
-    if (user?.uid !== id) {
+    if (user?.uid !== id && isFriend === "false") {
       setShowActionButtons(true);
     }
   }, []);

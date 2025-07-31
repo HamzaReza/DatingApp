@@ -281,7 +281,12 @@ export default function Discover() {
                 image={encodeImagePath(item.photo || "")}
                 isNew={item.isNew}
                 distance={calculatedDistance}
-                onPress={() => router.push(`/discover/${item.uid || item.id}`)}
+                onPress={() =>
+                  router.push({
+                    pathname: "/discover/[id]",
+                    params: { id: item.uid as string, isFriend: "false" },
+                  })
+                }
               />
             );
           }}

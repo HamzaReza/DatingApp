@@ -21,6 +21,7 @@ import {
   putFile,
   ref,
 } from "@react-native-firebase/storage";
+import { sendInAppNotification } from "../helpers/notificationHelper";
 
 export interface Reel {
   id: string;
@@ -65,7 +66,7 @@ const fetchUserReels = (callback: (reels: Reel[]) => void): (() => void) => {
             const data = doc.data();
 
             // Filter for public visibility in the client side
-            if (data.visibility === "public") {
+            if (data.visibility === "public" && data.status === "approved") {
               const reel: Reel = {
                 id: doc.id,
                 userId: data.userId,
@@ -150,11 +151,42 @@ const likeDislikeReel = async (
       }
     }
 
-    await updateDoc(reelRef, {
+    // Check if dislikes exceed 5 and update status to 'rejected'
+    const shouldReject = updatedDislikes.length >= 2;
+    const updateData: any = {
       likes: updatedLikes,
       dislikes: updatedDislikes,
       updatedAt: serverTimestamp(),
-    });
+    };
+
+    if (shouldReject) {
+      updateData.status = "rejected";
+    }
+
+    await updateDoc(reelRef, updateData);
+
+    // Send notification if reel is rejected
+    if (shouldReject && reelOwnerId) {
+      try {
+        await sendInAppNotification({
+          toUserId: reelOwnerId,
+          title: "Reel Rejected",
+          subtitle: `Your reel captioned ${reelData?.caption} has been rejected due to community feedback. It received too many dislikes.`,
+          type: "reel",
+          data: {
+            reelId: reelId,
+            action: "reel_rejected",
+            caption: reelData?.caption || "",
+            thumbnailUrl: reelData?.thumbnailUrl || "",
+          },
+        });
+      } catch (notificationError) {
+        console.error(
+          "Error sending rejection notification:",
+          notificationError
+        );
+      }
+    }
 
     if (reelOwnerId) {
       const userRef = doc(db, "users", reelOwnerId);
@@ -166,11 +198,17 @@ const likeDislikeReel = async (
 
         const updatedUserReels = userReels.map((userReel: any) => {
           if (userReel.id === reelId) {
-            return {
+            const userReelUpdate: any = {
               ...userReel,
               likes: updatedLikes,
               dislikes: updatedDislikes,
             };
+
+            if (shouldReject) {
+              userReelUpdate.status = "rejected";
+            }
+
+            return userReelUpdate;
           }
           return userReel;
         });

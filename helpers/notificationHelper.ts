@@ -1,19 +1,17 @@
 import {
-  getFirestore,
   doc,
-  setDoc,
   getDoc,
-  serverTimestamp,
+  getFirestore,
+  setDoc,
 } from "@react-native-firebase/firestore";
 
-type NotificationType = "like" | "match" | "message" | "custom"; // Expandable
+type NotificationType = "like" | "match" | "message" | "reel" | "custom"; // Expandable
 
 type NotificationData = {
   toUserId: string;
   title: string;
   subtitle: string;
   type: NotificationType;
-
   data?: Record<string, any>; // 🔑 For additional dynamic data
 };
 
@@ -30,22 +28,20 @@ export const sendInAppNotification = async ({
     const notifSnap = await getDoc(notifRef);
 
     const existingNotifications = notifSnap.exists()
-      ? notifSnap.data().items || []
+      ? (notifSnap.data()?.items as NotificationData[]) || []
       : [];
 
     const newNotification = {
       title,
       subtitle,
       type,
-      //   createdAt: serverTimestamp(),
       data,
+      isRead: false,
     };
 
     const updatedNotifications = [newNotification, ...existingNotifications];
 
     await setDoc(notifRef, { items: updatedNotifications }, { merge: true });
-
-    console.log("Notification saved successfully");
   } catch (error) {
     console.error("Error sending in-app notification:", error);
   }

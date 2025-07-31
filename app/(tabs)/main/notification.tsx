@@ -3,9 +3,14 @@ import Container from "@/components/RnContainer";
 import RnText from "@/components/RnText";
 import RoundButton from "@/components/RoundButton";
 import { Colors } from "@/constants/Colors";
-import { getUserNotifications, respondToGroupInvite } from "@/firebase/auth";
+import { respondToGroupInvite } from "@/firebase/auth";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { RootState } from "@/redux/store";
+import {
+  doc,
+  getFirestore,
+  onSnapshot,
+} from "@react-native-firebase/firestore";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Alert, FlatList, Image, TouchableOpacity, View } from "react-native";
@@ -18,6 +23,9 @@ export type NotificationItem = {
   time: string;
   image: string;
   read: boolean;
+  type?: string;
+  groupId?: string;
+  status?: string;
 };
 
 export default function NotificationScreen() {
@@ -28,12 +36,18 @@ export default function NotificationScreen() {
   const { user } = useSelector((state: RootState) => state.user);
 
   useEffect(() => {
-    const fetchNotifications = async () => {
-      if (user?.uid) {
-        try {
-          const notifs = await getUserNotifications(user.uid);
+    if (!user?.uid) return;
 
-          const formattedNotifications = notifs.map(notif => {
+    const db = getFirestore();
+    const notificationRef = doc(db, "notifications", user.uid);
+
+    const unsubscribe = onSnapshot(
+      notificationRef,
+      snapshot => {
+        if (snapshot.exists()) {
+          const notifs = snapshot.data()?.items || [];
+
+          const formattedNotifications = notifs.map((notif: any) => {
             const defaultImage = "https://example.com/default-user.png";
 
             return {
@@ -44,8 +58,12 @@ export default function NotificationScreen() {
                 notif.message ||
                 "You have a new notification",
               time: formatTime(notif.createdAt?.toDate?.() || new Date()),
-              image: notif.inviterImage || notif.senderImage || defaultImage,
-              read: notif.read || false,
+              image:
+                notif.inviterImage ||
+                notif.senderImage ||
+                notif.data?.thumbnailUrl ||
+                defaultImage,
+              read: notif.isRead || false,
               type: notif.type === "messages" ? "group_invite" : notif.type, // Normalize type
               groupId: notif.groupId,
               status: notif.status || "pending", // Default status
@@ -53,13 +71,17 @@ export default function NotificationScreen() {
           });
 
           setNotifications(formattedNotifications);
-        } catch (error) {
-          console.error("Error fetching notifications:", error);
+        } else {
+          setNotifications([]);
         }
+      },
+      error => {
+        console.error("Error in notification listener:", error);
+        setNotifications([]);
       }
-    };
+    );
 
-    fetchNotifications();
+    return () => unsubscribe();
   }, [user]);
 
   const formatTime = (date?: Date) => {

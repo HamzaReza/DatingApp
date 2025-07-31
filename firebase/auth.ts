@@ -12,7 +12,6 @@ import {
 import {
   collection,
   doc,
-  FirebaseFirestoreTypes,
   getDoc,
   getDocs,
   getFirestore,
@@ -426,28 +425,26 @@ const fetchAllUsers = (callback: (users: any[]) => void) => {
         const threeDaysAgo = new Date();
         threeDaysAgo.setDate(now.getDate() - 3);
 
-        const users = snapshot.docs.map(
-          (doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
-            const data = doc.data();
+        const users = snapshot.docs.map((doc: any) => {
+          const data = doc.data();
 
-            let createdAt: Date = new Date(0);
+          let createdAt: Date = new Date(0);
 
-            if (data.createdAt instanceof Timestamp) {
-              createdAt = data.createdAt.toDate();
-            } else if (
-              typeof data.createdAt === "string" ||
-              typeof data.createdAt === "number"
-            ) {
-              createdAt = new Date(data.createdAt);
-            }
-
-            return {
-              id: doc.id,
-              ...data,
-              isNew: createdAt > threeDaysAgo,
-            };
+          if (data.createdAt instanceof Timestamp) {
+            createdAt = data.createdAt.toDate();
+          } else if (
+            typeof data.createdAt === "string" ||
+            typeof data.createdAt === "number"
+          ) {
+            createdAt = new Date(data.createdAt);
           }
-        );
+
+          return {
+            id: doc.id,
+            ...data,
+            isNew: createdAt > threeDaysAgo,
+          };
+        });
 
         callback(users);
       },
@@ -473,20 +470,18 @@ export const fetchUsersWithLocation = async () => {
   );
   const snapshot = await getDocs(q);
 
-  return snapshot.docs.map(
-    (doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
-      const data = doc.data();
-      const interestsArray = data.interests?.split(",") || [];
+  return snapshot.docs.map((doc: any) => {
+    const data = doc.data();
+    const interestsArray = data.interests?.split(",") || [];
 
-      return {
-        id: doc.id,
-        name: data.name,
-        photo: data.photo,
-        location: data.location, // GeoPoint
-        interests: interestsArray,
-      };
-    }
-  );
+    return {
+      id: doc.id,
+      name: data.name,
+      photo: data.photo,
+      location: data.location, // GeoPoint
+      interests: interestsArray,
+    };
+  });
 };
 
 const fetchAllUserStories = async (userId: string) => {
@@ -498,26 +493,22 @@ const fetchAllUserStories = async (userId: string) => {
       getDocs(collection(db, "stories")),
     ]);
 
-    const usersData = usersSnapshot.docs.map(
-      (doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => ({
-        id: doc.id,
-        username: doc.data().name || "User",
-        profilePic: doc.data().photo || "https://example.com/default.jpg",
-        isOwn: doc.id === userId,
-      })
-    );
+    const usersData = usersSnapshot.docs.map((doc: any) => ({
+      id: doc.id,
+      username: doc.data().name || "User",
+      profilePic: doc.data().photo || "https://example.com/default.jpg",
+      isOwn: doc.id === userId,
+    }));
 
     const storiesByUser: Record<string, any[]> = {};
-    storiesSnapshot.forEach(
-      (doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
-        storiesByUser[doc.id] = (doc.data().storyItems || [])
-          .map((story: any) => ({
-            ...story,
-            date: story.date?.toDate() || new Date(),
-          }))
-          .sort((a: any, b: any) => b.date - a.date);
-      }
-    );
+    storiesSnapshot.forEach((doc: any) => {
+      storiesByUser[doc.id] = (doc.data().storyItems || [])
+        .map((story: any) => ({
+          ...story,
+          date: story.date?.toDate() || new Date(),
+        }))
+        .sort((a: any, b: any) => b.date - a.date);
+    });
 
     return usersData
       .map((user: any) => {
@@ -557,11 +548,8 @@ const fetchNextUsersStories = async (currentUserId: string) => {
   const snapshot = await getDocs(collection(db, "stories"));
 
   const allUsers = snapshot.docs
-    .filter(
-      (doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) =>
-        doc.id !== currentUserId
-    )
-    .map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => ({
+    .filter((doc: any) => doc.id !== currentUserId)
+    .map((doc: any) => ({
       userId: doc.id,
       ...doc.data(),
     }));
@@ -593,7 +581,7 @@ export const getNearbyUsers = async (currentUserLocation: Location) => {
 
   const nearbyUsers: any[] = [];
 
-  snapshot.forEach((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
+  snapshot.forEach((doc: any) => {
     const data = doc.data();
     const userLocation = data.location;
 
@@ -645,7 +633,7 @@ export const sendGroupInvitesByTags = async (
     const usersSnapshot = await getDocs(collection(db, "users"));
 
     const matchingUsers = usersSnapshot.docs
-      .filter((userDoc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
+      .filter((userDoc: any) => {
         const data = userDoc.data();
 
         // Skip inviter (already added later)
@@ -682,7 +670,7 @@ export const sendGroupInvitesByTags = async (
         return hasMatchingTag && genderMatch && ageMatch;
       })
       .slice(0, maxParticipants)
-      .map((userDoc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => ({
+      .map((userDoc: any) => ({
         uid: userDoc.id,
         name: userDoc.data().name || "User",
       }));
@@ -1279,8 +1267,7 @@ const fetchQuestionnaires = (callback: (questionnaires: any[]) => void) => {
       snapshot => {
         // Flatten all questionnaire arrays from all docs
         const questionnaires = snapshot.docs.flatMap(
-          (doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) =>
-            doc.data() || []
+          (doc: any) => doc.data() || []
         );
         callback(questionnaires);
       },

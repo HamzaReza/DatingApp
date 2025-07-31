@@ -181,8 +181,8 @@ export default function Matches() {
                 distance={item.distance}
                 image={item.image}
                 matchPercentage={item.matchPercentage}
-                onPress={() => router.push(`/discover/${item.id}`)}
-                isPending={item.status == "pending"}
+                onPress={() => router.push(`/discover/${item.userId}`)}
+                isPending={item.status === "pending"}
               />
             )}
             numColumns={2}

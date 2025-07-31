@@ -32,13 +32,6 @@ import getDistanceFromLatLonInMeters from "@/utils/Distance";
 import { filterUsers } from "@/utils/Filter";
 import { requestLocationPermission } from "@/utils/Permission";
 import { Ionicons } from "@expo/vector-icons";
-import { getAuth } from "@react-native-firebase/auth";
-import {
-  collection,
-  doc,
-  getDoc,
-  getFirestore,
-} from "@react-native-firebase/firestore";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Location from "expo-location";
 import { router } from "expo-router";

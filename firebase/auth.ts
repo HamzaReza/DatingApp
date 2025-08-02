@@ -1,5 +1,6 @@
 import { addViewedUser, resetViewedUsers } from "@/redux/slices/swipeSlice";
-import { store } from "@/redux/store";
+import { setUser } from "@/redux/slices/userSlice";
+import { AppDispatch, store } from "@/redux/store";
 import getDistanceFromLatLonInMeters from "@/utils/Distance";
 import { calculateMatchScore } from "@/utils/MatchScore";
 import {
@@ -94,7 +95,7 @@ const authenticateWithPhone = async (phoneNumber: string) => {
   }
 };
 
-const signInWithGoogleFirebase = async () => {
+const signInWithGoogleFirebase = async (dispatch: any) => {
   try {
     GoogleSignin.configure({
       webClientId:
@@ -121,9 +122,13 @@ const signInWithGoogleFirebase = async () => {
           provider: "google",
         });
       } else {
-        await updateUser(existingUser.uid, {
-          provider: "google",
-        });
+        await updateCurrentUserDoc(
+          existingUser.uid,
+          {
+            provider: "google",
+          },
+          dispatch
+        );
       }
 
       return {
@@ -777,7 +782,8 @@ export const getUserNotifications = async (userId: string) => {
     const snapshot = await getDoc(notificationRef);
 
     if (snapshot.exists()) {
-      return snapshot.data().items || [];
+      const data = snapshot.data();
+      return data && data.items ? data.items : [];
     }
     return [];
   } catch (error) {
@@ -802,20 +808,20 @@ export const respondToGroupInvite = async (
       throw new Error("Group not found");
     }
 
-    const groupData = groupSnap.data();
+    const groupData: any = groupSnap.data();
     const maxParticipants = groupData.maxParticipants || 0;
     console.log(maxParticipants, "max");
     const currentUsers = groupData.users || [];
 
     const acceptedCount = currentUsers.filter(
-      user => user.status === "accepted"
+      (user: any) => user.status === "accepted"
     ).length;
 
     if (accept && acceptedCount >= maxParticipants) {
       throw new Error("This group has already reached its participant limit.");
     }
 
-    const updatedUsers = currentUsers.map(user => {
+    const updatedUsers = currentUsers.map((user: any) => {
       if (user.uid === userId) {
         return {
           ...user,
@@ -954,7 +960,7 @@ const getRandomUser = async (
     const snapshot = await getDocs(usersRef);
 
     const availableUsers = snapshot.docs
-      .map(doc => ({
+      .map((doc: any) => ({
         id: doc.id,
         ...doc.data(),
       }))
@@ -1052,7 +1058,10 @@ const getNextUserForSwipe = async (
     const snapshot = await getDocs(usersRef);
 
     // DEBUG: Log all users first
-    const allUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const allUsers = snapshot.docs.map((doc: any) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
 
     // Get current state
     const state = store.getState();
@@ -1060,7 +1069,7 @@ const getNextUserForSwipe = async (
     // Get liked users
     const currentUserLikesRef = collection(db, "users", currentUserId, "likes");
     const likesSnapshot = await getDocs(currentUserLikesRef);
-    const likedUserIds = likesSnapshot.docs.map(doc => doc.id);
+    const likedUserIds = likesSnapshot.docs.map((doc: any) => doc.id);
 
     const availableUsers = allUsers.filter(
       (user: any) =>
@@ -1114,14 +1123,14 @@ const fetchUserMatches = async (
 
     const currentUserDoc = await getDoc(doc(db, "users", currentUserId));
     if (!currentUserDoc.exists()) throw new Error("Current user not found");
-    const currentUserData = currentUserDoc.data();
+    const currentUserData: any = currentUserDoc.data();
 
     // 🔄 Listen to matches
     unsubscribeMatches = onSnapshot(matchesRef, async matchesSnapshot => {
       const mutualMatches: any[] = [];
       const matchedUserIds: string[] = [];
 
-      matchesSnapshot.forEach(docSnap => {
+      matchesSnapshot.forEach((docSnap: any) => {
         const matchData = docSnap.data();
         if (matchData.users.includes(currentUserId) && matchData.isActive) {
           const otherUserId = matchData.users.find(
@@ -1148,7 +1157,7 @@ const fetchUserMatches = async (
           const pendingMatches: any[] = [];
 
           await Promise.all(
-            likesSnapshot.docs.map(async likeDoc => {
+            likesSnapshot.docs.map(async (likeDoc: any) => {
               const likedUserId = likeDoc.id;
 
               if (matchedUserIds.includes(likedUserId)) return;
@@ -1538,6 +1547,26 @@ const getUserByGuardianPhone = async (guardianPhoneNumber: string) => {
       `Failed to get user data by guardian phone: ${error.message}`
     );
   }
+};
+
+export const updateCurrentUserDoc = async (
+  uid: string,
+  updates: Partial<any>,
+  dispatch: AppDispatch
+) => {
+  const db = getFirestore();
+  const userRef = doc(db, "users", uid);
+
+  // 1. Update Firestore user doc
+  await updateDoc(userRef, updates);
+
+  // 2. Update Redux state
+  dispatch(
+    setUser((prevUser: any) => ({
+      ...prevUser,
+      ...updates,
+    }))
+  );
 };
 
 export {

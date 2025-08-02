@@ -4,7 +4,7 @@ import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
 import RoundButton from "@/components/RoundButton";
 import { Colors } from "@/constants/Colors";
-import { getUserByUidAsync, updateUser } from "@/firebase/auth";
+import { getUserByUidAsync, updateCurrentUserDoc } from "@/firebase/auth";
 import { fetchEventById, updateEvent } from "@/firebase/event";
 import { RootState } from "@/redux/store";
 import { wp } from "@/utils";
@@ -22,7 +22,7 @@ import {
   useColorScheme,
   View,
 } from "react-native";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 const EventDetails = () => {
   const colorScheme = useColorScheme();
@@ -37,6 +37,7 @@ const EventDetails = () => {
   const [creator, setCreator] = useState<any>(null);
   const [isLiked, setIsLiked] = useState(false);
   const [currentUserData, setCurrentUserData] = useState<any>(null);
+  const dispatch = useDispatch();
 
   useEffect(() => {
     if (!eventId) return;
@@ -166,9 +167,13 @@ const EventDetails = () => {
       }
 
       // Update user's favouriteEvents array
-      await updateUser(user.uid, {
-        favouriteEvents: newFavouriteEvents,
-      });
+      await updateCurrentUserDoc(
+        user.uid,
+        {
+          favouriteEvents: newFavouriteEvents,
+        },
+        dispatch
+      );
 
       // Update event's favouriteCount
       await updateEvent(eventId, { favouriteCount: newFavouriteCount });

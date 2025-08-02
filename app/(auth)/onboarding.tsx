@@ -21,7 +21,7 @@ export default function Onboarding({ navigation }: any) {
 
   const _handleGoogleSignIn = async () => {
     setGoogleLoading(true);
-    const result = await signInWithGoogleFirebase();
+    const result = await signInWithGoogleFirebase(dispatch);
     if (result.success) {
       if (result.isNewUser) {
         router.push({

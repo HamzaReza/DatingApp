@@ -18,6 +18,7 @@ import {
   fetchTags,
   getUserByUid,
   recordLike,
+  updateCurrentUserDoc,
   updateUser,
   uploadMultipleImages,
 } from "@/firebase/auth";
@@ -219,7 +220,11 @@ export default function Profile() {
           }
 
           // Update user with new trust score
-          await updateUser(userId, { trustScore: newTrustScore });
+          await updateCurrentUserDoc(
+            userId,
+            { trustScore: newTrustScore },
+            dispatch
+          );
 
           // Clean up the listener after updating
           unsubscribe();
@@ -340,9 +345,10 @@ export default function Profile() {
       user.uid,
       "gallery"
     );
-    await updateUser(user.uid, {
-      gallery: [...(profileData?.gallery || []), ...galleryUrl],
-    });
+
+    const updatedGallery = [...(profileData?.gallery || []), ...galleryUrl];
+
+    await updateCurrentUserDoc(user.uid, { gallery: updatedGallery }, dispatch);
     setGalleryLoading(false);
     await getUserDetails();
   };
@@ -355,7 +361,13 @@ export default function Profile() {
       const thumbnailUri = await generateThumbnail(uri);
 
       // Use the new uploadReel function
-      await uploadReel(uri, user, thumbnailUri || undefined, caption);
+      await uploadReel(uri, user, thumbnailUri || undefined, caption, dispatch);
+
+      const newReel = {
+        url: videoUrl,
+        caption,
+        uploadedAt: new Date(),
+      };
 
       // Reset form and close modal
       setReelUploadModalVisible(false);

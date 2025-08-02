@@ -9,7 +9,7 @@ import {
   getRandomUser,
   getUserByUid,
   recordLike,
-  updateUser,
+  updateCurrentUserDoc,
 } from "@/firebase/auth";
 import { sendInAppNotification } from "@/helpers/notificationHelper";
 import { useColorScheme } from "@/hooks/useColorScheme";
@@ -24,7 +24,7 @@ import { router, useFocusEffect } from "expo-router";
 import React, { useState } from "react";
 import { ActivityIndicator, Image, TouchableOpacity, View } from "react-native";
 import Toast from "react-native-toast-message";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 export default function SwipeProfile() {
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -36,6 +36,7 @@ export default function SwipeProfile() {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
+  const dispatch = useDispatch();
 
   useFocusEffect(
     React.useCallback(() => {
@@ -91,7 +92,11 @@ export default function SwipeProfile() {
           }
 
           // Update user with new trust score
-          await updateUser(userId, { trustScore: newTrustScore });
+          await updateCurrentUserDoc(
+            userId,
+            { trustScore: newTrustScore },
+            dispatch
+          );
 
           // Clean up the listener after updating
           unsubscribe();

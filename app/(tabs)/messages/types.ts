@@ -2,6 +2,7 @@ export interface User {
   id: string;
   name: string;
   profileImage?: string;
+  photo: string;
 }
 
 export interface GroupMessage {
@@ -10,8 +11,9 @@ export interface GroupMessage {
   senderName?: string;
   senderImage?: string;
   content: string;
-  timestamp: Date | FirestoreTimestamp;
+  timestamp: any;
   isRead: boolean;
   messageType: "text" | "image" | "audio";
   mediaUrl?: string;
+  photo: string;
 }

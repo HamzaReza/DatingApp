@@ -1,6 +1,7 @@
 import { User } from "@/app/(tabs)/messages/types";
-import { FirebaseAuthTypes } from "@react-native-firebase/auth";
+import { getAuth } from "@react-native-firebase/auth";
 import {
+  addDoc,
   arrayUnion,
   collection,
   deleteDoc,
@@ -18,6 +19,7 @@ import {
   updateDoc,
   where,
 } from "@react-native-firebase/firestore";
+import { router } from "expo-router";
 import { Alert } from "react-native";
 
 // Types for message data
@@ -133,7 +135,7 @@ export const checkAndUpdateMessageLimit = async (
   const limitRef = doc(db, "messageLimits", chatId);
   const snapshot = await getDoc(limitRef);
 
-  let data = {};
+  let data: any = {};
   let currentCount = 0;
 
   if (snapshot.exists()) {
@@ -470,7 +472,7 @@ export const setupGroupMessagesListener = (
 
       // Enhance messages with user data
       const enhancedMessages = await Promise.all(
-        (groupData.messages || []).map(async msg => {
+        (groupData.messages || []).map(async (msg: any) => {
           const user = await getUser(msg.senderId);
           return {
             ...msg,
@@ -533,13 +535,13 @@ export const fetchOneToOneChats = async (userId: string) => {
   const snapshot = await getDocs(messagesRef);
 
   const oneToOneChats = snapshot.docs
-    .filter(doc => {
+    .filter((doc: any) => {
       const idParts = doc.id.split("_");
       return (
         idParts.length === 2 && (idParts[0] === userId || idParts[1] === userId)
       );
     })
-    .map(doc => ({ id: doc.id, ...doc.data() }));
+    .map((doc: any) => ({ id: doc.id, ...doc.data() }));
 
   return oneToOneChats;
 };
@@ -564,14 +566,14 @@ const fetchMeetData = async (groupId: string) => {
 
 // matches
 
-export const checkIfMeetRejected = async (matchId, currentUserId) => {
+export const checkIfMeetRejected = async (matchId: any, currentUserId: any) => {
   const db = getFirestore();
   const rejectedSnap = await getDoc(
     doc(db, "messages", matchId, "meet", "rejected")
   );
 
   if (rejectedSnap.exists()) {
-    const rejection = rejectedSnap.data();
+    const rejection: any = rejectedSnap.data();
 
     // Only show alert if rejected by other user
     if (rejection.userId !== currentUserId) {
@@ -607,8 +609,8 @@ export const listenToUserGroups = (
 
   const unsubscribe = onSnapshot(q, snapshot => {
     const userGroups = snapshot.docs
-      .map(doc => ({ id: doc.id, ...doc.data() }))
-      .filter(group => {
+      .map((doc: any) => ({ id: doc.id, ...doc.data() }))
+      .filter((group: any) => {
         const matchedUser = group.users?.find((u: any) => u.uid === userId);
         return matchedUser && matchedUser.status === "accepted";
       });
@@ -628,14 +630,14 @@ export const listenToOneToOneChats = (
 
   const unsubscribe = onSnapshot(messagesRef, snapshot => {
     const oneToOneChats = snapshot.docs
-      .filter(doc => {
+      .filter((doc: any) => {
         const idParts = doc.id.split("_");
         return (
           idParts.length === 2 &&
           (idParts[0] === userId || idParts[1] === userId)
         );
       })
-      .map(doc => ({ id: doc.id, ...doc.data() }));
+      .map((doc: any) => ({ id: doc.id, ...doc.data() }));
 
     callback(oneToOneChats);
   });
@@ -645,15 +647,18 @@ export const listenToOneToOneChats = (
 
 export const setupChatListeners = (
   onGroupsUpdate: (groups: any[]) => void,
-  onOneToOneUpdate: (chats: any[]) => void,
-  user: FirebaseAuthTypes.User
+  onOneToOneUpdate: (chats: any[]) => void
 ) => {
-  if (!user?.uid) {
+  const currentUserId = getAuth().currentUser?.uid;
+  if (!currentUserId) {
     throw new Error("No authenticated user found");
   }
 
-  const unsubscribeGroups = listenToUserGroups(user.uid, onGroupsUpdate);
-  const unsubscribeOneToOne = listenToOneToOneChats(user.uid, onOneToOneUpdate);
+  const unsubscribeGroups = listenToUserGroups(currentUserId, onGroupsUpdate);
+  const unsubscribeOneToOne = listenToOneToOneChats(
+    currentUserId,
+    onOneToOneUpdate
+  );
 
   return {
     unsubscribe: () => {
@@ -665,11 +670,11 @@ export const setupChatListeners = (
   };
 };
 export {
-  deleteMessage,
   fetchMeetData,
+  sendDirectMessage,
+  deleteMessage,
   fetchMessagesBetweenUsers,
   fetchUserConversations,
   markConversationAsRead,
   markMessagesAsRead,
-  sendDirectMessage,
 };

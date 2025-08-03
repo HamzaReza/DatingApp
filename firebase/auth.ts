@@ -324,9 +324,9 @@ const checkUserExistsForSignup = async (phoneNumber: string) => {
 
 const uploadImage = async (
   imageUri: string,
-  type: "user" | "event" | "creator" | "story",
+  type: "user" | "event" | "creator" | "story" | "groupImages",
   userId?: string,
-  imageType?: "profile" | "gallery" | "reel"
+  imageType?: "profile" | "gallery" | "reel" | "inviteImage"
 ): Promise<string> => {
   try {
     // Check if Firebase is properly initialized

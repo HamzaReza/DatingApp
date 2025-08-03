@@ -14,13 +14,20 @@ import {
   fetchTags,
   getUserByUid,
   sendGroupInvitesByTags,
+  uploadImage,
 } from "@/firebase/auth";
-import { setupChatListeners } from "@/firebase/message";
-import { RootState } from "@/redux/store";
+import {
+  fetchOneToOneChats,
+  fetchUserGroups,
+  setupChatListeners,
+} from "@/firebase/message";
 import { encodeImagePath, wp } from "@/utils";
 import { Ionicons } from "@expo/vector-icons";
+import { getAuth } from "@react-native-firebase/auth";
 import {
+  collection,
   doc,
+  getDoc,
   getFirestore,
   onSnapshot,
 } from "@react-native-firebase/firestore";
@@ -31,7 +38,7 @@ import {
   getForegroundPermissionsAsync,
 } from "expo-location";
 import { router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   FlatList,
   Image,
@@ -40,7 +47,7 @@ import {
   useColorScheme,
   View,
 } from "react-native";
-import { useSelector } from "react-redux";
+import Toast from "react-native-toast-message";
 
 type RecentMatch = {
   id: string;
@@ -103,8 +110,6 @@ export default function Messages() {
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
 
-  const { user } = useSelector((state: RootState) => state.user);
-
   const [isBottomSheetVisible, setIsBottomSheetVisible] = React.useState(false);
 
   const [tagsOpen, setTagsOpen] = useState(false);
@@ -139,12 +144,18 @@ export default function Messages() {
   const [receiverId, setRecieverId] = useState("");
   const [chatStatusMap, setChatStatusMap] = useState({});
 
-  // Replace this useEffect with the new listener setup
+  const currentUserId = getAuth().currentUser?.uid;
+  const memoizedGroupList = useMemo(() => groupList, [groupList]);
+  const memoizedOneToOneList = useMemo(() => oneToOneList, [oneToOneList]);
+  const memoizedChatStatusMap = useMemo(() => chatStatusMap, [chatStatusMap]);
+
   useEffect(() => {
+    const currentUserId = getAuth().currentUser?.uid as string;
+    console.log("currentUserId", currentUserId);
+
     const { unsubscribe } = setupChatListeners(
       groups => setGroupList(groups),
-      chats => setOneToOneList(chats),
-      user
+      chats => setOneToOneList(chats)
     );
 
     return () => unsubscribe();
@@ -186,7 +197,6 @@ export default function Messages() {
     const prepareChatList = async () => {
       const allChats = [];
 
-      // Group Chats
       for (const group of groupList) {
         const timestamp =
           group.lastMessage?.timestamp || group.lastUpdated || new Date();
@@ -205,48 +215,71 @@ export default function Messages() {
         });
       }
 
-      // One-to-One Chats
       for (const convo of oneToOneList) {
-        const otherUserId = convo.participants.find(p => p !== user?.uid);
+        const otherUserId = convo.participants.find(p => p !== currentUserId);
         setRecieverId(otherUserId);
         if (!otherUserId) continue;
 
-        // Set up real-time listener for user data
         const unsubscribe = getUserByUid(otherUserId, user => {
           if (!user) return;
 
-          const lastMessage = convo.messages[convo.messages.length - 1];
+          const lastMessage = convo.messages?.[convo.messages.length - 1];
+          const timestamp =
+            lastMessage?.timestamp || convo.lastUpdated || new Date();
+
+          const convoId = convo.id;
+
+          const status = chatStatusMap[convoId] || {
+            isConfirmed: false,
+            isRejected: false,
+          };
 
           const chatData = {
-            id: convo.id,
+            id: convoId,
             groupName: user.name,
             message: lastMessage?.text || "No message yet",
-            time: formatTimestamp(convo.lastUpdated),
+            time: formatTimestamp(timestamp),
+            rawTime: timestamp,
             image: encodeImagePath(user.photo) || null,
             isOnline: user.isOnline || false,
             unread: convo.unread || 0,
-            lastMessage: convo.lastMessage.content,
+            lastMessage: lastMessage?.content || "No message yet",
+            type: "single",
+            ...status,
           };
 
-          // Update the chat list with real-time data
-          setChatList(prevChats => {
-            const updatedChats = prevChats.filter(chat => chat.id !== convo.id);
-            return [...updatedChats, chatData].sort(
-              (a, b) => b.time?.seconds - a.time?.seconds
-            );
-          });
+          allChats.push(chatData);
 
-          // Clean up the listener after getting the data
-          unsubscribe();
+          unsubListeners.push(...listenToMeetStatus(convoId, updateChatStatus));
         });
 
-        // Add Firestore listeners for this convo
-        unsubListeners.push(...listenToMeetStatus(convoId, updateChatStatus));
+        unsubListeners.push(unsubscribe);
       }
+
+      allChats.sort((a, b) => {
+        const getTime = t =>
+          t?.seconds
+            ? t.seconds * 1000
+            : t?.toDate
+            ? t.toDate().getTime()
+            : new Date(t).getTime();
+
+        return getTime(b.rawTime) - getTime(a.rawTime);
+      });
+
+      setChatList(allChats);
     };
 
     prepareChatList();
-  }, [groupList, oneToOneList, chatStatusMap]);
+
+    return () => {
+      unsubListeners.forEach(unsub => unsub());
+    };
+  }, [
+    JSON.stringify(groupList),
+    JSON.stringify(oneToOneList),
+    JSON.stringify(chatStatusMap),
+  ]);
 
   useEffect(() => {
     const unsubscribe = fetchTags(tags => {
@@ -289,9 +322,30 @@ export default function Messages() {
   };
 
   const handleCreateHangout = async () => {
+    if (
+      !groupName ||
+      !groupDescription ||
+      !selectedTags ||
+      !selectedGender ||
+      !participantCount ||
+      !maxAge ||
+      !minAge ||
+      !pickedImageUri ||
+      !eventDate
+    ) {
+      Toast.show({
+        type: "error",
+        text1: "Complete all required fields",
+        visibilityTime: 2000,
+      });
+
+      return;
+    }
+
     try {
+      const currentUserId = getAuth().currentUser?.uid as string;
       await sendGroupInvitesByTags(
-        user?.uid,
+        currentUserId,
         selectedTags,
         participantCount,
         pickedImageUri as string,
@@ -331,14 +385,6 @@ export default function Messages() {
       </View>
     </TouchableOpacity>
   );
-
-  // const renderMessage = ({ item }: { item: Message }) =>
-  //   console.log("Rendering MessageItem", item.id, "Rejected?", item.isRejected);
-  // {
-  //   return (
-
-  //   );
-  // }
 
   const renderMessage = ({ item }) => {
     return (

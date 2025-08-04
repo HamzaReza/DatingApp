@@ -1,4 +1,5 @@
 import { User } from "@/app/(tabs)/messages/types";
+import { sendInAppNotification } from "@/helpers/notificationHelper";
 import { getAuth } from "@react-native-firebase/auth";
 import {
   addDoc,
@@ -80,7 +81,8 @@ export interface Conversation {
 const sendDirectMessage = async (
   matchId: string,
   senderId: string,
-  content: string
+  content: string,
+  receiverId: string
 ): Promise<void> => {
   try {
     if (!matchId || typeof matchId !== "string") {
@@ -119,6 +121,19 @@ const sendDirectMessage = async (
         participants: matchId.includes("_")
           ? matchId.split("_")
           : [senderId, matchId],
+      });
+    }
+
+    if (receiverId) {
+      await sendInAppNotification({
+        toUserId: receiverId,
+        title: "New Message",
+        subtitle: content,
+        type: "message",
+        data: {
+          matchId,
+          senderId,
+        },
       });
     }
   } catch (error) {

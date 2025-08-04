@@ -209,6 +209,11 @@ export default function Chat() {
   const handleSendMessage = async () => {
     if (!message.trim() || !user?.uid) return;
 
+    const getReceiverId = (matchId: string, currentUserId: string): string => {
+      const ids = matchId.split("_");
+      return ids[0] === currentUserId ? ids[1] : ids[0];
+    };
+
     try {
       if (isSingleChat) {
         const messageCount = await checkAndUpdateMessageLimit(
@@ -257,7 +262,14 @@ export default function Chat() {
           );
         }
 
-        await sendDirectMessage(matchId as string, user?.uid, message);
+        const receiverId = getReceiverId(matchId as string, user?.uid);
+
+        await sendDirectMessage(
+          matchId as string,
+          user?.uid,
+          message,
+          receiverId
+        );
       } else {
         await sendGroupMessage({
           senderId: user?.uid,
@@ -533,7 +545,7 @@ export default function Chat() {
                 <View style={styles.avatarContainer}>
                   <Image
                     source={{
-                      uri: group?.image || encodeImagePath(reciverData.photo),
+                      uri: group?.image || encodeImagePath(reciverData?.photo),
                     }}
                     style={styles.userAvatar}
                   />

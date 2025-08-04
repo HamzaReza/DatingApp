@@ -1,3 +1,4 @@
+import { sendInAppNotification } from "@/helpers/notificationHelper";
 import { addViewedUser, resetViewedUsers } from "@/redux/slices/swipeSlice";
 import { setUser } from "@/redux/slices/userSlice";
 import { AppDispatch, store } from "@/redux/store";
@@ -64,6 +65,18 @@ interface User {
   updatedAt?: Date;
   isProfileComplete?: boolean;
 }
+
+export type AppNotification = {
+  id: string;
+  title: string;
+  description: string;
+  time: string;
+  image: string;
+  read: boolean;
+  type: string;
+  groupId?: string;
+  status?: string;
+};
 
 const auth = getAuth();
 const storage = getStorage();
@@ -739,36 +752,23 @@ export const sendGroupInvitesByTags = async (
     });
 
     // Send notifications
-    const notificationBatch = writeBatch(db);
     const now = Timestamp.now();
-
     for (const user of matchingUsers) {
-      const notificationRef = doc(db, "notifications", user.uid);
-      const notificationDoc = await getDoc(notificationRef);
-
-      const newNotification = {
+      await sendInAppNotification({
+        toUserId: user.uid,
         title: groupName,
         subtitle: `${inviterName} has invited you for a hangout. Want to join?`,
-        type: "messages",
-        groupId,
-        createdAt: now,
-        tags: selectedTags,
-        maxParticipants,
-      };
-
-      if (notificationDoc.exists()) {
-        notificationBatch.update(notificationRef, {
-          items: [...(notificationDoc.data()?.items || []), newNotification],
-        });
-      } else {
-        notificationBatch.set(notificationRef, {
-          items: [newNotification],
-        });
-      }
+        type: "groupMessage",
+        data: {
+          groupId,
+          tags: selectedTags,
+          maxParticipants,
+          createdAt: now.toDate(),
+          inviterId: invitedBy,
+          inviterName,
+        },
+      });
     }
-
-    await notificationBatch.commit();
-
     return { success: true };
   } catch (error) {
     console.error("Error sending group invites:", error);
@@ -1569,6 +1569,61 @@ export const updateCurrentUserDoc = async (
   );
 };
 
+const listenToUserNotifications = (
+  userId: string,
+  formatTime: (date: Date) => string,
+  onUpdate: (notifications: AppNotification[]) => void,
+  onError?: (error: any) => void
+) => {
+  const db = getFirestore();
+  const notificationRef = doc(db, "notifications", userId);
+
+  const unsubscribe = onSnapshot(
+    notificationRef,
+    snapshot => {
+      if (snapshot.exists()) {
+        const notifs = snapshot.data()?.items || [];
+
+        const formattedNotifications: AppNotification[] = notifs.map(
+          (notif: any) => {
+            const defaultImage = "https://example.com/default-user.png";
+
+            return {
+              id: notif.data?.groupId || notif.groupId || "unknown-id",
+              title: notif.title || "New Notification",
+              description:
+                notif.subtitle ||
+                notif.message ||
+                "You have a new notification",
+              time: formatTime(notif.createdAt?.toDate?.() || new Date()),
+              image:
+                notif.inviterImage ||
+                notif.senderImage ||
+                notif.data?.thumbnailUrl ||
+                defaultImage,
+              read: notif.isRead || false,
+              type: notif.type === "groupMessage" ? "group_invite" : notif.type,
+              groupId: notif.groupId,
+              status: notif.status || "pending",
+            };
+          }
+        );
+
+        onUpdate(formattedNotifications);
+      } else {
+        onUpdate([]);
+      }
+    },
+    error => {
+      console.error("Error in notification listener:", error);
+      onError?.(error);
+      onUpdate([]);
+    }
+  );
+
+  return unsubscribe; // must be cleaned up later
+};
+
 export {
   addGuardianMobileNumber,
   authenticateWithPhone,
@@ -1601,4 +1656,5 @@ export {
   uploadImage,
   uploadMultipleImages,
   verifyCode,
+  listenToUserNotifications,
 };

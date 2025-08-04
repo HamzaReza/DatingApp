@@ -142,7 +142,7 @@ export default function Messages() {
   const [oneToOneList, setOneToOneList] = useState([]);
   const [chatList, setChatList] = useState<Message[]>([]);
   const [receiverId, setRecieverId] = useState("");
-  const [chatStatusMap, setChatStatusMap] = useState({});
+  const [chatStatusMap, setChatStatusMap] = useState<any>({});
 
   const currentUserId = getAuth().currentUser?.uid;
   const memoizedGroupList = useMemo(() => groupList, [groupList]);
@@ -155,27 +155,27 @@ export default function Messages() {
 
     const { unsubscribe } = setupChatListeners(
       groups => setGroupList(groups),
-      chats => setOneToOneList(chats)
+      (chats: any) => setOneToOneList(chats)
     );
 
     return () => unsubscribe();
   }, []);
 
-  const listenToMeetStatus = (convoId, updateChatStatus) => {
+  const listenToMeetStatus = (convoId: any, updateChatStatus: any) => {
     const db = getFirestore();
 
     const confirmRef = doc(db, "messages", convoId, "meet", "confirm");
     const rejectRef = doc(db, "messages", convoId, "meet", "rejected");
 
     const unsubConfirm = onSnapshot(confirmRef, docSnap => {
-      updateChatStatus(convoId, prev => ({
+      updateChatStatus(convoId, (prev: any) => ({
         ...prev,
         isConfirmed: docSnap.exists(),
       }));
     });
 
     const unsubReject = onSnapshot(rejectRef, docSnap => {
-      updateChatStatus(convoId, prev => ({
+      updateChatStatus(convoId, (prev: any) => ({
         ...prev,
         isRejected: docSnap.exists(),
       }));
@@ -184,7 +184,7 @@ export default function Messages() {
     return [unsubConfirm, unsubReject];
   };
 
-  const updateChatStatus = (convoId, statusUpdateFn) => {
+  const updateChatStatus = (convoId: any, statusUpdateFn: any) => {
     setChatStatusMap(prev => ({
       ...prev,
       [convoId]: statusUpdateFn(prev[convoId] || {}),
@@ -192,10 +192,10 @@ export default function Messages() {
   };
 
   useEffect(() => {
-    const unsubListeners = [];
+    const unsubListeners: any = [];
 
     const prepareChatList = async () => {
-      const allChats = [];
+      const allChats: any = [];
 
       for (const group of groupList) {
         const timestamp =
@@ -215,8 +215,10 @@ export default function Messages() {
         });
       }
 
-      for (const convo of oneToOneList) {
-        const otherUserId = convo.participants.find(p => p !== currentUserId);
+      for (const convo of oneToOneList as any) {
+        const otherUserId = convo.participants.find(
+          (p: any) => p !== currentUserId
+        );
         setRecieverId(otherUserId);
         if (!otherUserId) continue;
 
@@ -256,8 +258,8 @@ export default function Messages() {
         unsubListeners.push(unsubscribe);
       }
 
-      allChats.sort((a, b) => {
-        const getTime = t =>
+      allChats.sort((a: any, b: any) => {
+        const getTime = (t: any) =>
           t?.seconds
             ? t.seconds * 1000
             : t?.toDate
@@ -273,7 +275,7 @@ export default function Messages() {
     prepareChatList();
 
     return () => {
-      unsubListeners.forEach(unsub => unsub());
+      unsubListeners.forEach((unsub: any) => unsub());
     };
   }, [
     JSON.stringify(groupList),
@@ -386,7 +388,7 @@ export default function Messages() {
     </TouchableOpacity>
   );
 
-  const renderMessage = ({ item }) => {
+  const renderMessage = ({ item }: { item: any }) => {
     return (
       <MessageItem
         name={item.groupName ?? item.name}

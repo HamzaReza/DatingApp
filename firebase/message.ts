@@ -438,7 +438,7 @@ export const sendGroupMessage = async (messageData: {
     const db = getFirestore();
     const groupRef = doc(db, "messages", messageData.groupId);
 
-    const newMessage: GroupMessage = {
+    const newMessage: any = {
       id: Timestamp.now().toMillis().toString(),
       senderId: messageData.senderId,
       content: messageData.content,
@@ -471,7 +471,7 @@ export const setupGroupMessagesListener = (
       const groupData = doc.data() as Group;
 
       // Enhance messages with user data
-      const enhancedMessages = await Promise.all(
+      const enhancedMessages: any = await Promise.all(
         (groupData.messages || []).map(async (msg: any) => {
           const user = await getUser(msg.senderId);
           return {
@@ -499,7 +499,7 @@ export const setupDirectMessageListener = (
   const db = getFirestore();
   const messageRef = doc(db, "messages", matchId);
 
-  return onSnapshot(messageRef, doc => {
+  return onSnapshot(messageRef, (doc: any) => {
     if (doc.exists()) {
       callback(doc.data().messages || []);
     }

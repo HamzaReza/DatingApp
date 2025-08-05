@@ -1,5 +1,7 @@
+import { sendInAppNotification } from "@/helpers/notificationHelper";
 import { addViewedUser, resetViewedUsers } from "@/redux/slices/swipeSlice";
-import { store } from "@/redux/store";
+import { setUser } from "@/redux/slices/userSlice";
+import { AppDispatch, store } from "@/redux/store";
 import getDistanceFromLatLonInMeters from "@/utils/Distance";
 import { calculateMatchScore } from "@/utils/MatchScore";
 import {
@@ -64,6 +66,18 @@ interface User {
   isProfileComplete?: boolean;
 }
 
+export type AppNotification = {
+  id: string;
+  title: string;
+  description: string;
+  time: string;
+  image: string;
+  read: boolean;
+  type: string;
+  groupId?: string;
+  status?: string;
+};
+
 const auth = getAuth();
 const storage = getStorage();
 
@@ -94,7 +108,7 @@ const authenticateWithPhone = async (phoneNumber: string) => {
   }
 };
 
-const signInWithGoogleFirebase = async () => {
+const signInWithGoogleFirebase = async (dispatch: any) => {
   try {
     GoogleSignin.configure({
       webClientId:
@@ -121,9 +135,13 @@ const signInWithGoogleFirebase = async () => {
           provider: "google",
         });
       } else {
-        await updateUser(existingUser.uid, {
-          provider: "google",
-        });
+        await updateCurrentUserDoc(
+          existingUser.uid,
+          {
+            provider: "google",
+          },
+          dispatch
+        );
       }
 
       return {
@@ -184,15 +202,33 @@ const saveUserToDatabase = async (userId: string, userData: any) => {
   }
 };
 
-const updateUser = async (userId: string, updateData: any) => {
+const updateUser = async (
+  userId: string,
+  updateData: Partial<any>, // Replace 'any' with your user type
+  dispatch?: AppDispatch // Optional Redux dispatch
+): Promise<boolean> => {
   try {
     const db = getFirestore();
-
     const userRef = doc(db, "users", userId);
-    await updateDoc(userRef, {
+
+    // Include automatic timestamp
+    const updatesWithTimestamp = {
       ...updateData,
       updatedAt: new Date(),
-    });
+    };
+
+    // 1. Always update Firestore
+    await updateDoc(userRef, updatesWithTimestamp);
+
+    // 2. Conditionally update Redux if dispatch provided
+    if (dispatch) {
+      dispatch(
+        setUser((prevUser: any) => ({
+          ...prevUser,
+          ...updatesWithTimestamp,
+        }))
+      );
+    }
 
     return true;
   } catch (error: any) {
@@ -319,9 +355,9 @@ const checkUserExistsForSignup = async (phoneNumber: string) => {
 
 const uploadImage = async (
   imageUri: string,
-  type: "user" | "event" | "creator" | "story",
+  type: "user" | "event" | "creator" | "story" | "groupImages",
   userId?: string,
-  imageType?: "profile" | "gallery" | "reel"
+  imageType?: "profile" | "gallery" | "reel" | "inviteImage"
 ): Promise<string> => {
   try {
     // Check if Firebase is properly initialized
@@ -734,36 +770,23 @@ export const sendGroupInvitesByTags = async (
     });
 
     // Send notifications
-    const notificationBatch = writeBatch(db);
     const now = Timestamp.now();
-
     for (const user of matchingUsers) {
-      const notificationRef = doc(db, "notifications", user.uid);
-      const notificationDoc = await getDoc(notificationRef);
-
-      const newNotification = {
+      await sendInAppNotification({
+        toUserId: user.uid,
         title: groupName,
         subtitle: `${inviterName} has invited you for a hangout. Want to join?`,
-        type: "messages",
-        groupId,
-        createdAt: now,
-        tags: selectedTags,
-        maxParticipants,
-      };
-
-      if (notificationDoc.exists()) {
-        notificationBatch.update(notificationRef, {
-          items: [...(notificationDoc.data()?.items || []), newNotification],
-        });
-      } else {
-        notificationBatch.set(notificationRef, {
-          items: [newNotification],
-        });
-      }
+        type: "groupMessage",
+        data: {
+          groupId,
+          tags: selectedTags,
+          maxParticipants,
+          createdAt: now.toDate(),
+          inviterId: invitedBy,
+          inviterName,
+        },
+      });
     }
-
-    await notificationBatch.commit();
-
     return { success: true };
   } catch (error) {
     console.error("Error sending group invites:", error);
@@ -777,7 +800,8 @@ export const getUserNotifications = async (userId: string) => {
     const snapshot = await getDoc(notificationRef);
 
     if (snapshot.exists()) {
-      return snapshot.data().items || [];
+      const data = snapshot.data();
+      return data && data.items ? data.items : [];
     }
     return [];
   } catch (error) {
@@ -802,20 +826,20 @@ export const respondToGroupInvite = async (
       throw new Error("Group not found");
     }
 
-    const groupData = groupSnap.data();
+    const groupData: any = groupSnap.data();
     const maxParticipants = groupData.maxParticipants || 0;
     console.log(maxParticipants, "max");
     const currentUsers = groupData.users || [];
 
     const acceptedCount = currentUsers.filter(
-      user => user.status === "accepted"
+      (user: any) => user.status === "accepted"
     ).length;
 
     if (accept && acceptedCount >= maxParticipants) {
       throw new Error("This group has already reached its participant limit.");
     }
 
-    const updatedUsers = currentUsers.map(user => {
+    const updatedUsers = currentUsers.map((user: any) => {
       if (user.uid === userId) {
         return {
           ...user,
@@ -954,7 +978,7 @@ const getRandomUser = async (
     const snapshot = await getDocs(usersRef);
 
     const availableUsers = snapshot.docs
-      .map(doc => ({
+      .map((doc: any) => ({
         id: doc.id,
         ...doc.data(),
       }))
@@ -1052,7 +1076,10 @@ const getNextUserForSwipe = async (
     const snapshot = await getDocs(usersRef);
 
     // DEBUG: Log all users first
-    const allUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const allUsers = snapshot.docs.map((doc: any) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
 
     // Get current state
     const state = store.getState();
@@ -1060,7 +1087,7 @@ const getNextUserForSwipe = async (
     // Get liked users
     const currentUserLikesRef = collection(db, "users", currentUserId, "likes");
     const likesSnapshot = await getDocs(currentUserLikesRef);
-    const likedUserIds = likesSnapshot.docs.map(doc => doc.id);
+    const likedUserIds = likesSnapshot.docs.map((doc: any) => doc.id);
 
     const availableUsers = allUsers.filter(
       (user: any) =>
@@ -1114,14 +1141,14 @@ const fetchUserMatches = async (
 
     const currentUserDoc = await getDoc(doc(db, "users", currentUserId));
     if (!currentUserDoc.exists()) throw new Error("Current user not found");
-    const currentUserData = currentUserDoc.data();
+    const currentUserData: any = currentUserDoc.data();
 
     // 🔄 Listen to matches
     unsubscribeMatches = onSnapshot(matchesRef, async matchesSnapshot => {
       const mutualMatches: any[] = [];
       const matchedUserIds: string[] = [];
 
-      matchesSnapshot.forEach(docSnap => {
+      matchesSnapshot.forEach((docSnap: any) => {
         const matchData = docSnap.data();
         if (matchData.users.includes(currentUserId) && matchData.isActive) {
           const otherUserId = matchData.users.find(
@@ -1148,7 +1175,7 @@ const fetchUserMatches = async (
           const pendingMatches: any[] = [];
 
           await Promise.all(
-            likesSnapshot.docs.map(async likeDoc => {
+            likesSnapshot.docs.map(async (likeDoc: any) => {
               const likedUserId = likeDoc.id;
 
               if (matchedUserIds.includes(likedUserId)) return;
@@ -1540,6 +1567,61 @@ const getUserByGuardianPhone = async (guardianPhoneNumber: string) => {
   }
 };
 
+const listenToUserNotifications = (
+  userId: string,
+  formatTime: (date: Date) => string,
+  onUpdate: (notifications: AppNotification[]) => void,
+  onError?: (error: any) => void
+) => {
+  const db = getFirestore();
+  const notificationRef = doc(db, "notifications", userId);
+
+  const unsubscribe = onSnapshot(
+    notificationRef,
+    snapshot => {
+      if (snapshot.exists()) {
+        const notifs = snapshot.data()?.items || [];
+
+        const formattedNotifications: AppNotification[] = notifs.map(
+          (notif: any) => {
+            const defaultImage = "https://example.com/default-user.png";
+
+            return {
+              id: notif.data?.groupId || notif.groupId || "unknown-id",
+              title: notif.title || "New Notification",
+              description:
+                notif.subtitle ||
+                notif.message ||
+                "You have a new notification",
+              time: formatTime(notif.createdAt?.toDate?.() || new Date()),
+              image:
+                notif.inviterImage ||
+                notif.senderImage ||
+                notif.data?.thumbnailUrl ||
+                defaultImage,
+              read: notif.isRead || false,
+              type: notif.type === "groupMessage" ? "group_invite" : notif.type,
+              groupId: notif.groupId,
+              status: notif.status || "pending",
+            };
+          }
+        );
+
+        onUpdate(formattedNotifications);
+      } else {
+        onUpdate([]);
+      }
+    },
+    error => {
+      console.error("Error in notification listener:", error);
+      onError?.(error);
+      onUpdate([]);
+    }
+  );
+
+  return unsubscribe; // must be cleaned up later
+};
+
 export {
   addGuardianMobileNumber,
   authenticateWithPhone,
@@ -1572,4 +1654,5 @@ export {
   uploadImage,
   uploadMultipleImages,
   verifyCode,
+  listenToUserNotifications,
 };

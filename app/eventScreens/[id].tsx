@@ -22,7 +22,7 @@ import {
   useColorScheme,
   View,
 } from "react-native";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 const EventDetails = () => {
   const colorScheme = useColorScheme();
@@ -37,6 +37,7 @@ const EventDetails = () => {
   const [creator, setCreator] = useState<any>(null);
   const [isLiked, setIsLiked] = useState(false);
   const [currentUserData, setCurrentUserData] = useState<any>(null);
+  const dispatch = useDispatch();
 
   useEffect(() => {
     if (!eventId) return;
@@ -166,9 +167,13 @@ const EventDetails = () => {
       }
 
       // Update user's favouriteEvents array
-      await updateUser(user.uid, {
-        favouriteEvents: newFavouriteEvents,
-      });
+      await updateUser(
+        user.uid,
+        {
+          favouriteEvents: newFavouriteEvents,
+        },
+        dispatch
+      );
 
       // Update event's favouriteCount
       await updateEvent(eventId, { favouriteCount: newFavouriteCount });

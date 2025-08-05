@@ -22,7 +22,6 @@ import {
   ref,
 } from "@react-native-firebase/storage";
 import { sendInAppNotification } from "../helpers/notificationHelper";
-
 export interface Reel {
   id: string;
   userId: string;
@@ -343,6 +342,7 @@ const uploadReel = async (
   user: FirebaseAuthTypes.User,
   thumbnailUri?: string,
   caption?: string
+  // dispatch?: AppDispatch
 ): Promise<string> => {
   try {
     if (!user?.uid) {

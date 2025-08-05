@@ -64,12 +64,17 @@ export default function Chat() {
   const [usersName, setUsersName] = useState<any[]>([]);
   const [messages, setMessages] = useState<GroupMessage[]>([]);
   const [showMemberList, setShowMemberList] = useState(false);
-  const [reciverData, setReceiverData] = useState([]);
+  const [reciverData, setReciverData] = useState<any>(null);
+
   const isSingleChat = chatType === "single";
   const flatListRef = useRef<FlatList>(null);
   const navigation = useNavigation();
   const [statusMessage, setStatusMessage] = useState<any>(null);
   const [meetDataModalVisible, setMeetDataModalVisible] = useState(false);
+
+  useEffect(() => {
+    console.log(statusMessage);
+  }, [statusMessage]);
 
   useEffect(() => {
     if (isSingleChat) {
@@ -88,7 +93,6 @@ export default function Chat() {
     if (isSingleChat) {
       const fetchRejection = async () => {
         const rejection = await checkIfMeetRejected(matchId, user?.uid);
-        console.log("rejectionData", rejection);
       };
 
       fetchRejection();
@@ -163,16 +167,18 @@ export default function Chat() {
     };
 
     if (groupId) fetchGroupWithUsers();
-    console.log(group, "group");
   }, [groupId]);
 
   useEffect(() => {
     let unsubscribe: () => void;
 
     if (isSingleChat) {
-      unsubscribe = setupDirectMessageListener(matchId as string, messages => {
-        setMessages(messages);
-      });
+      unsubscribe = setupDirectMessageListener(
+        matchId as string,
+        (messages: any) => {
+          setMessages(messages);
+        }
+      );
     } else {
       unsubscribe = setupGroupMessagesListener(id as string, group => {
         setMessages(group.messages || []);
@@ -202,6 +208,11 @@ export default function Chat() {
 
   const handleSendMessage = async () => {
     if (!message.trim() || !user?.uid) return;
+
+    const getReceiverId = (matchId: string, currentUserId: string): string => {
+      const ids = matchId.split("_");
+      return ids[0] === currentUserId ? ids[1] : ids[0];
+    };
 
     try {
       if (isSingleChat) {
@@ -251,7 +262,14 @@ export default function Chat() {
           );
         }
 
-        await sendDirectMessage(matchId as string, user?.uid, message);
+        const receiverId = getReceiverId(matchId as string, user?.uid);
+
+        await sendDirectMessage(
+          matchId as string,
+          user?.uid,
+          message,
+          receiverId
+        );
       } else {
         await sendGroupMessage({
           senderId: user?.uid,
@@ -357,7 +375,7 @@ export default function Chat() {
       // Set up real-time listener for receiver data
       unsubscribe = getUserByUid(otherUserId as string, userData => {
         if (userData) {
-          setReceiverData(userData); // Save to state to show name/photo etc.
+          setReciverData(userData); // Save to state to show name/photo etc.
         }
       });
     }
@@ -420,7 +438,7 @@ export default function Chat() {
     );
   };
 
-  const setupRealtimeChatStatus = (groupId, callback) => {
+  const setupRealtimeChatStatus = (groupId: any, callback: any) => {
     const db = getFirestore();
     const meetRef = collection(db, "messages", groupId, "meet");
 
@@ -433,12 +451,12 @@ export default function Chat() {
 
       try {
         const docs = meetSnap.docs;
-        const hasConfirm = docs.some(doc => doc.id === "confirm");
-        const hasRejected = docs.some(doc => doc.id === "rejected");
+        const hasConfirm = docs.some((doc: any) => doc.id === "confirm");
+        const hasRejected = docs.some((doc: any) => doc.id === "rejected");
 
         // Check for confirmation first
         if (hasConfirm) {
-          const confirmDoc = docs.find(doc => doc.id === "confirm");
+          const confirmDoc = docs.find((doc: any) => doc.id === "confirm");
           callback({
             type: "button",
             label: "View Meeting Details",
@@ -449,7 +467,7 @@ export default function Chat() {
 
         // Check for rejections
         if (hasRejected) {
-          const rejectedDoc = docs.find(doc => doc.id === "rejected");
+          const rejectedDoc = docs.find((doc: any) => doc.id === "rejected");
           const rejectionData = rejectedDoc?.data();
 
           callback({
@@ -484,6 +502,10 @@ export default function Chat() {
     console.log("hi");
     setMeetDataModalVisible(!meetDataModalVisible);
   };
+
+  const handleMeetPress = () => {
+    router.push(`/meet/${matchId}`);
+  }; // navigate to meet setup screen
 
   return (
     <GestureHandlerRootView style={styles.container}>
@@ -523,7 +545,7 @@ export default function Chat() {
                 <View style={styles.avatarContainer}>
                   <Image
                     source={{
-                      uri: group?.image || encodeImagePath(reciverData.photo),
+                      uri: group?.image || encodeImagePath(reciverData?.photo),
                     }}
                     style={styles.userAvatar}
                   />
@@ -548,10 +570,9 @@ export default function Chat() {
                     onPress={() => setShowMemberList(true)}
                   />
                 </TouchableOpacity>
-              ) : (
+              ) : statusMessage?.label === "View Meeting Details" ? null : (
                 <TouchableOpacity
-                  style={styles.meetButton}
-                  onPress={() => router.push(`/meet/${matchId}`)} // navigate to meet setup screen
+                  onPress={handleMeetPress} // navigate to meet setup screen
                 >
                   <MaterialIcons
                     name="video-call"

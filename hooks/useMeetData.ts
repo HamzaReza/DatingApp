@@ -69,6 +69,13 @@ export const useMeetingData = (matchId: string): UseMeetingDataReturn => {
     setLoading(true);
 
     try {
+      const currentUserDataPromise = new Promise(resolve => {
+        getUserByUid(user.uid, resolve);
+      });
+
+      const otherUserProfileDataPromise = new Promise(resolve => {
+        getUserByUid(otherUid.trim(), resolve);
+      });
       // Load data in parallel
       const [
         currentUserData,
@@ -77,8 +84,8 @@ export const useMeetingData = (matchId: string): UseMeetingDataReturn => {
         fixedMeetDetails,
         rejectionData,
       ] = await Promise.all([
-        getUserByUid(user.uid),
-        getUserByUid(otherUid.trim()),
+        currentUserDataPromise,
+        otherUserProfileDataPromise,
         fetchUserMeetingData(matchId, otherUid),
         checkFixedMeetDetails(matchId),
         checkRejectionStatus(matchId, user.uid),

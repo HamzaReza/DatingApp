@@ -21,10 +21,10 @@ import { calculateMatchScore } from "@/utils/MatchScore";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useFocusEffect } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Image, TouchableOpacity, View } from "react-native";
 import Toast from "react-native-toast-message";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 export default function SwipeProfile() {
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -36,12 +36,17 @@ export default function SwipeProfile() {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
+  const dispatch = useDispatch();
 
   useFocusEffect(
     React.useCallback(() => {
       initializeSwipeProfile();
     }, [])
   );
+
+  useEffect(() => {
+    console.log(reduxUser.name);
+  }, []);
 
   const initializeSwipeProfile = async () => {
     try {
@@ -91,7 +96,7 @@ export default function SwipeProfile() {
           }
 
           // Update user with new trust score
-          await updateUser(userId, { trustScore: newTrustScore });
+          await updateUser(userId, { trustScore: newTrustScore }, dispatch);
 
           // Clean up the listener after updating
           unsubscribe();
@@ -169,7 +174,7 @@ export default function SwipeProfile() {
         await sendInAppNotification({
           toUserId: profileData.id,
           title: "You got a Like!",
-          subtitle: "John liked your profile",
+          subtitle: `${reduxUser.name} liked your profile`,
           type: "like",
           data: {
             fromUserId: currentUser.uid,
@@ -227,6 +232,18 @@ export default function SwipeProfile() {
 
       if (isMatch) {
         router.push("/(tabs)/matches");
+
+        await sendInAppNotification({
+          toUserId: profileData.id,
+          title: "It's a Match!",
+          subtitle: `${currentUser.name || "Someone"} matched with you!`,
+          type: "match",
+          data: {
+            matchedUserId: currentUser.uid,
+            timestamp: Date.now(),
+          },
+        });
+
         return;
       }
 

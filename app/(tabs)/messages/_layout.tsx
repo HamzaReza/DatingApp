@@ -22,15 +22,17 @@ export default function MessagesLayout() {
           },
           animationDuration: 300,
           gestureEnabled: true,
-          tabBarStyle: { display: "none" }, // ✅ use this directly here
+          // tabBarStyle: { display: "none" }, // Removed because not supported in NativeStack
         }}
       />
 
       <Stack.Screen
         name="connection/[id]"
-        options={{
-          tabBarStyle: { display: "none" }, // Hide tab bar in this screen
-        }}
+        options={
+          {
+            // tabBarStyle: { display: "none" }, // Removed because not supported in NativeStack
+          }
+        }
       />
     </Stack>
   );

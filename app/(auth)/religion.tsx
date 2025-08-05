@@ -4,7 +4,11 @@ import RnProgressBar from "@/components/RnProgressBar";
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
 import { Colors } from "@/constants/Colors";
-import { getCurrentAuth, updateUser } from "@/firebase/auth";
+import {
+  getCurrentAuth,
+  updateCurrentUserDoc,
+  updateUser,
+} from "@/firebase/auth";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { ReligionValues } from "@/types";
 import { wp } from "@/utils";
@@ -13,6 +17,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { Formik } from "formik";
 import { useState } from "react";
 import { Pressable, View } from "react-native";
+import { useDispatch } from "react-redux";
 import * as Yup from "yup";
 
 const religionSchema = Yup.object().shape({
@@ -37,6 +42,7 @@ export default function Religion() {
   const styles = createStyles(theme);
   const [isLoading, setIsLoading] = useState(false);
   const params = useLocalSearchParams();
+  const dispatch = useDispatch();
 
   const handleReligionSubmit = async (values: ReligionValues) => {
     if (!values.religion) return;
@@ -59,7 +65,7 @@ export default function Religion() {
         isProfileComplete: true,
       };
 
-      await updateUser(currentUser.uid, updatedUserData);
+      await updateUser(currentUser.uid, updatedUserData, dispatch);
 
       router.dismissTo("/getStarted");
     } catch (error) {

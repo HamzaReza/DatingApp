@@ -3,7 +3,10 @@ import Container from "@/components/RnContainer";
 import RnText from "@/components/RnText";
 import RoundButton from "@/components/RoundButton";
 import { Colors } from "@/constants/Colors";
-import { respondToGroupInvite } from "@/firebase/auth";
+import {
+  listenToUserNotifications,
+  respondToGroupInvite,
+} from "@/firebase/auth";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { RootState } from "@/redux/store";
 import {
@@ -36,49 +39,16 @@ export default function NotificationScreen() {
   const { user } = useSelector((state: RootState) => state.user);
 
   useEffect(() => {
+    console.log(notifications);
+  }, [notifications]);
+
+  useEffect(() => {
     if (!user?.uid) return;
 
-    const db = getFirestore();
-    const notificationRef = doc(db, "notifications", user.uid);
-
-    const unsubscribe = onSnapshot(
-      notificationRef,
-      snapshot => {
-        if (snapshot.exists()) {
-          const notifs = snapshot.data()?.items || [];
-
-          const formattedNotifications = notifs.map((notif: any) => {
-            const defaultImage = "https://example.com/default-user.png";
-
-            return {
-              id: notif.groupId || `notif-${Date.now()}`,
-              title: notif.title || "New Notification",
-              description:
-                notif.subtitle ||
-                notif.message ||
-                "You have a new notification",
-              time: formatTime(notif.createdAt?.toDate?.() || new Date()),
-              image:
-                notif.inviterImage ||
-                notif.senderImage ||
-                notif.data?.thumbnailUrl ||
-                defaultImage,
-              read: notif.isRead || false,
-              type: notif.type === "messages" ? "group_invite" : notif.type, // Normalize type
-              groupId: notif.groupId,
-              status: notif.status || "pending", // Default status
-            };
-          });
-
-          setNotifications(formattedNotifications);
-        } else {
-          setNotifications([]);
-        }
-      },
-      error => {
-        console.error("Error in notification listener:", error);
-        setNotifications([]);
-      }
+    const unsubscribe = listenToUserNotifications(
+      user.uid,
+      formatTime,
+      setNotifications
     );
 
     return () => unsubscribe();
@@ -96,33 +66,8 @@ export default function NotificationScreen() {
     return `${Math.floor(minutes / 1440)}d ago`;
   };
 
-  const handleResponse = async (groupId: string, accept: boolean) => {
-    try {
-      if (!user?.uid) return;
-
-      await respondToGroupInvite(groupId, user.uid, accept);
-
-      // Update local state
-      setNotifications(prev =>
-        prev.map(notif =>
-          notif.groupId === groupId
-            ? { ...notif, status: accept ? "accepted" : "rejected" }
-            : notif
-        )
-      );
-
-      Alert.alert(
-        accept ? "Invite Accepted" : "Invite Declined",
-        accept
-          ? "You can now chat with the group"
-          : "The invite has been declined"
-      );
-    } catch (error: any) {
-      Alert.alert("Error", error.message || "Failed to process your response");
-    }
-  };
-
   const handleNotificationPress = (groupId: string) => {
+    console.log("groupId", groupId);
     router.push(`/mainScreens/hangoutDetails?groupId=${groupId}`);
   };
 

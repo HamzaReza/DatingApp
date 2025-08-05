@@ -1,22 +1,28 @@
-import ScrollContainer from "@/components/RnScrollContainer";
-import RnText from "@/components/RnText";
-import { Colors } from "@/constants/Colors";
-import { encodeImagePath } from "@/utils";
-import { Ionicons } from "@expo/vector-icons";
-import DateTimePicker from "@react-native-community/datetimepicker";
-import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
+  View,
+  TouchableOpacity,
+  StyleSheet,
   FlatList,
+  Alert,
   Image,
   Platform,
   TextInput,
-  TouchableOpacity,
+  Text,
   useColorScheme,
-  View,
+  ActivityIndicator,
 } from "react-native";
+import { useLocalSearchParams, router } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import ScrollContainer from "@/components/RnScrollContainer";
+import RnText from "@/components/RnText";
+import { FontSize } from "@/constants/FontSize";
+import { encodeImagePath, hp, wp } from "@/utils";
+import { Colors } from "@/constants/Colors";
+import { getAuth } from "@react-native-firebase/auth";
+import { FontFamily } from "@/constants/FontFamily";
+import { Borders } from "@/constants/Borders";
 import createStyles from "./styles";
 
 // Custom hooks
@@ -26,30 +32,27 @@ import { useRejectModal } from "@/hooks/useRejectModal";
 
 // Utility functions
 import {
-  checkFixedMeetDetails,
-  checkIsFirstEntry,
-  createFinalMeet,
   handleMutualSelection,
-  handleReject,
+  createFinalMeet,
   saveUserMeetingPreferences,
+  handleReject,
+  checkIsFirstEntry,
+  checkFixedMeetDetails,
 } from "@/firebase/meet";
 import {
-  districtPlaces,
   formatDate,
-  mockUsers,
-  timeSlots,
   validateMeetingForm,
+  timeSlots,
+  districtPlaces,
+  mockUsers,
 } from "@/helpers/meetHelpers";
-import { RootState } from "@/redux/store";
-import { useSelector } from "react-redux";
 
 export default function MeetSetupScreen() {
   const { matchId } = useLocalSearchParams();
-  console.log("matchId", matchId);
   const colorScheme = useColorScheme();
-  const theme = colorScheme === "light" ? "light" : "dark";
+  const theme = colorScheme == "light" ? "light" : "dark";
   const styles = createStyles(theme);
-  const { user } = useSelector((state: RootState) => state.user);
+  const currentUser = getAuth().currentUser;
 
   // Custom hooks
   const {
@@ -62,8 +65,6 @@ export default function MeetSetupScreen() {
     loading: dataLoading,
     refreshData,
   } = useMeetingData(matchId as string);
-
-  console.log("firasdsadsdadst", userData, otherUserMeet);
 
   const {
     selectedPlaces,
@@ -101,7 +102,7 @@ export default function MeetSetupScreen() {
       return;
     }
 
-    if (!user?.uid) {
+    if (!currentUser?.uid) {
       Alert.alert("Error", "User not authenticated");
       return;
     }
@@ -111,7 +112,7 @@ export default function MeetSetupScreen() {
       // Save current user's preferences
       await saveUserMeetingPreferences(
         matchId as string,
-        user.uid,
+        currentUser.uid,
         selectedPlaces,
         selectedDates,
         selectedTimes
@@ -119,7 +120,7 @@ export default function MeetSetupScreen() {
 
       const isFirstEntry = await checkIsFirstEntry(
         matchId as string,
-        user.uid,
+        currentUser.uid,
         otherUid
       );
 
@@ -135,7 +136,7 @@ export default function MeetSetupScreen() {
       // Check for mutual selections
       const hasMutual = await handleMutualSelection(
         matchId as string,
-        user.uid,
+        currentUser.uid,
         selectedPlaces,
         selectedDates,
         selectedTimes
@@ -153,6 +154,7 @@ export default function MeetSetupScreen() {
         ) {
           await createFinalMeet(matchId as string);
           Alert.alert("Confirmed", "Mutual match found for all preferences.");
+          router.back();
         } else {
           Alert.alert(
             "Saved",
@@ -186,7 +188,7 @@ export default function MeetSetupScreen() {
       return;
     }
 
-    if (!user?.uid) {
+    if (!currentUser?.uid) {
       Alert.alert("Error", "User not authenticated");
       return;
     }
@@ -194,7 +196,7 @@ export default function MeetSetupScreen() {
     try {
       await handleReject({
         matchId: matchId as string,
-        currentUserId: user.uid,
+        currentUserId: currentUser.uid,
         unavailable: [rejectModal.category],
         reason: rejectModal.reason,
       });
@@ -318,7 +320,7 @@ export default function MeetSetupScreen() {
         <View style={styles.usersSection}>
           <View style={styles.userProfile}>
             <Image
-              source={{ uri: encodeImagePath(userData?.photo) }}
+              source={{ uri: encodeImagePath(userData.photo) }}
               style={styles.userAvatar}
             />
             <RnText style={styles.userName}>
@@ -334,10 +336,10 @@ export default function MeetSetupScreen() {
 
           <View style={styles.userProfile}>
             <Image
-              source={{ uri: encodeImagePath(otherUserData?.photo) }}
+              source={{ uri: encodeImagePath(otherUserData.photo) }}
               style={styles.userAvatar}
             />
-            <RnText style={styles.userName}>{otherUserData?.name}</RnText>
+            <RnText style={styles.userName}>{otherUserData.name}</RnText>
           </View>
         </View>
 
@@ -351,7 +353,7 @@ export default function MeetSetupScreen() {
                 color={Colors.light.primary}
               />
               <RnText style={styles.preferencesTitle}>
-                {`${otherUserData?.name}'s Preferences`}
+                {otherUserData.name}'s Preferences
               </RnText>
             </View>
 
@@ -444,7 +446,7 @@ export default function MeetSetupScreen() {
               <RnText style={styles.sectionTitle}>Choose Places</RnText>
             </View>
             <RnText style={styles.sectionSubtitle}>
-              {`Select places you'd like to meet. Hearts show mutual interests!`}
+              Select places you'd like to meet. Hearts show mutual interests!
             </RnText>
 
             <FlatList
@@ -482,7 +484,7 @@ export default function MeetSetupScreen() {
               <RnText style={styles.addDateText}>Add Available Date</RnText>
             </TouchableOpacity>
 
-            {otherUserMeet?.dates && otherUserMeet?.dates?.length > 0 && (
+            {otherUserMeet?.dates?.length > 0 && (
               <View style={styles.selectedDatesContainer}>
                 {otherUserMeet.dates.map((date: string) => (
                   <View

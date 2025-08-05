@@ -500,8 +500,6 @@ export default function Messages() {
             </View>
           </View>
 
-          <View style={""}></View>
-
           <View style={styles.inputWrapper}>
             <RnText style={styles.inputLabel}>Age Group:</RnText>
             <View

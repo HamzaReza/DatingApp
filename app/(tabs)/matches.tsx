@@ -1,8 +1,7 @@
 import createStyles from "@/app/tabStyles/matches.styles";
 import MatchCard from "@/components/MatchCard";
-import ScrollContainer from "@/components/RnScrollContainer";
+import Container from "@/components/RnContainer";
 import RnText from "@/components/RnText";
-import RoundButton from "@/components/RoundButton";
 import { Colors } from "@/constants/Colors";
 import {
   fetchUserMatches,
@@ -40,7 +39,6 @@ export default function Matches() {
   const [likedCount, setLikedCount] = useState(0);
   const [connectCount, setConnectCount] = useState(0);
   const [matches, setMatches] = useState<Match[]>([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const init = async () => {
@@ -100,16 +98,10 @@ export default function Matches() {
   };
 
   return (
-    <ScrollContainer>
+    <Container>
       {/* Header */}
       <View style={styles.headerContainer}>
         <RnText style={styles.headerTitle}>Matches</RnText>
-        <RoundButton
-          iconName="more-vert"
-          iconSize={22}
-          iconColor={Colors[theme].primary}
-          backgroundColour={Colors[theme].whiteText}
-        />
       </View>
 
       {/* Stats Section */}
@@ -181,8 +173,13 @@ export default function Matches() {
                 distance={item.distance}
                 image={item.image}
                 matchPercentage={item.matchPercentage}
-                onPress={() => router.push(`/discover/${item.id}`)}
-                isPending={item.status == "pending"}
+                onPress={() =>
+                  router.push({
+                    pathname: "/discover/[id]",
+                    params: { id: item.userId, isFriend: "true" },
+                  })
+                }
+                isPending={item.status === "pending"}
               />
             )}
             numColumns={2}
@@ -191,17 +188,15 @@ export default function Matches() {
             contentContainerStyle={styles.matchesList}
             style={{ width: wp(100) }}
             ListEmptyComponent={
-              !loading ? (
-                <View style={{ alignItems: "center", paddingVertical: 20 }}>
-                  <RnText style={{ color: Colors[theme].tabIconDefault }}>
-                    No matches yet. Start swiping to find matches!
-                  </RnText>
-                </View>
-              ) : null
+              <View style={{ alignItems: "center", paddingVertical: 20 }}>
+                <RnText style={{ color: Colors[theme].tabIconDefault }}>
+                  No matches yet. Start swiping to find matches!
+                </RnText>
+              </View>
             }
           />
         </View>
       </View>
-    </ScrollContainer>
+    </Container>
   );
 }

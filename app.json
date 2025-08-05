@@ -90,7 +90,14 @@
           "isAccessMediaLocationEnabled": true
         }
       ],
-      "expo-video"
+      "expo-video",
+      [
+        "@stripe/stripe-react-native",
+        {
+          "merchantIdentifier": "merchant.com.dating.app",
+          "enableGooglePay": true
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

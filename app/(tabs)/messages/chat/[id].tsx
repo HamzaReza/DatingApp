@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import createStyles from "@/app/tabStyles/chat.styles";
+import PaymentModal from "@/components/PaymentModal";
 import RnInput from "@/components/RnInput";
 import RnModal from "@/components/RnModal";
 import ScrollContainer from "@/components/RnScrollContainer";
@@ -18,6 +19,7 @@ import {
   setupDirectMessageListener,
   setupGroupMessagesListener,
 } from "@/firebase/message";
+import { createPaymentIntent } from "@/firebase/stripe";
 import { RootState } from "@/redux/store";
 import { encodeImagePath, hp, wp } from "@/utils";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -30,6 +32,7 @@ import {
   onSnapshot,
   updateDoc,
 } from "@react-native-firebase/firestore";
+import functions from "@react-native-firebase/functions";
 import { router, useLocalSearchParams, useNavigation } from "expo-router";
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
@@ -71,6 +74,9 @@ export default function Chat() {
   const navigation = useNavigation();
   const [statusMessage, setStatusMessage] = useState<any>(null);
   const [meetDataModalVisible, setMeetDataModalVisible] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentInitialized, setPaymentInitialized] = useState(false);
+  const [paymentData, setPaymentData] = useState<any>(null);
 
   useEffect(() => {
     console.log(statusMessage);
@@ -220,7 +226,6 @@ export default function Chat() {
           matchId as string,
           user?.uid
         );
-
         if (messageCount > 5) {
           Alert.alert(
             "Limit Reached",
@@ -232,8 +237,9 @@ export default function Chat() {
               },
               {
                 text: "Pay Now",
-                onPress: () =>
-                  router.push("/eventScreens/tickets/paymentScreen"),
+                onPress: () => {
+                  initializePayment();
+                },
               },
             ]
           );
@@ -255,8 +261,9 @@ export default function Chat() {
               },
               {
                 text: "Pay Now",
-                onPress: () =>
-                  router.push("/eventScreens/tickets/paymentScreen"),
+                onPress: () => {
+                  initializePayment();
+                },
               },
             ]
           );
@@ -321,6 +328,48 @@ export default function Chat() {
     } catch (error) {
       console.error("Error leaving group:", error);
       Alert.alert("Error", "Failed to leave group");
+    }
+  };
+
+  // Initialize payment before opening modal
+  const initializePayment = async () => {
+    try {
+      if (!matchId || !user?.uid) {
+        Alert.alert("Error", "Missing required data for payment");
+        return;
+      }
+
+      // Create payment intent in Firebase
+      const paymentId = await createPaymentIntent(user.uid, matchId as string);
+
+      // Call Firebase Function to create Stripe payment intent
+      const createStripePaymentIntent = functions().httpsCallable(
+        "createStripePaymentIntent"
+      );
+
+      const result = await createStripePaymentIntent({
+        paymentId: paymentId,
+        amount: 500, // $5.00 in cents
+        userId: user.uid,
+        matchId: matchId as string,
+      });
+
+      const data = result.data as any;
+      if (data.clientSecret) {
+        setPaymentData({
+          paymentId,
+          clientSecret: data.clientSecret,
+          userId: user.uid,
+          matchId: matchId as string,
+        });
+        setPaymentInitialized(true);
+        setShowPaymentModal(true);
+      } else {
+        throw new Error("No client secret received from Stripe");
+      }
+    } catch (error: any) {
+      console.error("Error initializing payment:", error);
+      Alert.alert("Error", "Failed to initialize payment. Please try again.");
     }
   };
 
@@ -499,7 +548,6 @@ export default function Chat() {
     return unsubscribe;
   };
   const handleDetailsPress = () => {
-    console.log("hi");
     setMeetDataModalVisible(!meetDataModalVisible);
   };
 
@@ -737,6 +785,23 @@ export default function Chat() {
               </View>
             </View>
           </Modal>
+          <PaymentModal
+            visible={showPaymentModal}
+            onClose={() => {
+              setShowPaymentModal(false);
+              setPaymentInitialized(false);
+              setPaymentData(null);
+            }}
+            onSuccess={() => {
+              setShowPaymentModal(false);
+              setPaymentInitialized(false);
+              setPaymentData(null);
+            }}
+            matchId={matchId as string}
+            userId={user?.uid || ""}
+            paymentData={paymentData}
+            isPreInitialized={paymentInitialized}
+          />
         </KeyboardAvoidingView>
       </Animated.View>
     </GestureHandlerRootView>

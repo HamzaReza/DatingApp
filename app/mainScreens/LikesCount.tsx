@@ -1,19 +1,14 @@
-// app/(tabs)/LikesAndConnections.tsx
-
-import { router, useLocalSearchParams } from "expo-router";
-import React, { useEffect, useState } from "react";
-import {
-  FlatList,
-  View,
-  Image,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-} from "react-native";
-import RnText from "@/components/RnText";
+import MatchCard from "@/components/MatchCard";
+import Container from "@/components/RnContainer";
 import ScrollContainer from "@/components/RnScrollContainer";
+import RnText from "@/components/RnText";
+import RoundButton from "@/components/RoundButton";
+import { Borders } from "@/constants/Borders";
+import { Colors } from "@/constants/Colors";
+import { FontFamily } from "@/constants/FontFamily";
+import { FontSize } from "@/constants/FontSize";
 import { getCurrentAuth } from "@/firebase/auth";
-import { getAuth } from "@react-native-firebase/auth";
+import { hp, wp } from "@/utils";
 import {
   collectionGroup,
   doc,
@@ -21,17 +16,22 @@ import {
   getDocs,
   getFirestore,
 } from "@react-native-firebase/firestore";
-import { encodeImagePath, hp, wp } from "@/utils";
-import Container from "@/components/RnContainer";
-import PrimaryHeader from "@/components/PrimaryHeader";
-import { Borders } from "@/constants/Borders";
-import { Colors } from "@/constants/Colors";
-import { FontFamily } from "@/constants/FontFamily";
-import MatchCard from "@/components/MatchCard";
+import { router, useLocalSearchParams } from "expo-router";
+import React, { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+  useColorScheme,
+  View,
+} from "react-native";
 
 export default function LikesAndConnections() {
   const { type } = useLocalSearchParams(); // 'likes' or 'connections'
-  const tabType = type == "likes" ? "Likes" : "Connections";
+  const tabType = type === "likes" ? "Likes" : "Connections";
+  const colorScheme = useColorScheme();
+  const theme = colorScheme === "dark" ? "dark" : "light";
   const [users, setUsers] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<"Likes" | "Connections">(tabType);
   const [loading, setLoading] = useState(false); // Add loading state
@@ -149,13 +149,89 @@ export default function LikesAndConnections() {
     };
   }, [activeTab]);
 
+  const styles = StyleSheet.create({
+    tabContainer: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      backgroundColor: Colors[theme].primaryOpaque,
+      borderRadius: Borders.radius3,
+      marginBottom: hp(1),
+      padding: wp(1.5),
+    },
+    tab: {
+      flex: 1,
+      paddingVertical: hp(1),
+      alignItems: "center",
+      justifyContent: "center",
+      borderRadius: Borders.radius3,
+    },
+    activeTab: {
+      backgroundColor: Colors[theme].background,
+      elevation: 2,
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      shadowOffset: { width: 0, height: 2 },
+    },
+    tabText: {
+      textAlign: "center",
+      color: Colors[theme].greenText,
+      fontFamily: FontFamily.semiBold,
+    },
+    activeTabText: {
+      color: Colors[theme].redText,
+      fontFamily: FontFamily.bold, // dont
+    },
+    scrollView: {
+      marginHorizontal: 0,
+      paddingHorizontal: 0,
+    },
+    flatListCon: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginVertical: 16,
+      borderBottomColor: Colors[theme].gray,
+      borderBottomWidth: 0.5,
+      padding: hp(1),
+    },
+    image: {
+      width: 50,
+      height: 50,
+      borderRadius: 25,
+      marginRight: 12,
+    },
+    name: {
+      color: Colors[theme].blackText,
+      fontFamily: FontFamily.bold,
+    },
+    titleContainer: {
+      flexDirection: "row",
+      marginBottom: hp(2),
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    titleText: {
+      fontFamily: FontFamily.bold,
+      color: Colors[theme].greenText,
+      fontSize: FontSize.large,
+    },
+  });
+
   return (
     <Container>
-      <PrimaryHeader
-        title={type === "likes" ? "People who liked you" : "Your connections"}
-        showRightIcon={false}
-        onLeftPress={() => router.back()}
-      />
+      <View style={styles.titleContainer}>
+        <RoundButton
+          iconName="arrow-back"
+          iconSize={22}
+          iconColor={Colors[theme].primary}
+          backgroundColour={Colors[theme].whiteText}
+          onPress={() => router.back()}
+        />
+        <RnText style={styles.titleText}>
+          {activeTab === "Likes" ? "People who liked you" : "Your connections"}
+        </RnText>
+        <View />
+      </View>
+
       <ScrollContainer customStyle={styles.scrollView}>
         <View style={styles.tabContainer}>
           <TouchableOpacity
@@ -193,7 +269,7 @@ export default function LikesAndConnections() {
         {loading ? (
           <ActivityIndicator
             size="large"
-            color={Colors.light.primary}
+            color={Colors[theme].primary}
             style={{ marginTop: hp(5) }}
           />
         ) : (
@@ -226,59 +302,3 @@ export default function LikesAndConnections() {
     </Container>
   );
 }
-
-const styles = StyleSheet.create({
-  tabContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    backgroundColor: Colors.light.primaryOpaque,
-    borderRadius: Borders.radius3,
-    marginBottom: hp(1),
-    padding: wp(1.5),
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: hp(1),
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: Borders.radius3,
-  },
-  activeTab: {
-    backgroundColor: Colors.light.background,
-    elevation: 2,
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-  },
-  tabText: {
-    textAlign: "center",
-    color: Colors.light.greenText,
-    fontFamily: FontFamily.semiBold,
-  },
-  activeTabText: {
-    color: Colors.light.redText,
-    fontFamily: FontFamily.bold, // dont
-  },
-  scrollView: {
-    marginHorizontal: 0,
-    paddingHorizontal: 0,
-  },
-  flatListCon: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 16,
-    borderBottomColor: Colors.light.gray,
-    borderBottomWidth: 0.5,
-    padding: hp(1),
-  },
-  image: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginRight: 12,
-  },
-  name: {
-    color: Colors.light.blackText,
-    fontFamily: FontFamily.bold,
-  },
-});

@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import createStyles from "@/app/tabStyles/discover.styles";
 import InterestTag from "@/components/InterestTag";
 import RnBottomSheet from "@/components/RnBottomSheet";
@@ -13,7 +12,6 @@ import UserCard from "@/components/UserCard";
 import { Colors } from "@/constants/Colors";
 import {
   alcoholPreferenceOptions,
-  casualDatingAndMatrimonyOptions,
   heightOptions,
   interestMatchOptions,
   locationOptions,
@@ -32,13 +30,6 @@ import getDistanceFromLatLonInMeters from "@/utils/Distance";
 import { filterUsers } from "@/utils/Filter";
 import { requestLocationPermission } from "@/utils/Permission";
 import { Ionicons } from "@expo/vector-icons";
-import { getAuth } from "@react-native-firebase/auth";
-import {
-  collection,
-  doc,
-  getDoc,
-  getFirestore,
-} from "@react-native-firebase/firestore";
 import { LinearGradient } from "expo-linear-gradient";
 import * as Location from "expo-location";
 import { router } from "expo-router";
@@ -80,12 +71,18 @@ export default function Discover() {
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
   const dispatch = useDispatch();
-  const [usersList, setUsersList] = useState(Array<UsersList>);
+  const [usersList, setUsersList] = useState<UsersList[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<UsersList[]>([]);
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [showAllInterests, setShowAllInterests] = useState(false);
-  const [interests, setInterests] = useState<Tag[] | []>([]);
+  const [interests, setInterests] = useState<Tag[]>([]);
   const [isLoadingTags, setIsLoadingTags] = useState(true);
+
+  const {
+    deviceLocation,
+    locationPermissionGranted,
+    user: currentUser,
+  } = useSelector((state: RootState) => state.user);
 
   useEffect(() => {
     const unsubscribe = fetchTags(tagsArray => {
@@ -99,28 +96,25 @@ export default function Discover() {
   }, []);
 
   useEffect(() => {
-    getUsers();
-  }, []);
-
-  const displayedInterests = showAllInterests
-    ? interests
-    : interests.slice(0, 6);
-
-  const getUsers = async () => {
-    try {
-      const users: UsersList[] = await fetchAllUsers();
-
+    const unsubscribe = fetchAllUsers((users: UsersList[]) => {
       const usersWithoutCurrentUser = users.filter(
         user => user.id !== currentUser?.uid
       );
 
       setUsersList(usersWithoutCurrentUser);
       setFilteredUsers(usersWithoutCurrentUser);
-    } catch (err) {
-      console.error("Failed to fetch users:", err);
-    }
-  };
+    });
 
+    return () => {
+      unsubscribe();
+    };
+  }, [currentUser?.uid]);
+
+  const displayedInterests = showAllInterests
+    ? interests
+    : interests.slice(0, 6);
+
+  // Filter users based on selected interests
   useEffect(() => {
     if (usersList.length === 0) return;
 
@@ -143,12 +137,6 @@ export default function Discover() {
 
     setFilteredUsers(filtered);
   }, [selectedInterests, usersList]);
-
-  const {
-    deviceLocation,
-    locationPermissionGranted,
-    user: currentUser,
-  } = useSelector((state: RootState) => state.user);
 
   const [filterModal, setFilterModal] = useState(false);
 
@@ -191,13 +179,6 @@ export default function Discover() {
   );
   const [relationshipIntentValue, setRelationshipIntentValue] = useState("");
 
-  const [casualDatingAndMatrimonyOpen, setCasualDatingAndMatrimonyOpen] =
-    useState(false);
-  const [casualDatingAndMatrimonyItems, setCasualDatingAndMatrimonyItems] =
-    useState(casualDatingAndMatrimonyOptions);
-  const [casualDatingAndMatrimonyValue, setCasualDatingAndMatrimonyValue] =
-    useState("");
-
   const handleInterestPress = (label: string) => {
     setSelectedInterests(prev => {
       const newSelection = prev.includes(label)
@@ -221,6 +202,29 @@ export default function Discover() {
       console.error("Error getting location:", error);
       dispatch(setLocationPermissionGranted(false));
     }
+  };
+
+  const applyFilters = () => {
+    const filtered = filterUsers({
+      currentUser,
+      users: usersList,
+      age,
+      height: heightValue,
+      maritalStatus: maritalStatusValue,
+      location: locationValue,
+      distance,
+      interests: interestMatchValue, // This should be a range string like "0-100"
+      alcoholPreference: alcoholPreferenceValue,
+      smokingPreference: smokingPreferenceValue,
+      relationshipIntent: relationshipIntentValue,
+      deviceLocation: deviceLocation?.coords && {
+        latitude: deviceLocation.coords.latitude,
+        longitude: deviceLocation.coords.longitude,
+      },
+    });
+
+    setFilteredUsers(filtered);
+    setFilterModal(false);
   };
 
   return (
@@ -277,7 +281,12 @@ export default function Discover() {
                 image={encodeImagePath(item.photo || "")}
                 isNew={item.isNew}
                 distance={calculatedDistance}
-                onPress={() => router.push(`/discover/${item.uid || item.id}`)}
+                onPress={() =>
+                  router.push({
+                    pathname: "/discover/[id]",
+                    params: { id: item.uid as string, isFriend: "false" },
+                  })
+                }
               />
             );
           }}
@@ -572,47 +581,10 @@ export default function Discover() {
               zIndexInverse={8000}
             />
 
-            {/* <RnText style={styles.modalOptionText}>
-              Casual Dating And Matrimony
-            </RnText>
-            <RnDropdown
-              open={casualDatingAndMatrimonyOpen}
-              items={casualDatingAndMatrimonyItems}
-              value={casualDatingAndMatrimonyValue}
-              setOpen={setCasualDatingAndMatrimonyOpen}
-              setItems={setCasualDatingAndMatrimonyItems}
-              setValue={setCasualDatingAndMatrimonyValue}
-              placeholder="Select preference"
-              style={styles.filterInput}
-              zIndex={900}
-              zIndexInverse={8100}
-            /> */}
-
             <RnButton
               title="Apply Filter"
               style={[styles.applyFilterButton]}
-              onPress={() => {
-                const filtered = filterUsers({
-                  users: usersList,
-                  age,
-                  height: heightValue,
-                  maritalStatus: maritalStatusValue,
-                  location: locationValue,
-                  distance,
-                  interests: selectedInterests,
-                  alcoholPreference: alcoholPreferenceValue,
-                  smokingPreference: smokingPreferenceValue,
-                  relationshipIntent: relationshipIntentValue,
-                  casualDatingAndMatrimony: casualDatingAndMatrimonyValue,
-                  deviceLocation: deviceLocation?.coords && {
-                    latitude: deviceLocation.coords.latitude,
-                    longitude: deviceLocation.coords.longitude,
-                  },
-                });
-
-                setFilteredUsers(filtered);
-                setFilterModal(false);
-              }}
+              onPress={applyFilters}
             />
           </KeyboardAwareScrollView>
         </LinearGradient>

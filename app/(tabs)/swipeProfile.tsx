@@ -74,7 +74,10 @@ export default function SwipeProfile() {
   };
 
   const handleUserPress = () => {
-    router.push(`/(tabs)/discover/${profileData?.uid}`);
+    router.push({
+      pathname: "/discover/[id]",
+      params: { id: profileData?.uid, isFriend: "false" },
+    });
   };
 
   const updateTrustScore = async (userId: string) => {

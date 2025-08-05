@@ -4,7 +4,7 @@ import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
 import RoundButton from "@/components/RoundButton";
 import { Colors } from "@/constants/Colors";
-import { getUserByUidAsync, updateCurrentUserDoc } from "@/firebase/auth";
+import { getUserByUidAsync, updateUser } from "@/firebase/auth";
 import { fetchEventById, updateEvent } from "@/firebase/event";
 import { RootState } from "@/redux/store";
 import { wp } from "@/utils";
@@ -167,7 +167,7 @@ const EventDetails = () => {
       }
 
       // Update user's favouriteEvents array
-      await updateCurrentUserDoc(
+      await updateUser(
         user.uid,
         {
           favouriteEvents: newFavouriteEvents,

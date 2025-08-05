@@ -202,15 +202,33 @@ const saveUserToDatabase = async (userId: string, userData: any) => {
   }
 };
 
-const updateUser = async (userId: string, updateData: any) => {
+const updateUser = async (
+  userId: string,
+  updateData: Partial<any>, // Replace 'any' with your user type
+  dispatch?: AppDispatch // Optional Redux dispatch
+): Promise<boolean> => {
   try {
     const db = getFirestore();
-
     const userRef = doc(db, "users", userId);
-    await updateDoc(userRef, {
+
+    // Include automatic timestamp
+    const updatesWithTimestamp = {
       ...updateData,
       updatedAt: new Date(),
-    });
+    };
+
+    // 1. Always update Firestore
+    await updateDoc(userRef, updatesWithTimestamp);
+
+    // 2. Conditionally update Redux if dispatch provided
+    if (dispatch) {
+      dispatch(
+        setUser((prevUser: any) => ({
+          ...prevUser,
+          ...updatesWithTimestamp,
+        }))
+      );
+    }
 
     return true;
   } catch (error: any) {
@@ -1547,26 +1565,6 @@ const getUserByGuardianPhone = async (guardianPhoneNumber: string) => {
       `Failed to get user data by guardian phone: ${error.message}`
     );
   }
-};
-
-export const updateCurrentUserDoc = async (
-  uid: string,
-  updates: Partial<any>,
-  dispatch: AppDispatch
-) => {
-  const db = getFirestore();
-  const userRef = doc(db, "users", uid);
-
-  // 1. Update Firestore user doc
-  await updateDoc(userRef, updates);
-
-  // 2. Update Redux state
-  dispatch(
-    setUser((prevUser: any) => ({
-      ...prevUser,
-      ...updates,
-    }))
-  );
 };
 
 const listenToUserNotifications = (

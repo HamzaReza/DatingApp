@@ -9,7 +9,7 @@ import {
   getRandomUser,
   getUserByUid,
   recordLike,
-  updateCurrentUserDoc,
+  updateUser,
 } from "@/firebase/auth";
 import { sendInAppNotification } from "@/helpers/notificationHelper";
 import { useColorScheme } from "@/hooks/useColorScheme";
@@ -96,11 +96,7 @@ export default function SwipeProfile() {
           }
 
           // Update user with new trust score
-          await updateCurrentUserDoc(
-            userId,
-            { trustScore: newTrustScore },
-            dispatch
-          );
+          await updateUser(userId, { trustScore: newTrustScore }, dispatch);
 
           // Clean up the listener after updating
           unsubscribe();

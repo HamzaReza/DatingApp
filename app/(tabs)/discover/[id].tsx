@@ -18,7 +18,6 @@ import {
   fetchTags,
   getUserByUid,
   recordLike,
-  updateCurrentUserDoc,
   updateUser,
   uploadMultipleImages,
 } from "@/firebase/auth";
@@ -220,11 +219,7 @@ export default function Profile() {
           }
 
           // Update user with new trust score
-          await updateCurrentUserDoc(
-            userId,
-            { trustScore: newTrustScore },
-            dispatch
-          );
+          await updateUser(userId, { trustScore: newTrustScore }, dispatch);
 
           // Clean up the listener after updating
           unsubscribe();
@@ -348,7 +343,7 @@ export default function Profile() {
 
     const updatedGallery = [...(profileData?.gallery || []), ...galleryUrl];
 
-    await updateCurrentUserDoc(user.uid, { gallery: updatedGallery }, dispatch);
+    await updateUser(user.uid, { gallery: updatedGallery }, dispatch);
     setGalleryLoading(false);
     await getUserDetails();
   };

@@ -4,7 +4,11 @@ import RnProgressBar from "@/components/RnProgressBar";
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
 import { Colors } from "@/constants/Colors";
-import { getCurrentAuth, updateCurrentUserDoc } from "@/firebase/auth";
+import {
+  getCurrentAuth,
+  updateCurrentUserDoc,
+  updateUser,
+} from "@/firebase/auth";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { ReligionValues } from "@/types";
 import { wp } from "@/utils";
@@ -61,7 +65,7 @@ export default function Religion() {
         isProfileComplete: true,
       };
 
-      await updateCurrentUserDoc(currentUser.uid, updatedUserData, dispatch);
+      await updateUser(currentUser.uid, updatedUserData, dispatch);
 
       router.dismissTo("/getStarted");
     } catch (error) {

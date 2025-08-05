@@ -135,7 +135,7 @@ const signInWithGoogleFirebase = async (dispatch: any) => {
           provider: "google",
         });
       } else {
-        await updateCurrentUserDoc(
+        await updateUser(
           existingUser.uid,
           {
             provider: "google",

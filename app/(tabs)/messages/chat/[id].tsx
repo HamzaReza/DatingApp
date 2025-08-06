@@ -19,7 +19,7 @@ import {
   setupDirectMessageListener,
   setupGroupMessagesListener,
 } from "@/firebase/message";
-import { createPaymentIntent } from "@/firebase/stripe";
+import { createPaymentIntent, getMatchPaymentStatus } from "@/firebase/stripe";
 import { RootState } from "@/redux/store";
 import { encodeImagePath, hp, wp } from "@/utils";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -77,10 +77,7 @@ export default function Chat() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentInitialized, setPaymentInitialized] = useState(false);
   const [paymentData, setPaymentData] = useState<any>(null);
-
-  useEffect(() => {
-    console.log(statusMessage);
-  }, [statusMessage]);
+  const [matchPaymentStatus, setMatchPaymentStatus] = useState<any>(null);
 
   useEffect(() => {
     if (isSingleChat) {
@@ -104,6 +101,26 @@ export default function Chat() {
       fetchRejection();
     }
   }, [matchId]);
+
+  // Track match payment status for single chat
+  useEffect(() => {
+    let unsubscribe: () => void;
+
+    if (isSingleChat && matchId) {
+      unsubscribe = getMatchPaymentStatus(
+        matchId as string,
+        (matchPayment: any) => {
+          setMatchPaymentStatus(matchPayment);
+        }
+      );
+    }
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, [matchId, isSingleChat]);
 
   useEffect(() => {
     if (messages) {
@@ -618,7 +635,7 @@ export default function Chat() {
                     onPress={() => setShowMemberList(true)}
                   />
                 </TouchableOpacity>
-              ) : statusMessage?.label === "View Meeting Details" ? null : (
+              ) : matchPaymentStatus?.status === "completed" ? (
                 <TouchableOpacity
                   onPress={handleMeetPress} // navigate to meet setup screen
                 >
@@ -628,7 +645,7 @@ export default function Chat() {
                     color={Colors[theme].greenText}
                   />
                 </TouchableOpacity>
-              )}
+              ) : null}
             </View>
 
             {isSingleChat && (

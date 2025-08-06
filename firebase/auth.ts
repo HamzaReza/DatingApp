@@ -72,7 +72,8 @@ export type AppNotification = {
   time: string;
   image: string;
   read: boolean;
-  type: string;
+  dataId: string;
+  type?: string;
   groupId?: string;
   status?: string;
 };
@@ -221,12 +222,16 @@ const updateUser = async (
 
     // 2. Conditionally update Redux if dispatch provided
     if (dispatch) {
-      dispatch(
-        setUser((prevUser: any) => ({
-          ...prevUser,
+      const currentState = store.getState();
+      const currentUser = currentState.user.user;
+
+      if (currentUser) {
+        const updatedUser = {
+          ...currentUser,
           ...updatesWithTimestamp,
-        }))
-      );
+        };
+        dispatch(setUser(updatedUser));
+      }
     }
 
     return true;
@@ -774,12 +779,13 @@ export const sendGroupInvitesByTags = async (
         subtitle: `${inviterName} has invited you for a hangout. Want to join?`,
         type: "groupMessage",
         data: {
-          groupId,
+          id: groupId,
           tags: selectedTags,
           maxParticipants,
           createdAt: now.toDate(),
           inviterId: invitedBy,
           inviterName,
+          image: inviterData?.photo,
         },
       });
     }
@@ -1564,12 +1570,23 @@ const getUserByGuardianPhone = async (guardianPhoneNumber: string) => {
 
 const listenToUserNotifications = (
   userId: string,
-  formatTime: (date: Date) => string,
   onUpdate: (notifications: AppNotification[]) => void,
   onError?: (error: any) => void
 ) => {
   const db = getFirestore();
   const notificationRef = doc(db, "notifications", userId);
+
+  const formatTime = (date?: Date) => {
+    if (!date) return "Just now";
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const minutes = Math.floor(diff / 60000);
+
+    if (minutes < 1) return "Just now";
+    if (minutes < 60) return `${minutes}m ago`;
+    if (minutes < 1440) return `${Math.floor(minutes / 60)}h ago`;
+    return `${Math.floor(minutes / 1440)}d ago`;
+  };
 
   const unsubscribe = onSnapshot(
     notificationRef,
@@ -1581,24 +1598,30 @@ const listenToUserNotifications = (
           (notif: any) => {
             const defaultImage = "https://example.com/default-user.png";
 
-            return {
-              id: notif.data?.groupId || notif.groupId || "unknown-id",
+            const baseNotification = {
+              id: notif.id || "unknown-id",
+              dataId: notif.data.id,
               title: notif.title || "New Notification",
               description:
                 notif.subtitle ||
                 notif.message ||
                 "You have a new notification",
               time: formatTime(notif.createdAt?.toDate?.() || new Date()),
-              image:
-                notif.inviterImage ||
-                notif.senderImage ||
-                notif.data?.thumbnailUrl ||
-                defaultImage,
+              image: notif.data.image || defaultImage,
+              data: notif.data,
               read: notif.isRead || false,
-              type: notif.type === "groupMessage" ? "group_invite" : notif.type,
-              groupId: notif.groupId,
-              status: notif.status || "pending",
+              type: notif.type,
             };
+
+            // Only add groupId for groupMessage notifications
+            if (notif.type === "groupMessage") {
+              return {
+                ...baseNotification,
+                status: notif.status || "pending",
+              };
+            }
+
+            return baseNotification;
           }
         );
 
@@ -1615,6 +1638,33 @@ const listenToUserNotifications = (
   );
 
   return unsubscribe; // must be cleaned up later
+};
+
+const markNotificationAsRead = async (
+  userId: string,
+  notificationId: string
+) => {
+  try {
+    const db = getFirestore();
+    const notificationRef = doc(db, "notifications", userId);
+    const snapshot = await getDoc(notificationRef);
+
+    if (snapshot.exists()) {
+      const data = snapshot.data();
+      const items = data?.items || [];
+
+      const updatedItems = items.map((item: any) => {
+        if (item.id === notificationId) {
+          return { ...item, isRead: true };
+        }
+        return item;
+      });
+
+      await updateDoc(notificationRef, { items: updatedItems });
+    }
+  } catch (error) {
+    console.error("Error marking notification as read:", error);
+  }
 };
 
 export {
@@ -1642,6 +1692,8 @@ export {
   getUserByUidAsync,
   getUserLocation,
   handleStoryUpload,
+  listenToUserNotifications,
+  markNotificationAsRead,
   recordLike,
   saveUserToDatabase,
   signInWithGoogleFirebase,
@@ -1649,5 +1701,4 @@ export {
   uploadImage,
   uploadMultipleImages,
   verifyCode,
-  listenToUserNotifications,
 };

@@ -14,6 +14,7 @@ import {
   fetchStoriesForUser,
   getUserByUid,
   handleStoryUpload,
+  listenToUserNotifications,
   updateUser,
 } from "@/firebase/auth";
 import {
@@ -46,13 +47,17 @@ type Story = {
   isOwn: boolean;
 };
 
+type NotificationItem = {
+  read: boolean;
+};
+
 export default function Home() {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
   const { user } = useSelector((state: RootState) => state.user);
 
-  const [hasNotification] = useState(true);
+  const [hasNotification, setHasNotification] = useState(false);
 
   const dispatch = useDispatch();
   const [allStories, setAllStories] = useState<Story[]>([]);
@@ -106,6 +111,8 @@ export default function Home() {
     const unsubscribe = getReels();
 
     let userListener: (() => void) | null = null;
+    let notificationListener: (() => void) | null = null;
+
     if (user?.uid) {
       userListener = getUserByUid(user.uid, userData => {
         if (!userData) {
@@ -114,6 +121,17 @@ export default function Home() {
           router.replace("/onboarding");
         }
       });
+
+      // Listen to notifications and update hasNotification state
+      notificationListener = listenToUserNotifications(
+        user.uid,
+        (notifications: NotificationItem[]) => {
+          const hasUnreadNotifications = notifications.some(
+            notification => !notification.read
+          );
+          setHasNotification(hasUnreadNotifications);
+        }
+      );
     }
 
     const interval = setInterval(() => {
@@ -126,6 +144,9 @@ export default function Home() {
       }
       if (userListener) {
         userListener();
+      }
+      if (notificationListener) {
+        notificationListener();
       }
       clearInterval(interval);
       // Clean up comment listener if it exists

@@ -173,10 +173,11 @@ const likeDislikeReel = async (
           subtitle: `Your reel captioned ${reelData?.caption} has been rejected due to community feedback. It received too many dislikes.`,
           type: "reel",
           data: {
+            id: reelOwnerId,
             reelId: reelId,
             action: "reel_rejected",
             caption: reelData?.caption || "",
-            thumbnailUrl: reelData?.thumbnailUrl || "",
+            image: reelData?.thumbnailUrl || "",
           },
         });
       } catch (notificationError) {

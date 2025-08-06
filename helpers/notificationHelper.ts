@@ -5,7 +5,13 @@ import {
   setDoc,
 } from "@react-native-firebase/firestore";
 
-type NotificationType = "like" | "match" | "message" | "reel" | "custom"; // Expandable
+type NotificationType =
+  | "like"
+  | "match"
+  | "message"
+  | "reel"
+  | "custom"
+  | "groupMessage"; // Expandable
 
 type NotificationData = {
   toUserId: string;
@@ -32,10 +38,14 @@ export const sendInAppNotification = async ({
       : [];
 
     const newNotification = {
+      id: `notification_${Date.now()}_${Math.random()
+        .toString(36)
+        .substr(2, 9)}`,
       title,
       subtitle,
       type,
       data,
+      createdAt: new Date(),
       isRead: false,
     };
 

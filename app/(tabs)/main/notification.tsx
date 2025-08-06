@@ -1,22 +1,19 @@
 import createStyles from "@/app/tabStyles/notification.styles";
+import RnButton from "@/components/RnButton";
 import Container from "@/components/RnContainer";
 import RnText from "@/components/RnText";
 import RoundButton from "@/components/RoundButton";
 import { Colors } from "@/constants/Colors";
 import {
   listenToUserNotifications,
-  respondToGroupInvite,
+  markNotificationAsRead,
 } from "@/firebase/auth";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { RootState } from "@/redux/store";
-import {
-  doc,
-  getFirestore,
-  onSnapshot,
-} from "@react-native-firebase/firestore";
+import { encodeImagePath } from "@/utils";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { Alert, FlatList, Image, TouchableOpacity, View } from "react-native";
+import { FlatList, Image, TouchableOpacity, View } from "react-native";
 import { useSelector } from "react-redux";
 
 export type NotificationItem = {
@@ -26,6 +23,7 @@ export type NotificationItem = {
   time: string;
   image: string;
   read: boolean;
+  dataId: string;
   type?: string;
   groupId?: string;
   status?: string;
@@ -39,61 +37,101 @@ export default function NotificationScreen() {
   const { user } = useSelector((state: RootState) => state.user);
 
   useEffect(() => {
-    console.log(notifications);
-  }, [notifications]);
-
-  useEffect(() => {
     if (!user?.uid) return;
 
-    const unsubscribe = listenToUserNotifications(
-      user.uid,
-      formatTime,
-      setNotifications
-    );
+    const unsubscribe = listenToUserNotifications(user.uid, setNotifications);
 
     return () => unsubscribe();
   }, [user]);
 
-  const formatTime = (date?: Date) => {
-    if (!date) return "Just now";
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const minutes = Math.floor(diff / 60000);
+  const handleNotificationPress = async (item: NotificationItem) => {
+    // Mark notification as read
+    if (user?.uid && !item.read) {
+      await markNotificationAsRead(user.uid, item.id);
+    }
 
-    if (minutes < 1) return "Just now";
-    if (minutes < 60) return `${minutes}m ago`;
-    if (minutes < 1440) return `${Math.floor(minutes / 60)}h ago`;
-    return `${Math.floor(minutes / 1440)}d ago`;
+    if (item.type === "reel") {
+      handleReelNotificationPress(item.dataId);
+    }
+    if (item.type === "like") {
+      handleLikeNotificationPress(item.dataId);
+    }
+    if (item.type === "match") {
+      handleMatchNotificationPress(item.dataId);
+    }
+    if (item.type === "message") {
+      handleMessageNotificationPress(item.dataId);
+    }
   };
 
-  const handleNotificationPress = (groupId: string) => {
+  const handleGroupNotificationPress = (groupId: string) => {
     console.log("groupId", groupId);
     router.push(`/mainScreens/hangoutDetails?groupId=${groupId}`);
   };
 
-  const renderItem = ({ item }: { item: NotificationItem }) => (
-    <TouchableOpacity style={[styles.card, item.read && styles.cardRead]}>
-      <Image source={{ uri: item.image }} style={styles.avatar} />
-      <View style={styles.content}>
-        <RnText style={styles.title}>{item.title}</RnText>
-        <RnText style={styles.description}>{item.description}</RnText>
+  const handleReelNotificationPress = (userId: string) => {
+    console.log("userId", userId);
+    router.push({
+      pathname: "/discover/[id]",
+      params: { id: userId },
+    });
+  };
 
-        {item.type === "group_invite" && item.status === "pending" && (
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.acceptButton]}
-              onPress={() => handleNotificationPress(item.id)}
-            >
-              <RnText style={styles.buttonText}>View Details</RnText>
-            </TouchableOpacity>
-          </View>
+  const handleLikeNotificationPress = (userId: string) => {
+    console.log("userId", userId);
+    router.push({
+      pathname: "/discover/[id]",
+      params: { id: userId },
+    });
+  };
+
+  const handleMatchNotificationPress = (userId: string) => {
+    console.log("userId", userId);
+    router.push({
+      pathname: "/discover/[id]",
+      params: { id: userId },
+    });
+  };
+
+  const handleMessageNotificationPress = (messageId: string) => {
+    router.push({
+      pathname: "/messages/chat/[id]",
+      params: { id: messageId },
+    });
+  };
+
+  const renderItem = ({ item }: { item: NotificationItem }) => (
+    <TouchableOpacity
+      style={[styles.card, !item.read && styles.unreadCard]}
+      onPress={() => handleNotificationPress(item)}
+    >
+      <Image
+        source={{ uri: encodeImagePath(item.image) }}
+        style={styles.avatar}
+      />
+      <View style={styles.content}>
+        <RnText style={[styles.title, item.read && styles.readTitle]}>
+          {item.title}
+        </RnText>
+        <RnText
+          style={[styles.description, item.read && styles.readDescription]}
+        >
+          {item.description}
+        </RnText>
+
+        {item.type === "groupMessage" && item.status === "pending" && (
+          <RnButton
+            style={[styles.buttonContainer, styles.buttonText]}
+            title="View Details"
+            onPress={() => handleGroupNotificationPress(item.id)}
+          />
         )}
 
-        {item.type === "group_invite" && item.status === "accepted" && (
+        {item.type === "groupMessage" && item.status === "accepted" && (
           <RnText style={styles.acceptedText}>✓ Accepted</RnText>
         )}
 
-        {item.type === "group_invite" && item.status === "rejected" && (
+        {item.type === "groupMessage" && item.status === "rejected" && (
           <RnText style={styles.rejectedText}>✗ Declined</RnText>
         )}
 
@@ -104,7 +142,7 @@ export default function NotificationScreen() {
   );
 
   return (
-    <Container customStyle={{ marginBottom: 100 }}>
+    <Container>
       <View style={styles.header}>
         <RoundButton
           iconName="chevron-left"
@@ -114,13 +152,20 @@ export default function NotificationScreen() {
           onPress={() => router.back()}
         />
         <RnText style={styles.headerTitle}>Notifications</RnText>
-        <View style={{ width: 24 }} />
+        <RoundButton noShadow />
       </View>
       <FlatList
         data={notifications}
         keyExtractor={item => item.id}
+        contentContainerStyle={{ flexGrow: 1 }}
         renderItem={renderItem}
         showsVerticalScrollIndicator={false}
+        ItemSeparatorComponent={() => <View style={styles.separator} />}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <RnText style={styles.emptyText}>No notifications</RnText>
+          </View>
+        }
       />
     </Container>
   );

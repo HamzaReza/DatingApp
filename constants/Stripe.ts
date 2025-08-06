@@ -19,6 +19,7 @@ export const STRIPE_CONFIG = {
 };
 
 export const PAYMENT_STATUS = {
+  PAID: "paid",
   PENDING: "pending",
   COMPLETED: "completed",
   FAILED: "failed",

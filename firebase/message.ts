@@ -1,8 +1,6 @@
 import { User } from "@/app/(tabs)/messages/types";
-import { sendInAppNotification } from "@/helpers/notificationHelper";
 import { getAuth } from "@react-native-firebase/auth";
 import {
-  addDoc,
   arrayUnion,
   collection,
   deleteDoc,
@@ -20,7 +18,6 @@ import {
   updateDoc,
   where,
 } from "@react-native-firebase/firestore";
-import { router } from "expo-router";
 import { Alert } from "react-native";
 
 // Types for message data
@@ -124,18 +121,19 @@ const sendDirectMessage = async (
       });
     }
 
-    if (receiverId) {
-      await sendInAppNotification({
-        toUserId: receiverId,
-        title: "New Message",
-        subtitle: content,
-        type: "message",
-        data: {
-          matchId,
-          senderId,
-        },
-      });
-    }
+    // if (receiverId) {
+    //   await sendInAppNotification({
+    //     toUserId: receiverId,
+    //     title: "You got a new message!",
+    //     subtitle: content,
+    //     type: "message",
+    //     data: {
+    //       matchId,
+    //       senderId,
+    //       image: store.getState().user.user?.photo,
+    //     },
+    //   });
+    // }
   } catch (error) {
     console.error("Error sending message:", error);
     throw new Error("Failed to send message");
@@ -705,11 +703,11 @@ export const setupChatListeners = (
   };
 };
 export {
-  fetchMeetData,
-  sendDirectMessage,
   deleteMessage,
+  fetchMeetData,
   fetchMessagesBetweenUsers,
   fetchUserConversations,
   markConversationAsRead,
   markMessagesAsRead,
+  sendDirectMessage,
 };

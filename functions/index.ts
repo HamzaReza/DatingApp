@@ -67,36 +67,44 @@ async function handlePaymentIntentSucceeded(
   paymentIntent: Stripe.PaymentIntent
 ) {
   try {
-    // Find the payment record in Firestore
-    const paymentsRef = db.collection("payments");
-    const query = paymentsRef.where(
-      "stripePaymentIntentId",
-      "==",
-      paymentIntent.id
-    );
-    const snapshot = await query.get();
+    // Extract payment details from metadata
+    const { paymentId, userId, matchId } = paymentIntent.metadata;
 
-    if (snapshot.empty) {
-      console.error(
-        "No payment record found for payment intent:",
-        paymentIntent.id
-      );
+    if (!paymentId || !userId || !matchId) {
+      console.error("Missing payment metadata:", paymentIntent.metadata);
       return;
     }
 
-    const paymentDoc = snapshot.docs[0];
-    const paymentData = paymentDoc.data();
+    // Get the amount from the payment intent
+    const amount = paymentIntent.amount;
+    const currency = paymentIntent.currency;
 
-    // Update payment status to paid (not completed yet - that happens when both users pay)
-    await paymentDoc.ref.update({
-      status: "paid",
+    // Create payment document in Firestore only after successful payment
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 24); // 24 hours from now
+
+    const paymentData = {
+      userId: userId,
+      matchId: matchId,
+      amount: amount,
+      currency: currency,
+      status: "paid", // Directly set to paid since payment succeeded
+      stripePaymentIntentId: paymentIntent.id,
+      createdAt: new Date(),
       updatedAt: new Date(),
-    });
+      expiresAt: expiresAt,
+    };
+
+    // Create the payment document
+    await db.collection("payments").doc(paymentId).set(paymentData);
+
+    // Create or update match payment record
+    await createOrUpdateMatchPaymentInFunction(matchId, userId, paymentId);
 
     // Check if both users have paid
-    await checkAndUpdateMatchPaymentStatus(paymentData.matchId);
+    await checkAndUpdateMatchPaymentStatus(matchId);
 
-    console.log("Payment completed successfully:", paymentIntent.id);
+    console.log("Payment document created successfully:", paymentId);
   } catch (error) {
     console.error("Error handling payment success:", error);
     throw error;
@@ -316,7 +324,7 @@ export const checkExpiredPayments = onSchedule(
 
       const paymentsRef = db.collection("payments");
       const query = paymentsRef
-        .where("status", "==", "pending")
+        .where("status", "==", "paid")
         .where("expiresAt", "<", now);
 
       const snapshot = await query.get();
@@ -345,7 +353,7 @@ export const checkExpiredPayments = onSchedule(
           await doc.ref.update({
             status: "refunded",
             refundedAt: new Date(),
-            refundReason: "Payment expired - 10 minute window passed",
+            refundReason: "Payment expired - 24 hour window passed",
           });
 
           refundCount++;
@@ -384,6 +392,21 @@ export const createStripePaymentIntent = onCall(
         throw new HttpsError("invalid-argument", "Missing required parameters");
       }
 
+      // Check if user has already paid for this match
+      const existingPaymentQuery = db
+        .collection("payments")
+        .where("userId", "==", userId)
+        .where("matchId", "==", matchId)
+        .where("status", "in", ["paid", "completed"]);
+
+      const existingPaymentSnapshot = await existingPaymentQuery.get();
+      if (!existingPaymentSnapshot.empty) {
+        throw new HttpsError(
+          "already-exists",
+          "Payment already exists for this match"
+        );
+      }
+
       // Create payment intent in Stripe
       const paymentIntent = await stripe.paymentIntents.create({
         amount: amount,
@@ -391,29 +414,11 @@ export const createStripePaymentIntent = onCall(
         metadata: {
           paymentId: paymentId,
           userId: userId,
+          matchId: matchId,
         },
       });
 
-      // Create payment document in Firestore with Stripe payment intent ID
-      const expiresAt = new Date();
-      expiresAt.setHours(expiresAt.getHours() + 24); // 24 hours from now
-
-      const paymentIntentData = {
-        userId: userId,
-        matchId: matchId,
-        amount: amount,
-        currency: "usd",
-        status: "pending",
-        stripePaymentIntentId: paymentIntent.id,
-        createdAt: new Date(),
-        expiresAt: expiresAt,
-      };
-
-      await db.collection("payments").doc(paymentId).set(paymentIntentData);
-
-      // Create or update match payment record
-      await createOrUpdateMatchPaymentInFunction(matchId, userId, paymentId);
-
+      // Return only the client secret - don't create Firestore document yet
       const result = {
         clientSecret: paymentIntent.client_secret,
         paymentIntentId: paymentIntent.id,

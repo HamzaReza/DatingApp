@@ -16,7 +16,7 @@ import PrimaryHeader from "@/components/PrimaryHeader";
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
 import { Colors } from "@/constants/Colors";
-import { respondToGroupInvite } from "@/firebase/auth";
+import { markNotificationAsRead, respondToGroupInvite } from "@/firebase/auth";
 import { RootState } from "@/redux/store";
 import { wp } from "@/utils";
 import { router } from "expo-router";
@@ -98,6 +98,10 @@ const GroupDetailsScreen = () => {
     setActionLoading(true);
     try {
       await respondToGroupInvite(groupId, user?.uid, accept);
+
+      // Mark the notification as read
+      await markNotificationAsRead(user.uid, groupId);
+
       setCurrentUserStatus(accept ? "accepted" : "rejected");
 
       Alert.alert(

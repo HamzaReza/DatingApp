@@ -4,7 +4,6 @@ import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, StyleSheet, View } from "react-native";
 import { useSelector } from "react-redux";
 import { Colors } from "../constants/Colors";
-import { updatePaymentStatus } from "../firebase/stripe";
 import { useColorScheme } from "../hooks/useColorScheme";
 import RnButton from "./RnButton";
 import RnModal from "./RnModal";
@@ -36,7 +35,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
   const { user } = useSelector((state: RootState) => state.user);
 
-  const { confirmPayment, createPaymentMethod } = useStripe();
+  const { confirmPayment } = useStripe();
 
   useEffect(() => {
     if (visible) {
@@ -96,11 +95,6 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       if (paymentIntent) {
         console.log("Payment successful:", paymentIntent);
 
-        // Update payment status to completed
-        if (paymentId) {
-          await updatePaymentStatus(paymentId, "completed");
-        }
-
         Alert.alert(
           "Payment Successful!",
           "Your payment of $5.00 has been processed successfully. You will be notified when the other user completes their payment.",
@@ -147,8 +141,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         <RnText style={styles.subtitle}>Pay $5.00 to unlock this match</RnText>
 
         <RnText style={styles.description}>
-          Both users must pay within 10 minutes to confirm the match. If the
-          other user doesn&apos;t pay, you&apos;ll receive a full refund.
+          Both users must pay within 24 hours to confirm the match. If the other
+          user doesn&apos;t pay, you&apos;ll receive a full refund.
         </RnText>
 
         {loading && !clientSecret ? (

@@ -246,7 +246,7 @@ async function createOrUpdateMatchPaymentInFunction(matchId, userId, paymentId) 
     }
 }
 // Scheduled function to check for expired payments and process refunds
-exports.checkExpiredPayments = (0, scheduler_1.onSchedule)("every 24 hours", async (event) => {
+exports.checkExpiredPayments = (0, scheduler_1.onSchedule)("every 6 hours", async (event) => {
     const stripe = new stripe_1.default(process.env.STRIPE_SECRET_KEY || "", {
         apiVersion: "2025-07-30.basil",
     });
@@ -275,7 +275,7 @@ exports.checkExpiredPayments = (0, scheduler_1.onSchedule)("every 24 hours", asy
                 await doc.ref.update({
                     status: "refunded",
                     refundedAt: new Date(),
-                    refundReason: "Payment expired - 24 hour window passed",
+                    refundReason: "Payment expired - 24 hour payment window passed",
                 });
                 refundCount++;
                 console.log("Refunded expired payment:", doc.id);

@@ -263,29 +263,6 @@ export default function Chat() {
           return;
         }
 
-        // ✅ Show alert only if messageCount is 3, 4 or 5
-        const messagesLeft = 5 - messageCount;
-        if (messageCount >= 3 && messageCount <= 5 && messagesLeft > 0) {
-          Alert.alert("Message Sent", `${messagesLeft} messages left`);
-        } else if (messageCount === 5) {
-          Alert.alert(
-            "Limit Reached",
-            "Messages are finished. Please pay now to meet.",
-            [
-              {
-                text: "Cancel",
-                style: "cancel",
-              },
-              {
-                text: "Pay Now",
-                onPress: () => {
-                  initializePayment();
-                },
-              },
-            ]
-          );
-        }
-
         const receiverId = getReceiverId(matchId as string, user?.uid);
 
         await sendDirectMessage(

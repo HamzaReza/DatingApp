@@ -1,5 +1,5 @@
 import { User } from "@/app/(tabs)/messages/types";
-import { getAuth } from "@react-native-firebase/auth";
+import { store } from "@/redux/store";
 import {
   arrayUnion,
   collection,
@@ -90,6 +90,7 @@ const sendDirectMessage = async (
     const messageRef = doc(db, "messages", matchId);
 
     const newMessage = {
+      id: Timestamp.now().toMillis().toString(),
       senderId,
       content,
       timestamp: new Date(),
@@ -682,7 +683,8 @@ export const setupChatListeners = (
   onGroupsUpdate: (groups: any[]) => void,
   onOneToOneUpdate: (chats: any[]) => void
 ) => {
-  const currentUserId = getAuth().currentUser?.uid;
+  const currentUserId = store.getState().user.user.uid;
+
   if (!currentUserId) {
     throw new Error("No authenticated user found");
   }

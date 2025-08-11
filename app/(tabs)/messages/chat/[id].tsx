@@ -1,5 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import createStyles from "@/app/tabStyles/chat.styles";
+import RnButton from "@/components/RnButton";
 import RnInput from "@/components/RnInput";
 import RnModal from "@/components/RnModal";
 import ScrollContainer from "@/components/RnScrollContainer";
@@ -12,6 +13,7 @@ import { FontSize } from "@/constants/FontSize";
 import { getUserByUid } from "@/firebase/auth";
 import {
   checkAndUpdateMessageLimit,
+  checkMessageLimit,
   sendDirectMessage,
   sendGroupMessage,
   setupDirectMessageListener,
@@ -130,12 +132,12 @@ export default function Chat() {
             // Check current message count to see if limit is already reached
             if (!paid) {
               try {
-                const messageCount = await checkAndUpdateMessageLimit(
+                const messageCount = await checkMessageLimit(
                   matchId as string,
                   user?.uid
                 );
 
-                setMessageLimitReached(messageCount > 5);
+                setMessageLimitReached(messageCount >= 5);
               } catch (error) {
                 console.error("Error checking message limit:", error);
                 setMessageLimitReached(false);
@@ -397,22 +399,6 @@ export default function Chat() {
         );
         if (messageCount > 5) {
           setMessageLimitReached(true);
-          Alert.alert(
-            "Limit Reached",
-            "Messages are finished. Please pay now to meet.",
-            [
-              {
-                text: "Cancel",
-                style: "cancel",
-              },
-              {
-                text: "Pay Now",
-                onPress: () => {
-                  initializePayment();
-                },
-              },
-            ]
-          );
           return;
         }
 
@@ -786,14 +772,11 @@ export default function Chat() {
                 <RnText style={teststyles.payNowText}>
                   Message limit reached. Pay to continue chatting!
                 </RnText>
-                <TouchableOpacity
-                  style={teststyles.payNowButton}
+                <RnButton
+                  title="Pay Now"
                   onPress={initializePayment}
-                >
-                  <RnText style={{ color: "white", textAlign: "center" }}>
-                    Pay Now
-                  </RnText>
-                </TouchableOpacity>
+                  style={[teststyles.payNowButton]}
+                />
               </View>
             ) : userHasPaid && !bothUsersPaid ? (
               <View style={teststyles.waitingContainer}>

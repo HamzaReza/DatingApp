@@ -171,6 +171,24 @@ export const checkAndUpdateMessageLimit = async (
   return currentCount + 1;
 };
 
+export const checkMessageLimit = async (
+  chatId: string,
+  senderId: string
+): Promise<number> => {
+  const db = getFirestore();
+  const limitRef = doc(db, "messageLimits", chatId);
+  const snapshot = await getDoc(limitRef);
+
+  let currentCount = 0;
+
+  if (snapshot.exists()) {
+    const data = snapshot.data();
+    currentCount = data?.[senderId] || 0;
+  }
+
+  return currentCount;
+};
+
 // Fetch messages between two users
 const fetchMessagesBetweenUsers = (
   user1Id: string,

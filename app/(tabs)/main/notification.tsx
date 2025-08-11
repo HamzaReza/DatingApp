@@ -70,22 +70,31 @@ export default function NotificationScreen() {
 
   const handleReelNotificationPress = (userId: string) => {
     router.push({
-      pathname: "/discover/[id]",
-      params: { id: userId },
+      pathname: "/(tabs)/discover/[id]",
+      params: {
+        id: userId,
+        isFriend: "false",
+      },
     });
   };
 
   const handleLikeNotificationPress = (userId: string) => {
     router.push({
-      pathname: "/discover/[id]",
-      params: { id: userId },
+      pathname: "/(tabs)/discover/[id]",
+      params: {
+        id: userId,
+        isFriend: "false",
+      },
     });
   };
 
   const handleMatchNotificationPress = (userId: string) => {
     router.push({
-      pathname: "/discover/[id]",
-      params: { id: userId },
+      pathname: "/(tabs)/discover/[id]",
+      params: {
+        id: userId,
+        isFriend: "true",
+      },
     });
   };
 

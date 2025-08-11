@@ -18,7 +18,7 @@ import {
 } from "@/firebase/auth";
 import { setupChatListeners } from "@/firebase/message";
 import { RootState } from "@/redux/store";
-import { encodeImagePath, wp } from "@/utils";
+import { encodeImagePath, hp, wp } from "@/utils";
 import { Ionicons } from "@expo/vector-icons";
 import {
   doc,
@@ -453,6 +453,8 @@ export default function Messages() {
           renderItem={renderMessage}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.messagesList}
+          ListFooterComponent={() => <View />}
+          ListFooterComponentStyle={{ height: hp(15) }}
         />
       </View>
       <RnBottomSheet

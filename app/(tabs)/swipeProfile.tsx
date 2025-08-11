@@ -111,31 +111,10 @@ export default function SwipeProfile() {
       }
 
       // Get state before fetching
-      const preState = store.getState();
-      const preViewedIds = preState.swipe.viewedUserIds;
       const nextUser = await getNextUserForSwipe(currentUser.uid, likedUserIds);
 
       if (nextUser) {
-        // Get state after fetching
-        const postState = store.getState();
-        const postViewedIds = postState.swipe.viewedUserIds;
-
         setProfileData(nextUser);
-
-        if (postViewedIds.length === 1 && preViewedIds.length > 0) {
-          Toast.show({
-            type: "info",
-            text1: "Showing profiles from the beginning",
-            visibilityTime: 2000,
-          });
-        }
-      } else {
-        Toast.show({
-          type: "info",
-          text1: "No more profiles available",
-          text2: "Please try again later",
-          visibilityTime: 2000,
-        });
       }
     } catch (error) {
       console.error("Refresh error:", error);

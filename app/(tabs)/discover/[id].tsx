@@ -104,7 +104,7 @@ export default function Profile() {
 
   useEffect(() => {
     getUserDetails();
-    if (user?.uid !== id && isFriend === "false") {
+    if (user?.uid !== id && isFriend !== "true") {
       setShowActionButtons(true);
     }
   }, []);
@@ -354,13 +354,7 @@ export default function Profile() {
       const thumbnailUri = await generateThumbnail(uri);
 
       // Use the new uploadReel function
-      await uploadReel(uri, user, thumbnailUri || undefined, caption, dispatch);
-
-      const newReel = {
-        url: videoUrl,
-        caption,
-        uploadedAt: new Date(),
-      };
+      await uploadReel(uri, user, thumbnailUri || undefined, caption);
 
       // Reset form and close modal
       setReelUploadModalVisible(false);

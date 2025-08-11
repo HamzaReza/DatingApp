@@ -32,10 +32,7 @@ import {
 import { RootState } from "@/redux/store";
 import { encodeImagePath, hp, wp } from "@/utils";
 import { requestLocationPermission } from "@/utils/Permission";
-import {
-  NotificationTemplates,
-  sendPushNotification,
-} from "@/utils/sendPushNotification";
+import { sendNotification } from "@/utils/sendPushNotification";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import { router } from "expo-router";
@@ -78,14 +75,12 @@ export default function Home() {
   );
 
   useEffect(() => {
-    const sendAnnouncement = async () => {
-      await sendPushNotification(
-        NotificationTemplates.announcement("We have exciting news to share!")
-      );
-    };
-
-    sendAnnouncement();
-  }, [NotificationTemplates]);
+    sendNotification(
+      ["ohHgiHwMW8bTvFLhl83YU9xIgo93"],
+      "Hello!",
+      "Test notification from thishon"
+    );
+  }, []);
 
   // Get user's current location
   const getCurrentLocation = async () => {

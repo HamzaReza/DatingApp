@@ -28,6 +28,7 @@ import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
 import { OneSignal, LogLevel } from "react-native-onesignal";
 import { useEffect } from "react";
+import { getAuth } from "@react-native-firebase/auth";
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -41,7 +42,17 @@ export default function RootLayout() {
     // Use this method to prompt for push notifications.
     // We recommend removing this method after testing and instead use In-App Messages to prompt for notification permission.
     OneSignal.Notifications.requestPermission(false);
+
+    setOneSignalUserId();
   }, []);
+
+  async function setOneSignalUserId() {
+    const user = getAuth().currentUser;
+    if (user) {
+      OneSignal.login(user.uid); // Firebase UID-ஐ OneSignal external user id-ஆ set செய்க
+      console.log("OneSignal External User ID set:", user.uid);
+    }
+  }
 
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),

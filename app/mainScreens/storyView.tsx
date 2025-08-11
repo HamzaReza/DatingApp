@@ -83,37 +83,26 @@ export default function StoryView() {
   };
 
   const goToNextStory = async () => {
-    console.log("🔁 goToNextStory called");
-
     if (currentStoryIndex < currentStories.length - 1) {
-      console.log("➡️ Going to next story of same user");
       setCurrentStoryIndex(currentStoryIndex + 1);
     } else {
-      console.log("✅ All stories done for current user");
-
       const nextUserIndex = currentUserIndex + 1;
       const nextUser = allUsers[nextUserIndex];
 
       if (nextUser) {
-        console.log("📦 Next user already prefetched:", nextUser.username);
         setCurrentUserIndex(nextUserIndex);
         setCurrentStoryIndex(0);
       } else {
         try {
-          console.log("🛰 Fetching next user ID from backend...");
           const nextUserId = await getNextUserIdFromBackend(currentUser.id); // 💡 Using dynamic helper
 
           if (!nextUserId) {
-            console.log("🚫 No next user ID returned. Going back.");
             return router.back();
           }
 
-          console.log("📥 Fetching stories for next user ID:", nextUserId);
           const fetched = await fetchStoriesForUser(nextUserId);
 
           if (fetched?.length > 0) {
-            console.log("✅ Stories found for next user");
-
             // Set up real-time listener for user data
             const unsubscribe = getUserByUid(nextUserId, nextUserData => {
               if (nextUserData) {
@@ -124,8 +113,6 @@ export default function StoryView() {
                   stories: fetched,
                 };
 
-                console.log("fetched", fetched);
-
                 setAllUsers(prev => [...prev, newUser]);
                 setCurrentUserIndex(prev => prev + 1);
                 setCurrentStoryIndex(0);
@@ -135,7 +122,6 @@ export default function StoryView() {
               }
             });
           } else {
-            console.log("📭 No stories for next user, going back.");
             router.back();
           }
         } catch (e) {
@@ -272,7 +258,6 @@ export default function StoryView() {
   }, [currentStoryIndex, currentUserIndex, isPaused, isInputFocused]);
 
   const imageUri = currentStory?.storyUrls?.[0] || null;
-  console.log("currentStory", currentStory);
 
   return (
     <ImageBackground

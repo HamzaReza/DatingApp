@@ -145,14 +145,6 @@ export const checkAndUpdateMessageLimit = async (
   chatId: string,
   senderId: string
 ): Promise<number> => {
-  console.log(
-    "🚀 ~ message.ts:132 ~ checkAndUpdateMessageLimit ~ senderId:",
-    senderId
-  );
-  console.log(
-    "🚀 ~ message.ts:132 ~ checkAndUpdateMessageLimit ~ chatId:",
-    chatId
-  );
   const db = getFirestore();
   const limitRef = doc(db, "messageLimits", chatId);
   const snapshot = await getDoc(limitRef);
@@ -160,20 +152,13 @@ export const checkAndUpdateMessageLimit = async (
   let data: any = {};
   let currentCount = 0;
 
-  console.log(
-    "🚀 ~ message.ts:142 ~ checkAndUpdateMessageLimit ~ snapshot.exists():",
-    snapshot.exists()
-  );
   if (snapshot.exists()) {
     data = snapshot.data();
     currentCount = data[senderId] || 0;
   }
 
   // update sender's message count
-  console.log(
-    "🚀 ~ message.ts:159 ~ checkAndUpdateMessageLimit ~ limitRef:",
-    limitRef
-  );
+
   await setDoc(
     limitRef,
     {
@@ -183,10 +168,6 @@ export const checkAndUpdateMessageLimit = async (
     { merge: true }
   );
 
-  console.log(
-    "🚀 ~ message.ts:167 ~ checkAndUpdateMessageLimit ~ currentCount + 1:",
-    currentCount + 1
-  );
   return currentCount + 1;
 };
 
@@ -589,7 +570,6 @@ const fetchMeetData = async (groupId: string) => {
     if (meetSnap.exists()) {
       return meetSnap.data();
     } else {
-      console.log("No meet found for this group");
       return null;
     }
   } catch (error) {

@@ -1,4 +1,5 @@
 import createStyles from "@/app/eventScreens/styles/paymentScreen.styles";
+import PaymentModal from "@/components/PaymentModal";
 import RnBottomSheet from "@/components/RnBottomSheet";
 import RnButton from "@/components/RnButton";
 import Container from "@/components/RnContainer";
@@ -6,7 +7,6 @@ import RnInput from "@/components/RnInput";
 import RnText from "@/components/RnText";
 import RoundButton from "@/components/RoundButton";
 import { Colors } from "@/constants/Colors";
-import { addOrUpdateTicketSale } from "@/firebase/ticket";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { RootState } from "@/redux/store";
 import { wp } from "@/utils";
@@ -49,7 +49,8 @@ const PaymentScreen = () => {
   const [selectedMethod, setSelectedMethod] = useState("apple");
   const [voucher, setVoucher] = useState("");
   const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isPaymentModalVisible, setIsPaymentModalVisible] = useState(false);
+  const [paymentData, setPaymentData] = useState<any>(null);
 
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
@@ -103,39 +104,31 @@ const PaymentScreen = () => {
     return cleaned;
   };
 
-  const _handleTicketCheckout = async () => {
-    if (!user?.uid || !eventId) {
-      console.error("User UID or Event ID not found");
-      return;
+  // New checkout function that handles Stripe payments
+  const onCheckoutPress = async () => {
+    console.log("Selected payment method:", selectedMethod);
+
+    if (selectedMethod === "debit/credit") {
+      setIsPaymentModalVisible(true);
+    } else {
+      console.log(`User selected ${selectedMethod} payment method`);
     }
+  };
 
-    setIsLoading(true);
-    try {
-      const normalTickets = parseInt(normalTicketPurchased as string) || 0;
-      const vipTickets = parseInt(vipTicketPurchased as string) || 0;
+  const handlePaymentSuccess = () => {
+    router.push({
+      pathname: "/eventScreens/tickets/ticket",
+      params: {
+        eventId: eventId,
+        normalTicketPurchased: normalTicketPurchased,
+        vipTicketPurchased: vipTicketPurchased,
+      },
+    });
+  };
 
-      await addOrUpdateTicketSale(
-        eventId as string,
-        user.uid,
-        normalTickets,
-        vipTickets,
-        selectedMethod
-      );
-
-      console.log("Ticket purchase successful!");
-      router.push({
-        pathname: "/eventScreens/tickets/ticket",
-        params: {
-          eventId: eventId,
-          normalTicketPurchased: normalTickets,
-          vipTicketPurchased: vipTickets,
-        },
-      });
-    } catch (error) {
-      console.error("Error purchasing tickets:", error);
-    } finally {
-      setIsLoading(false);
-    }
+  const handlePaymentClose = () => {
+    setIsPaymentModalVisible(false);
+    setPaymentData(null);
   };
 
   return (
@@ -234,8 +227,7 @@ const PaymentScreen = () => {
       <RnButton
         title="Checkout"
         style={[styles.checkoutBtn]}
-        onPress={_handleTicketCheckout}
-        loading={isLoading}
+        onPress={onCheckoutPress}
       />
 
       <RnBottomSheet
@@ -306,6 +298,17 @@ const PaymentScreen = () => {
           </Formik>
         </View>
       </RnBottomSheet>
+
+      {/* PaymentModal for Stripe payments */}
+      <PaymentModal
+        visible={isPaymentModalVisible}
+        onClose={handlePaymentClose}
+        onSuccess={handlePaymentSuccess}
+        matchId={eventId as string}
+        userId={user?.uid || ""}
+        paymentData={paymentData}
+        isPreInitialized={false}
+      />
     </Container>
   );
 };

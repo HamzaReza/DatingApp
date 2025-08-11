@@ -21,7 +21,7 @@ import { calculateMatchScore } from "@/utils/MatchScore";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useFocusEffect } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { ActivityIndicator, Image, TouchableOpacity, View } from "react-native";
 import Toast from "react-native-toast-message";
 import { useDispatch, useSelector } from "react-redux";
@@ -43,10 +43,6 @@ export default function SwipeProfile() {
       initializeSwipeProfile();
     }, [])
   );
-
-  useEffect(() => {
-    console.log(reduxUser.name);
-  }, []);
 
   const initializeSwipeProfile = async () => {
     try {
@@ -111,7 +107,6 @@ export default function SwipeProfile() {
     setLoading(true);
     try {
       if (!currentUser?.uid) {
-        console.log("Refresh aborted: No current user ID");
         return;
       }
 

@@ -1,4 +1,8 @@
+import { Borders } from "@/constants/Borders";
+import { FontFamily } from "@/constants/FontFamily";
+import { FontSize } from "@/constants/FontSize";
 import { RootState } from "@/redux/store";
+import { hp, wp } from "@/utils";
 import { CardField, useStripe } from "@stripe/stripe-react-native";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, StyleSheet, View } from "react-native";
@@ -13,8 +17,6 @@ interface PaymentModalProps {
   visible: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  matchId: string;
-  userId: string;
   paymentData?: any;
   isPreInitialized?: boolean;
 }
@@ -23,13 +25,13 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   visible,
   onClose,
   onSuccess,
-  matchId,
-  userId,
   paymentData,
   isPreInitialized = false,
 }) => {
+  const colorScheme = useColorScheme();
+  const theme = colorScheme === "dark" ? "dark" : "light";
+
   const [loading, setLoading] = useState(false);
-  const [paymentId, setPaymentId] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [cardDetails, setCardDetails] = useState<any>(null);
 
@@ -38,12 +40,9 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   const { confirmPayment } = useStripe();
 
   useEffect(() => {
-    if (visible) {
-      if (isPreInitialized && paymentData) {
-        // Use pre-initialized data
-        setPaymentId(paymentData.paymentId);
-        setClientSecret(paymentData.clientSecret);
-      }
+    if (visible && isPreInitialized && paymentData) {
+      // Use pre-initialized data
+      setClientSecret(paymentData.clientSecret);
     }
   }, [visible, isPreInitialized, paymentData]);
 
@@ -121,34 +120,29 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   };
 
   const handleClose = () => {
-    if (loading) return;
-
-    // Reset state when closing
-    setPaymentId(null);
+    setLoading(false);
     setClientSecret(null);
     setCardDetails(null);
 
     onClose();
   };
 
-  const colorScheme = useColorScheme();
-  const theme = colorScheme === "dark" ? "dark" : "light";
+  const styles = createStyles(theme);
 
   return (
-    <RnModal show={visible} backDrop={handleClose}>
+    <RnModal show={visible} backButton={handleClose} backDrop={handleClose}>
       <View style={styles.container}>
-        <RnText style={styles.title}>Complete Payment</RnText>
-        <RnText style={styles.subtitle}>Pay $5.00 to unlock this match</RnText>
-
+        <RnText style={styles.title}>Payment</RnText>
+        <RnText style={styles.subtitle}>Book a Meetup</RnText>
         <RnText style={styles.description}>
-          Both users must pay within 24 hours to confirm the match. If the other
-          user doesn&apos;t pay, you&apos;ll receive a full refund.
+          Pay $5.00 to book a meetup with your match. You&apos;ll get a full
+          refund if the other person doesn&apos;t pay within 24 hours.
         </RnText>
 
-        {loading && !clientSecret ? (
+        {loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={Colors[theme].primary} />
-            <RnText style={styles.loadingText}>Initializing payment...</RnText>
+            <RnText style={styles.loadingText}>Processing payment...</RnText>
           </View>
         ) : (
           <>
@@ -186,64 +180,65 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-    backgroundColor: Colors.light.background,
-    borderRadius: 12,
-    margin: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 8,
-    color: Colors.light.blackText,
-  },
-  subtitle: {
-    fontSize: 18,
-    textAlign: "center",
-    marginBottom: 16,
-    color: Colors.light.placeholderText,
-  },
-  description: {
-    fontSize: 14,
-    textAlign: "center",
-    marginBottom: 24,
-    color: Colors.light.placeholderText,
-    lineHeight: 20,
-  },
-  loadingContainer: {
-    alignItems: "center",
-    paddingVertical: 40,
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: Colors.light.placeholderText,
-  },
-  cardContainer: {
-    marginBottom: 24,
-  },
-  card: {
-    backgroundColor: Colors.light.background,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: Colors.light.gray,
-  },
-  cardField: {
-    width: "100%",
-    height: 50,
-  },
-  buttonContainer: {
-    gap: 12,
-  },
-  payButton: {
-    backgroundColor: Colors.light.primary,
-  },
-  cancelButton: {
-    borderColor: Colors.light.gray,
-  },
-});
+const createStyles = (theme: "light" | "dark") =>
+  StyleSheet.create({
+    container: {
+      padding: wp(4),
+      backgroundColor: Colors[theme].background,
+      borderRadius: Borders.radius2,
+      margin: wp(4),
+    },
+    title: {
+      fontSize: FontSize.large,
+      fontFamily: FontFamily.bold,
+      textAlign: "center",
+      marginBottom: hp(1),
+    },
+    subtitle: {
+      fontSize: FontSize.large,
+      textAlign: "center",
+      marginBottom: hp(1),
+      color: Colors[theme].primary,
+    },
+    description: {
+      fontSize: FontSize.medium,
+      textAlign: "center",
+      marginBottom: hp(1),
+      color: Colors[theme].primary,
+      lineHeight: hp(2),
+    },
+    loadingContainer: {
+      alignItems: "center",
+      paddingVertical: hp(10),
+    },
+    loadingText: {
+      marginTop: hp(3),
+      color: Colors[theme].placeholderText,
+    },
+    cardContainer: {
+      marginBottom: hp(3),
+    },
+    card: {
+      borderWidth: 1,
+      borderColor: Colors[theme].primary,
+      backgroundColor: Colors[theme].background,
+    },
+    cardField: {
+      height: hp(6),
+    },
+    buttonContainer: {
+      gap: hp(3),
+    },
+    payButton: {
+      backgroundColor: Colors[theme].primary,
+      width: wp(60),
+      height: hp(5),
+    },
+    cancelButton: {
+      backgroundColor: "gray",
+      width: wp(60),
+      height: hp(5),
+    },
+  });
 
 export default PaymentModal;

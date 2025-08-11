@@ -29,6 +29,7 @@ const RnInput: React.FC<RnInputProps> = ({
   noError = false,
   multiline,
   numberOfLines,
+  editable = true,
 }) => {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
@@ -82,6 +83,7 @@ const RnInput: React.FC<RnInputProps> = ({
       rightIcon={rightIcon}
       multiline={multiline}
       numberOfLines={numberOfLines}
+      editable={editable}
     />
   );
 };

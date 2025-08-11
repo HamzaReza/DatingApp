@@ -44,7 +44,6 @@ export const MessageItem: React.FC<MessageItemProps> = ({
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
-  // console.log("my", isConfirmed);
   return (
     <TouchableOpacity style={styles.messageItem} onPress={onPress}>
       {showCheckbox && (

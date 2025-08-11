@@ -32,6 +32,7 @@ export interface RnInputProps {
   noError?: boolean;
   multiline?: boolean;
   numberOfLines?: number;
+  editable?: boolean;
 }
 
 export interface RnPhoneInputProps {

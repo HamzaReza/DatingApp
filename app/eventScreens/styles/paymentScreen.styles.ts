@@ -18,15 +18,27 @@ export default (theme: "dark" | "light") =>
       fontSize: FontSize.extraLarge,
       fontFamily: FontFamily.semiBold,
     },
-    section: {
+    subtitle: {
+      fontSize: FontSize.large,
+      fontFamily: FontFamily.semiBold,
+    },
+    paymentSection: {
+      marginTop: hp(1),
+      borderWidth: 1,
+      borderColor: Colors[theme].primary,
+      padding: wp(2),
+      borderRadius: Borders.radius1,
+    },
+    paymentRow: {
       flexDirection: "row",
       justifyContent: "space-between",
-      alignItems: "center",
-      marginTop: hp(2),
     },
     label: {
-      fontSize: FontSize.large,
-      color: Colors[theme].blackText,
+      fontSize: FontSize.medium,
+      fontFamily: FontFamily.semiBold,
+    },
+    value: {
+      fontSize: FontSize.medium,
     },
     addCard: {},
     addCardText: {

@@ -606,7 +606,6 @@ const getUserLocation = async (userId: string) => {
     if (snapshot.exists()) {
       return snapshot.data()?.location || null;
     } else {
-      console.log("No location data found!");
       return null;
     }
   } catch (error) {
@@ -817,8 +816,6 @@ export const respondToGroupInvite = async (
   userId: string,
   accept: boolean
 ) => {
-  console.log("hello", groupId, accept);
-
   const db = getFirestore();
   try {
     const groupRef = doc(db, "messages", groupId);
@@ -830,7 +827,6 @@ export const respondToGroupInvite = async (
 
     const groupData: any = groupSnap.data();
     const maxParticipants = groupData.maxParticipants || 0;
-    console.log(maxParticipants, "max");
     const currentUsers = groupData.users || [];
 
     const acceptedCount = currentUsers.filter(
@@ -882,7 +878,6 @@ const handleStoryUpload = async (pickStory: Promise<string[]>, user: User) => {
   const querySnapshot = await getDocs(q);
 
   if (querySnapshot.empty) {
-    console.log("User not found");
     return;
   }
 

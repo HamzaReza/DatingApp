@@ -312,64 +312,61 @@ async function createOrUpdateMatchPaymentInFunction(
 }
 
 // Scheduled function to check for expired payments and process refunds
-export const checkExpiredPayments = onSchedule(
-  "every 24 hours",
-  async event => {
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-      apiVersion: "2025-07-30.basil",
-    });
+export const checkExpiredPayments = onSchedule("every 6 hours", async event => {
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
+    apiVersion: "2025-07-30.basil",
+  });
 
-    try {
-      const now = new Date();
+  try {
+    const now = new Date();
 
-      const paymentsRef = db.collection("payments");
-      const query = paymentsRef
-        .where("status", "==", "paid")
-        .where("expiresAt", "<", now);
+    const paymentsRef = db.collection("payments");
+    const query = paymentsRef
+      .where("status", "==", "paid")
+      .where("expiresAt", "<", now);
 
-      const snapshot = await query.get();
+    const snapshot = await query.get();
 
-      let refundCount = 0;
+    let refundCount = 0;
 
-      for (const doc of snapshot.docs) {
-        const paymentData = doc.data();
+    for (const doc of snapshot.docs) {
+      const paymentData = doc.data();
 
-        try {
-          // Process refund in Stripe
-          if (paymentData.stripePaymentIntentId) {
-            const paymentIntent = await stripe.paymentIntents.retrieve(
-              paymentData.stripePaymentIntentId
-            );
+      try {
+        // Process refund in Stripe
+        if (paymentData.stripePaymentIntentId) {
+          const paymentIntent = await stripe.paymentIntents.retrieve(
+            paymentData.stripePaymentIntentId
+          );
 
-            if (paymentIntent.latest_charge) {
-              await stripe.refunds.create({
-                charge: paymentIntent.latest_charge as string,
-                reason: "requested_by_customer",
-              });
-            }
+          if (paymentIntent.latest_charge) {
+            await stripe.refunds.create({
+              charge: paymentIntent.latest_charge as string,
+              reason: "requested_by_customer",
+            });
           }
-
-          // Update payment status
-          await doc.ref.update({
-            status: "refunded",
-            refundedAt: new Date(),
-            refundReason: "Payment expired - 24 hour window passed",
-          });
-
-          refundCount++;
-          console.log("Refunded expired payment:", doc.id);
-        } catch (error) {
-          console.error("Error processing refund for payment:", doc.id, error);
         }
-      }
 
-      console.log(`Processed ${refundCount} expired payments`);
-    } catch (error) {
-      console.error("Error in checkExpiredPayments:", error);
-      throw error;
+        // Update payment status
+        await doc.ref.update({
+          status: "refunded",
+          refundedAt: new Date(),
+          refundReason: "Payment expired - 24 hour payment window passed",
+        });
+
+        refundCount++;
+        console.log("Refunded expired payment:", doc.id);
+      } catch (error) {
+        console.error("Error processing refund for payment:", doc.id, error);
+      }
     }
+
+    console.log(`Processed ${refundCount} expired payments`);
+  } catch (error) {
+    console.error("Error in checkExpiredPayments:", error);
+    throw error;
   }
-);
+});
 // Function to create payment intent
 export const createStripePaymentIntent = onCall(
   async (data: any, context: any) => {

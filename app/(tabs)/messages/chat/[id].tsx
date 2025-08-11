@@ -1,6 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import createStyles from "@/app/tabStyles/chat.styles";
-import PaymentModal from "@/components/PaymentModal";
 import RnInput from "@/components/RnInput";
 import RnModal from "@/components/RnModal";
 import ScrollContainer from "@/components/RnScrollContainer";
@@ -13,13 +12,12 @@ import { FontSize } from "@/constants/FontSize";
 import { getUserByUid } from "@/firebase/auth";
 import {
   checkAndUpdateMessageLimit,
-  checkIfMeetRejected,
   sendDirectMessage,
   sendGroupMessage,
   setupDirectMessageListener,
   setupGroupMessagesListener,
 } from "@/firebase/message";
-import { createPaymentIntent, getMatchPaymentStatus } from "@/firebase/stripe";
+import { checkBothUsersPaid } from "@/firebase/stripe";
 import { RootState } from "@/redux/store";
 import { encodeImagePath, hp, wp } from "@/utils";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -28,13 +26,26 @@ import {
   collection,
   doc,
   getDoc,
+  getDocs,
   getFirestore,
   onSnapshot,
+  query,
   updateDoc,
+  where,
 } from "@react-native-firebase/firestore";
-import functions from "@react-native-firebase/functions";
-import { router, useLocalSearchParams, useNavigation } from "expo-router";
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  router,
+  useFocusEffect,
+  useLocalSearchParams,
+  useNavigation,
+} from "expo-router";
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import {
   Alert,
   Animated,
@@ -68,16 +79,18 @@ export default function Chat() {
   const [messages, setMessages] = useState<GroupMessage[]>([]);
   const [showMemberList, setShowMemberList] = useState(false);
   const [reciverData, setReciverData] = useState<any>(null);
+  const [meetConfirm, setMeetConfirm] = useState(false);
+  const [bothUsersPaid, setBothUsersPaid] = useState(false);
+  const [isInputDisabled, setIsInputDisabled] = useState(false);
+  const [userHasPaid, setUserHasPaid] = useState(false);
+  const [messageLimitReached, setMessageLimitReached] = useState(false);
+  const [eventHasPassed, setEventHasPassed] = useState(false);
 
   const isSingleChat = chatType === "single";
   const flatListRef = useRef<FlatList>(null);
   const navigation = useNavigation();
   const [statusMessage, setStatusMessage] = useState<any>(null);
   const [meetDataModalVisible, setMeetDataModalVisible] = useState(false);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [paymentInitialized, setPaymentInitialized] = useState(false);
-  const [paymentData, setPaymentData] = useState<any>(null);
-  const [matchPaymentStatus, setMatchPaymentStatus] = useState<any>(null);
 
   useEffect(() => {
     if (isSingleChat) {
@@ -92,35 +105,159 @@ export default function Chat() {
     }
   }, [matchId, user?.uid]);
 
-  useEffect(() => {
-    if (isSingleChat) {
-      const fetchRejection = async () => {
-        const rejection = await checkIfMeetRejected(matchId, user?.uid);
+  // Check payment status and message limit when component mounts
+  useFocusEffect(
+    useCallback(() => {
+      const checkPaymentStatus = async () => {
+        if (isSingleChat && matchId) {
+          try {
+            const paid = await checkBothUsersPaid(matchId as string);
+            setBothUsersPaid(paid);
+
+            // Also check if current user has paid
+            const db = getFirestore();
+            const userPaymentQuery = query(
+              collection(db, "payments"),
+              where("userId", "==", user?.uid),
+              where("matchId", "==", matchId),
+              where("status", "in", ["paid", "completed"])
+            );
+
+            const userPaymentSnapshot = await getDocs(userPaymentQuery);
+
+            setUserHasPaid(!userPaymentSnapshot.empty);
+
+            // Check current message count to see if limit is already reached
+            if (!paid) {
+              try {
+                const messageCount = await checkAndUpdateMessageLimit(
+                  matchId as string,
+                  user?.uid
+                );
+
+                setMessageLimitReached(messageCount > 5);
+              } catch (error) {
+                console.error("Error checking message limit:", error);
+                setMessageLimitReached(false);
+              }
+            }
+          } catch (error) {
+            console.error("Error checking payment status:", error);
+            setBothUsersPaid(false);
+            setUserHasPaid(false);
+          }
+        }
       };
 
-      fetchRejection();
-    }
-  }, [matchId]);
+      checkPaymentStatus();
+    }, [matchId, isSingleChat, user?.uid])
+  );
 
-  // Track match payment status for single chat
+  // Realtime refresh when both users have paid
   useEffect(() => {
-    let unsubscribe: () => void;
+    if (!isSingleChat || !matchId) return;
 
-    if (isSingleChat && matchId) {
-      unsubscribe = getMatchPaymentStatus(
-        matchId as string,
-        (matchPayment: any) => {
-          setMatchPaymentStatus(matchPayment);
+    const db = getFirestore();
+    const paymentsRef = collection(db, "payments");
+    const paymentsQuery = query(
+      paymentsRef,
+      where("matchId", "==", matchId),
+      where("status", "in", ["paid", "completed"])
+    );
+
+    const unsubscribe = onSnapshot(
+      paymentsQuery,
+      snapshot => {
+        const paidUserIds = new Set<string>();
+        snapshot.forEach((docSnap: any) => {
+          const data = docSnap.data() as any;
+          if (data?.userId) {
+            paidUserIds.add(data.userId);
+          }
+        });
+
+        const both = paidUserIds.size >= 2;
+        setBothUsersPaid(both);
+        if (both) {
+          setMessageLimitReached(false);
         }
-      );
-    }
+      },
+      error => {
+        console.error("Error listening to payment status:", error);
+      }
+    );
 
-    return () => {
-      if (unsubscribe) {
-        unsubscribe();
+    return () => unsubscribe();
+  }, [isSingleChat, matchId]);
+
+  // Fetch meet data and check timing
+  useEffect(() => {
+    const fetchMeetDataAndCheckTiming = async () => {
+      if (isSingleChat && matchId && bothUsersPaid) {
+        try {
+          const db = getFirestore();
+          const meetRef = doc(
+            db,
+            "messages",
+            matchId as string,
+            "meet",
+            "confirm"
+          );
+          const meetSnap = await getDoc(meetRef);
+
+          if (meetSnap.exists()) {
+            const meetData = meetSnap.data();
+
+            // Check if event time is within 24 hours using finalDate and finalTime
+            if (meetData && meetData.finalDate && meetData.finalTime) {
+              // Parse the date and time properly
+              const [year, month, day] = meetData.finalDate
+                .split("-")
+                .map(Number);
+              const timeStr = meetData.finalTime; // "11:00 AM"
+
+              // Convert 12-hour format to 24-hour format
+              let [time, period] = timeStr.split(" ");
+              let [hours, minutes] = time.split(":").map(Number);
+
+              if (period === "PM" && hours !== 12) {
+                hours += 12;
+              } else if (period === "AM" && hours === 12) {
+                hours = 0;
+              }
+
+              // Create event datetime
+              const eventDateTime = new Date(
+                year,
+                month - 1,
+                day,
+                hours,
+                minutes
+              );
+              const now = new Date();
+              const timeDiff = eventDateTime.getTime() - now.getTime();
+              const hoursDiff = timeDiff / (1000 * 60 * 60);
+
+              // Disable input if more than 24 hours until event
+              setIsInputDisabled(hoursDiff > 24);
+
+              // Check if event has passed
+              setEventHasPassed(hoursDiff < 24);
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching meet data:", error);
+        }
       }
     };
-  }, [matchId, isSingleChat]);
+
+    fetchMeetDataAndCheckTiming();
+
+    // Set up periodic check every minute to update disabled state
+    const interval = setInterval(fetchMeetDataAndCheckTiming, 60000);
+
+    return () => clearInterval(interval);
+  }, [matchId, isSingleChat, bothUsersPaid]);
 
   useEffect(() => {
     if (messages) {
@@ -239,11 +376,27 @@ export default function Chat() {
 
     try {
       if (isSingleChat) {
+        // Use the stored boolean instead of checking every time
+        if (bothUsersPaid) {
+          // Both users have paid, allow unlimited messaging
+          const receiverId = getReceiverId(matchId as string, user?.uid);
+          await sendDirectMessage(
+            matchId as string,
+            user?.uid,
+            message,
+            receiverId
+          );
+          setMessage("");
+          return;
+        }
+
+        // If both users haven't paid, check message limit
         const messageCount = await checkAndUpdateMessageLimit(
           matchId as string,
           user?.uid
         );
         if (messageCount > 5) {
+          setMessageLimitReached(true);
           Alert.alert(
             "Limit Reached",
             "Messages are finished. Please pay now to meet.",
@@ -261,29 +414,6 @@ export default function Chat() {
             ]
           );
           return;
-        }
-
-        // ✅ Show alert only if messageCount is 3, 4 or 5
-        const messagesLeft = 5 - messageCount;
-        if (messageCount >= 3 && messageCount <= 5 && messagesLeft > 0) {
-          Alert.alert("Message Sent", `${messagesLeft} messages left`);
-        } else if (messageCount === 5) {
-          Alert.alert(
-            "Limit Reached",
-            "Messages are finished. Please pay now to meet.",
-            [
-              {
-                text: "Cancel",
-                style: "cancel",
-              },
-              {
-                text: "Pay Now",
-                onPress: () => {
-                  initializePayment();
-                },
-              },
-            ]
-          );
         }
 
         const receiverId = getReceiverId(matchId as string, user?.uid);
@@ -350,43 +480,20 @@ export default function Chat() {
 
   // Initialize payment before opening modal
   const initializePayment = async () => {
+    if (!user?.uid || !matchId) {
+      Alert.alert("Error", "Missing required data for payment");
+      return;
+    }
+
     try {
-      if (!matchId || !user?.uid) {
-        Alert.alert("Error", "Missing required data for payment");
-        return;
-      }
-
-      // Create payment intent in Firebase
-      const paymentId = await createPaymentIntent(user.uid, matchId as string);
-
-      // Call Firebase Function to create Stripe payment intent
-      const createStripePaymentIntent = functions().httpsCallable(
-        "createStripePaymentIntent"
-      );
-
-      const result = await createStripePaymentIntent({
-        paymentId: paymentId,
-        amount: 500, // $5.00 in cents
-        userId: user.uid,
-        matchId: matchId as string,
+      // Navigate to the message payment screen
+      router.push({
+        pathname: "/messages/payment",
+        params: { matchId: matchId as string },
       });
-
-      const data = result.data as any;
-      if (data.clientSecret) {
-        setPaymentData({
-          paymentId,
-          clientSecret: data.clientSecret,
-          userId: user.uid,
-          matchId: matchId as string,
-        });
-        setPaymentInitialized(true);
-        setShowPaymentModal(true);
-      } else {
-        throw new Error("No client secret received from Stripe");
-      }
-    } catch (error: any) {
-      console.error("Error initializing payment:", error);
-      Alert.alert("Error", "Failed to initialize payment. Please try again.");
+    } catch (error) {
+      console.error("Error navigating to payment:", error);
+      Alert.alert("Error", "Failed to navigate to payment. Please try again.");
     }
   };
 
@@ -422,16 +529,6 @@ export default function Chat() {
       console.error("Error removing user:", error);
       Alert.alert("Error", "Failed to remove user");
     }
-  };
-
-  const formatTimestamp = (timestamp: any) => {
-    // Handle both Firestore Timestamp and ISO string
-    const date = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
-
-    return date.toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
   };
 
   useEffect(() => {
@@ -522,6 +619,7 @@ export default function Chat() {
 
         // Check for confirmation first
         if (hasConfirm) {
+          setMeetConfirm(true);
           const confirmDoc = docs.find((doc: any) => doc.id === "confirm");
           callback({
             type: "button",
@@ -635,7 +733,7 @@ export default function Chat() {
                     onPress={() => setShowMemberList(true)}
                   />
                 </TouchableOpacity>
-              ) : matchPaymentStatus?.status === "completed" ? (
+              ) : bothUsersPaid && !meetConfirm ? (
                 <TouchableOpacity
                   onPress={handleMeetPress} // navigate to meet setup screen
                 >
@@ -683,40 +781,76 @@ export default function Chat() {
             />
 
             {/* Input Container */}
-            <View style={styles.inputContainer}>
-              <RnInput
-                value={message}
-                onChangeText={setMessage}
-                placeholder="Send message"
-                style={{
-                  fontSize: FontSize.small,
-                  color: Colors[theme].blackText,
-                }}
-                containerStyle={{
-                  flex: 1,
-                  marginRight: wp(3),
-                  marginBottom: 0,
-                }}
-                inputContainerStyle={{
-                  borderWidth: 1,
-                  borderColor: Colors[theme].gray,
-                  borderRadius: Borders.radius3,
-                  paddingHorizontal: wp(4),
-                  minHeight: hp(6),
-                  backgroundColor: Colors[theme].background,
-                }}
-              />
-              <TouchableOpacity
-                style={styles.sendButton}
-                onPress={handleSendMessage}
-              >
-                <MaterialIcons
-                  name="send"
-                  size={20}
-                  color={Colors[theme].pink}
+            {messageLimitReached && !bothUsersPaid ? (
+              <View style={teststyles.payNowContainer}>
+                <RnText style={teststyles.payNowText}>
+                  Message limit reached. Pay to continue chatting!
+                </RnText>
+                <TouchableOpacity
+                  style={teststyles.payNowButton}
+                  onPress={initializePayment}
+                >
+                  <RnText style={{ color: "white", textAlign: "center" }}>
+                    Pay Now
+                  </RnText>
+                </TouchableOpacity>
+              </View>
+            ) : userHasPaid && !bothUsersPaid ? (
+              <View style={teststyles.waitingContainer}>
+                <RnText style={teststyles.waitingText}>
+                  You&apos;ve paid! Waiting for the other user to pay.
+                </RnText>
+              </View>
+            ) : isInputDisabled ? (
+              <View style={teststyles.waitingContainer}>
+                <RnText style={teststyles.waitingText}>
+                  Messaging disabled until 24 hours before event
+                </RnText>
+              </View>
+            ) : eventHasPassed ? (
+              <View style={teststyles.waitingContainer}>
+                <RnText style={teststyles.waitingText}>
+                  Event has passed for more than 24 hours. Messaging is now
+                  disabled.
+                </RnText>
+              </View>
+            ) : (
+              <View style={styles.inputContainer}>
+                <RnInput
+                  value={message}
+                  onChangeText={setMessage}
+                  placeholder="Send message"
+                  style={{
+                    fontSize: FontSize.small,
+                    color: Colors[theme].blackText,
+                  }}
+                  containerStyle={{
+                    flex: 1,
+                    marginRight: wp(3),
+                    marginBottom: 0,
+                  }}
+                  inputContainerStyle={{
+                    borderWidth: 1,
+                    borderColor: Colors[theme].gray,
+                    borderRadius: Borders.radius3,
+                    paddingHorizontal: wp(4),
+                    minHeight: hp(6),
+                    backgroundColor: Colors[theme].background,
+                  }}
+                  editable={true}
                 />
-              </TouchableOpacity>
-            </View>
+                <TouchableOpacity
+                  style={styles.sendButton}
+                  onPress={handleSendMessage}
+                >
+                  <MaterialIcons
+                    name="send"
+                    size={20}
+                    color={Colors[theme].pink}
+                  />
+                </TouchableOpacity>
+              </View>
+            )}
           </ScrollContainer>
           <RnModal
             show={showMemberList}
@@ -802,23 +936,6 @@ export default function Chat() {
               </View>
             </View>
           </Modal>
-          <PaymentModal
-            visible={showPaymentModal}
-            onClose={() => {
-              setShowPaymentModal(false);
-              setPaymentInitialized(false);
-              setPaymentData(null);
-            }}
-            onSuccess={() => {
-              setShowPaymentModal(false);
-              setPaymentInitialized(false);
-              setPaymentData(null);
-            }}
-            matchId={matchId as string}
-            userId={user?.uid || ""}
-            paymentData={paymentData}
-            isPreInitialized={paymentInitialized}
-          />
         </KeyboardAvoidingView>
       </Animated.View>
     </GestureHandlerRootView>
@@ -847,7 +964,36 @@ const teststyles = StyleSheet.create({
     marginHorizontal: wp(1.5),
     fontFamily: FontFamily.bold,
   },
-
+  payNowContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: hp(2),
+    paddingHorizontal: wp(4),
+  },
+  payNowText: {
+    color: Colors.light.redText,
+    textAlign: "center",
+    fontSize: FontSize.medium,
+    marginBottom: hp(2),
+    fontFamily: FontFamily.medium,
+  },
+  payNowButton: {
+    backgroundColor: Colors.light.primary,
+    width: wp(40),
+    height: hp(5),
+  },
+  waitingContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: hp(2),
+    paddingHorizontal: wp(4),
+  },
+  waitingText: {
+    color: Colors.light.redText,
+    textAlign: "center",
+    fontSize: FontSize.medium,
+    fontFamily: FontFamily.medium,
+  },
   modalBackground: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.4)",

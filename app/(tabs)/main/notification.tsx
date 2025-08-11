@@ -65,12 +65,10 @@ export default function NotificationScreen() {
   };
 
   const handleGroupNotificationPress = (groupId: string) => {
-    console.log("groupId", groupId);
     router.push(`/mainScreens/hangoutDetails?groupId=${groupId}`);
   };
 
   const handleReelNotificationPress = (userId: string) => {
-    console.log("userId", userId);
     router.push({
       pathname: "/discover/[id]",
       params: { id: userId },
@@ -78,7 +76,6 @@ export default function NotificationScreen() {
   };
 
   const handleLikeNotificationPress = (userId: string) => {
-    console.log("userId", userId);
     router.push({
       pathname: "/discover/[id]",
       params: { id: userId },
@@ -86,7 +83,6 @@ export default function NotificationScreen() {
   };
 
   const handleMatchNotificationPress = (userId: string) => {
-    console.log("userId", userId);
     router.push({
       pathname: "/discover/[id]",
       params: { id: userId },

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import createStyles from "@/app/tabStyles/messages.styles";
 import { MessageItem } from "@/components/MessageItem";
 import RnBottomSheet from "@/components/RnBottomSheet";
@@ -14,20 +15,13 @@ import {
   fetchTags,
   getUserByUid,
   sendGroupInvitesByTags,
-  uploadImage,
 } from "@/firebase/auth";
-import {
-  fetchOneToOneChats,
-  fetchUserGroups,
-  setupChatListeners,
-} from "@/firebase/message";
+import { setupChatListeners } from "@/firebase/message";
+import { RootState } from "@/redux/store";
 import { encodeImagePath, wp } from "@/utils";
 import { Ionicons } from "@expo/vector-icons";
-import { getAuth } from "@react-native-firebase/auth";
 import {
-  collection,
   doc,
-  getDoc,
   getFirestore,
   onSnapshot,
 } from "@react-native-firebase/firestore";
@@ -38,7 +32,7 @@ import {
   getForegroundPermissionsAsync,
 } from "expo-location";
 import { router } from "expo-router";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   FlatList,
   Image,
@@ -48,6 +42,7 @@ import {
   View,
 } from "react-native";
 import Toast from "react-native-toast-message";
+import { useSelector } from "react-redux";
 
 type RecentMatch = {
   id: string;
@@ -110,6 +105,8 @@ export default function Messages() {
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
 
+  const { user } = useSelector((state: RootState) => state.user);
+
   const [isBottomSheetVisible, setIsBottomSheetVisible] = React.useState(false);
 
   const [tagsOpen, setTagsOpen] = useState(false);
@@ -144,15 +141,7 @@ export default function Messages() {
   const [receiverId, setRecieverId] = useState("");
   const [chatStatusMap, setChatStatusMap] = useState<any>({});
 
-  const currentUserId = getAuth().currentUser?.uid;
-  const memoizedGroupList = useMemo(() => groupList, [groupList]);
-  const memoizedOneToOneList = useMemo(() => oneToOneList, [oneToOneList]);
-  const memoizedChatStatusMap = useMemo(() => chatStatusMap, [chatStatusMap]);
-
   useEffect(() => {
-    const currentUserId = getAuth().currentUser?.uid as string;
-    console.log("currentUserId", currentUserId);
-
     const { unsubscribe } = setupChatListeners(
       groups => setGroupList(groups),
       (chats: any) => setOneToOneList(chats)
@@ -216,9 +205,7 @@ export default function Messages() {
       }
 
       for (const convo of oneToOneList as any) {
-        const otherUserId = convo.participants.find(
-          (p: any) => p !== currentUserId
-        );
+        const otherUserId = convo.participants.find((p: any) => p !== user.uid);
         setRecieverId(otherUserId);
         if (!otherUserId) continue;
 
@@ -244,7 +231,7 @@ export default function Messages() {
             rawTime: timestamp,
             image: encodeImagePath(user.photo) || null,
             isOnline: user.isOnline || false,
-            unread: convo.unread || 0,
+            unread: convo.unread || false,
             lastMessage: lastMessage?.content || "No message yet",
             type: "single",
             ...status,
@@ -345,9 +332,8 @@ export default function Messages() {
     }
 
     try {
-      const currentUserId = getAuth().currentUser?.uid as string;
       await sendGroupInvitesByTags(
-        currentUserId,
+        user.uid,
         selectedTags,
         participantCount,
         pickedImageUri as string,

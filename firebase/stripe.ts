@@ -42,8 +42,6 @@ export const createPaymentIntent = async (
   matchId: string
 ): Promise<string> => {
   try {
-    console.log("Creating payment intent for:", { userId, matchId });
-
     if (!userId || !matchId) {
       throw new Error("userId and matchId are required");
     }
@@ -109,5 +107,34 @@ export const getMatchPaymentStatus = (
   } catch (error) {
     console.error("Error setting up match payment listener:", error);
     throw error;
+  }
+};
+
+// Check if both users have completed their payments for a match
+export const checkBothUsersPaid = async (matchId: string): Promise<boolean> => {
+  try {
+    const db = getFirestore();
+
+    // Get the match payment record
+    const matchPaymentQuery = query(
+      collection(db, "matchPayments"),
+      where("matchId", "==", matchId)
+    );
+
+    const matchPaymentSnapshot = await getDocs(matchPaymentQuery);
+
+    if (matchPaymentSnapshot.empty) {
+      return false;
+    }
+
+    const matchPayment = matchPaymentSnapshot.docs[0].data() as MatchPayment;
+
+    // Simply check if the match payment status is "completed"
+    const bothCompleted = matchPayment.status === "completed";
+
+    return bothCompleted;
+  } catch (error) {
+    console.error("Error checking if both users paid:", error);
+    return false;
   }
 };

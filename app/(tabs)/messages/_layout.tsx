@@ -34,6 +34,14 @@ export default function MessagesLayout() {
           }
         }
       />
+
+      <Stack.Screen
+        name="payment"
+        options={{
+          animation: "slide_from_right",
+          headerShown: false,
+        }}
+      />
     </Stack>
   );
 }

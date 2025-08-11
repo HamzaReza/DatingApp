@@ -7,8 +7,6 @@ import {
   getFirestore,
   setDoc,
 } from "@react-native-firebase/firestore";
-import { getAuth } from "@react-native-firebase/auth";
-import { getUserByUid } from "@/firebase/auth";
 
 const db = getFirestore();
 

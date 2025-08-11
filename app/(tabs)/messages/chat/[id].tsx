@@ -105,8 +105,6 @@ export default function Chat() {
     }
   }, [matchId, user?.uid]);
 
-  //TODO: Refresh the chat, when both users paid
-
   // Check payment status and message limit when component mounts
   useFocusEffect(
     useCallback(() => {
@@ -154,6 +152,43 @@ export default function Chat() {
       checkPaymentStatus();
     }, [matchId, isSingleChat, user?.uid])
   );
+
+  // Realtime refresh when both users have paid
+  useEffect(() => {
+    if (!isSingleChat || !matchId) return;
+
+    const db = getFirestore();
+    const paymentsRef = collection(db, "payments");
+    const paymentsQuery = query(
+      paymentsRef,
+      where("matchId", "==", matchId),
+      where("status", "in", ["paid", "completed"])
+    );
+
+    const unsubscribe = onSnapshot(
+      paymentsQuery,
+      snapshot => {
+        const paidUserIds = new Set<string>();
+        snapshot.forEach((docSnap: any) => {
+          const data = docSnap.data() as any;
+          if (data?.userId) {
+            paidUserIds.add(data.userId);
+          }
+        });
+
+        const both = paidUserIds.size >= 2;
+        setBothUsersPaid(both);
+        if (both) {
+          setMessageLimitReached(false);
+        }
+      },
+      error => {
+        console.error("Error listening to payment status:", error);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [isSingleChat, matchId]);
 
   // Fetch meet data and check timing
   useEffect(() => {

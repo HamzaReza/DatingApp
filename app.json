@@ -43,6 +43,7 @@
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
+
    "plugins": [
   [
     "onesignal-expo-plugin",
@@ -98,6 +99,7 @@
   ],
   "expo-video"
 ],
+
     "experiments": {
       "typedRoutes": true
     },

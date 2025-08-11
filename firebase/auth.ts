@@ -14,7 +14,6 @@ import {
 import {
   collection,
   doc,
-  FirebaseFirestoreTypes,
   getDoc,
   getDocs,
   getFirestore,
@@ -73,7 +72,8 @@ export type AppNotification = {
   time: string;
   image: string;
   read: boolean;
-  type: string;
+  dataId: string;
+  type?: string;
   groupId?: string;
   status?: string;
 };
@@ -222,12 +222,16 @@ const updateUser = async (
 
     // 2. Conditionally update Redux if dispatch provided
     if (dispatch) {
-      dispatch(
-        setUser((prevUser: any) => ({
-          ...prevUser,
+      const currentState = store.getState();
+      const currentUser = currentState.user.user;
+
+      if (currentUser) {
+        const updatedUser = {
+          ...currentUser,
           ...updatesWithTimestamp,
-        }))
-      );
+        };
+        dispatch(setUser(updatedUser));
+      }
     }
 
     return true;
@@ -444,7 +448,7 @@ const getCurrentAuth = async () => {
   return getAuth();
 };
 
-const fetchAllUsers = async () => {
+const fetchAllUsers = (callback: (users: any[]) => void) => {
   try {
     const db = getFirestore();
     const usersRef = collection(db, "users");
@@ -455,36 +459,42 @@ const fetchAllUsers = async () => {
       where("status", "==", "approved")
     );
 
-    const snapshot = await getDocs(q);
+    const unsubscribe = onSnapshot(
+      q,
+      snapshot => {
+        const now = new Date();
+        const threeDaysAgo = new Date();
+        threeDaysAgo.setDate(now.getDate() - 3);
 
-    const now = new Date();
-    const threeDaysAgo = new Date();
-    threeDaysAgo.setDate(now.getDate() - 3);
+        const users = snapshot.docs.map((doc: any) => {
+          const data = doc.data();
 
-    const users = snapshot.docs.map(
-      (doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
-        const data = doc.data();
+          let createdAt: Date = new Date(0);
 
-        let createdAt: Date = new Date(0);
+          if (data.createdAt instanceof Timestamp) {
+            createdAt = data.createdAt.toDate();
+          } else if (
+            typeof data.createdAt === "string" ||
+            typeof data.createdAt === "number"
+          ) {
+            createdAt = new Date(data.createdAt);
+          }
 
-        if (data.createdAt instanceof Timestamp) {
-          createdAt = data.createdAt.toDate();
-        } else if (
-          typeof data.createdAt === "string" ||
-          typeof data.createdAt === "number"
-        ) {
-          createdAt = new Date(data.createdAt);
-        }
+          return {
+            id: doc.id,
+            ...data,
+            isNew: createdAt > threeDaysAgo,
+          };
+        });
 
-        return {
-          id: doc.id,
-          ...data,
-          isNew: createdAt > threeDaysAgo,
-        };
+        callback(users);
+      },
+      error => {
+        console.error("❌ Error in users listener:", error);
       }
     );
 
-    return users;
+    return unsubscribe;
   } catch (error) {
     console.error("❌ Error fetching users:", error);
     throw error;
@@ -501,20 +511,18 @@ export const fetchUsersWithLocation = async () => {
   );
   const snapshot = await getDocs(q);
 
-  return snapshot.docs.map(
-    (doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
-      const data = doc.data();
-      const interestsArray = data.interests?.split(",") || [];
+  return snapshot.docs.map((doc: any) => {
+    const data = doc.data();
+    const interestsArray = data.interests?.split(",") || [];
 
-      return {
-        id: doc.id,
-        name: data.name,
-        photo: data.photo,
-        location: data.location, // GeoPoint
-        interests: interestsArray,
-      };
-    }
-  );
+    return {
+      id: doc.id,
+      name: data.name,
+      photo: data.photo,
+      location: data.location, // GeoPoint
+      interests: interestsArray,
+    };
+  });
 };
 
 const fetchAllUserStories = async (userId: string) => {
@@ -526,26 +534,22 @@ const fetchAllUserStories = async (userId: string) => {
       getDocs(collection(db, "stories")),
     ]);
 
-    const usersData = usersSnapshot.docs.map(
-      (doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => ({
-        id: doc.id,
-        username: doc.data().name || "User",
-        profilePic: doc.data().photo || "https://example.com/default.jpg",
-        isOwn: doc.id === userId,
-      })
-    );
+    const usersData = usersSnapshot.docs.map((doc: any) => ({
+      id: doc.id,
+      username: doc.data().name || "User",
+      profilePic: doc.data().photo || "https://example.com/default.jpg",
+      isOwn: doc.id === userId,
+    }));
 
     const storiesByUser: Record<string, any[]> = {};
-    storiesSnapshot.forEach(
-      (doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
-        storiesByUser[doc.id] = (doc.data().storyItems || [])
-          .map((story: any) => ({
-            ...story,
-            date: story.date?.toDate() || new Date(),
-          }))
-          .sort((a: any, b: any) => b.date - a.date);
-      }
-    );
+    storiesSnapshot.forEach((doc: any) => {
+      storiesByUser[doc.id] = (doc.data().storyItems || [])
+        .map((story: any) => ({
+          ...story,
+          date: story.date?.toDate() || new Date(),
+        }))
+        .sort((a: any, b: any) => b.date - a.date);
+    });
 
     return usersData
       .map((user: any) => {
@@ -585,11 +589,8 @@ const fetchNextUsersStories = async (currentUserId: string) => {
   const snapshot = await getDocs(collection(db, "stories"));
 
   const allUsers = snapshot.docs
-    .filter(
-      (doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) =>
-        doc.id !== currentUserId
-    )
-    .map((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => ({
+    .filter((doc: any) => doc.id !== currentUserId)
+    .map((doc: any) => ({
       userId: doc.id,
       ...doc.data(),
     }));
@@ -621,7 +622,7 @@ export const getNearbyUsers = async (currentUserLocation: Location) => {
 
   const nearbyUsers: any[] = [];
 
-  snapshot.forEach((doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
+  snapshot.forEach((doc: any) => {
     const data = doc.data();
     const userLocation = data.location;
 
@@ -673,7 +674,7 @@ export const sendGroupInvitesByTags = async (
     const usersSnapshot = await getDocs(collection(db, "users"));
 
     const matchingUsers = usersSnapshot.docs
-      .filter((userDoc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => {
+      .filter((userDoc: any) => {
         const data = userDoc.data();
 
         // Skip inviter (already added later)
@@ -710,7 +711,7 @@ export const sendGroupInvitesByTags = async (
         return hasMatchingTag && genderMatch && ageMatch;
       })
       .slice(0, maxParticipants)
-      .map((userDoc: FirebaseFirestoreTypes.QueryDocumentSnapshot) => ({
+      .map((userDoc: any) => ({
         uid: userDoc.id,
         name: userDoc.data().name || "User",
       }));
@@ -778,12 +779,13 @@ export const sendGroupInvitesByTags = async (
         subtitle: `${inviterName} has invited you for a hangout. Want to join?`,
         type: "groupMessage",
         data: {
-          groupId,
+          id: groupId,
           tags: selectedTags,
           maxParticipants,
           createdAt: now.toDate(),
           inviterId: invitedBy,
           inviterName,
+          image: inviterData?.photo,
         },
       });
     }
@@ -1298,8 +1300,7 @@ const fetchQuestionnaires = (callback: (questionnaires: any[]) => void) => {
       snapshot => {
         // Flatten all questionnaire arrays from all docs
         const questionnaires = snapshot.docs.flatMap(
-          (doc: FirebaseFirestoreTypes.QueryDocumentSnapshot) =>
-            doc.data() || []
+          (doc: any) => doc.data() || []
         );
         callback(questionnaires);
       },
@@ -1569,12 +1570,23 @@ const getUserByGuardianPhone = async (guardianPhoneNumber: string) => {
 
 const listenToUserNotifications = (
   userId: string,
-  formatTime: (date: Date) => string,
   onUpdate: (notifications: AppNotification[]) => void,
   onError?: (error: any) => void
 ) => {
   const db = getFirestore();
   const notificationRef = doc(db, "notifications", userId);
+
+  const formatTime = (date?: Date) => {
+    if (!date) return "Just now";
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const minutes = Math.floor(diff / 60000);
+
+    if (minutes < 1) return "Just now";
+    if (minutes < 60) return `${minutes}m ago`;
+    if (minutes < 1440) return `${Math.floor(minutes / 60)}h ago`;
+    return `${Math.floor(minutes / 1440)}d ago`;
+  };
 
   const unsubscribe = onSnapshot(
     notificationRef,
@@ -1586,24 +1598,30 @@ const listenToUserNotifications = (
           (notif: any) => {
             const defaultImage = "https://example.com/default-user.png";
 
-            return {
-              id: notif.data?.groupId || notif.groupId || "unknown-id",
+            const baseNotification = {
+              id: notif.id || "unknown-id",
+              dataId: notif.data.id,
               title: notif.title || "New Notification",
               description:
                 notif.subtitle ||
                 notif.message ||
                 "You have a new notification",
               time: formatTime(notif.createdAt?.toDate?.() || new Date()),
-              image:
-                notif.inviterImage ||
-                notif.senderImage ||
-                notif.data?.thumbnailUrl ||
-                defaultImage,
+              image: notif.data.image || defaultImage,
+              data: notif.data,
               read: notif.isRead || false,
-              type: notif.type === "groupMessage" ? "group_invite" : notif.type,
-              groupId: notif.groupId,
-              status: notif.status || "pending",
+              type: notif.type,
             };
+
+            // Only add groupId for groupMessage notifications
+            if (notif.type === "groupMessage") {
+              return {
+                ...baseNotification,
+                status: notif.status || "pending",
+              };
+            }
+
+            return baseNotification;
           }
         );
 
@@ -1620,6 +1638,33 @@ const listenToUserNotifications = (
   );
 
   return unsubscribe; // must be cleaned up later
+};
+
+const markNotificationAsRead = async (
+  userId: string,
+  notificationId: string
+) => {
+  try {
+    const db = getFirestore();
+    const notificationRef = doc(db, "notifications", userId);
+    const snapshot = await getDoc(notificationRef);
+
+    if (snapshot.exists()) {
+      const data = snapshot.data();
+      const items = data?.items || [];
+
+      const updatedItems = items.map((item: any) => {
+        if (item.id === notificationId) {
+          return { ...item, isRead: true };
+        }
+        return item;
+      });
+
+      await updateDoc(notificationRef, { items: updatedItems });
+    }
+  } catch (error) {
+    console.error("Error marking notification as read:", error);
+  }
 };
 
 export {
@@ -1647,6 +1692,8 @@ export {
   getUserByUidAsync,
   getUserLocation,
   handleStoryUpload,
+  listenToUserNotifications,
+  markNotificationAsRead,
   recordLike,
   saveUserToDatabase,
   signInWithGoogleFirebase,
@@ -1654,5 +1701,4 @@ export {
   uploadImage,
   uploadMultipleImages,
   verifyCode,
-  listenToUserNotifications,
 };

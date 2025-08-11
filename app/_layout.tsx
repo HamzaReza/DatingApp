@@ -1,6 +1,7 @@
 import { VideoProvider } from "@/components/VideoContext";
 import { Colors } from "@/constants/Colors";
 import { FontSize } from "@/constants/FontSize";
+import { configureFirebaseEmulators } from "@/firebase/config";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { persistor, store } from "@/redux/store";
 import { hp, wp } from "@/utils/Dimensions";
@@ -10,6 +11,7 @@ import {
   DefaultTheme,
   ThemeProvider,
 } from "@react-navigation/native";
+import { StripeProvider } from "@stripe/stripe-react-native";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
@@ -48,6 +50,9 @@ export default function RootLayout() {
     InterSemiBold: require("../assets/fonts/Inter-SemiBold.ttf"),
     InterBold: require("../assets/fonts/Inter-Bold.ttf"),
   });
+
+  // Configure Firebase emulators for local development
+  configureFirebaseEmulators();
 
   if (!loaded) {
     return null;
@@ -140,15 +145,21 @@ export default function RootLayout() {
               <ThemeProvider
                 value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
               >
-                <VideoProvider>
-                  <Stack screenOptions={{ headerShown: false }}>
-                    <Stack.Screen name="(auth)" />
-                    <Stack.Screen name="(tabs)" />
-                    <Stack.Screen name="(admin)" />
-                    <Stack.Screen name="+not-found" />
-                    <Stack.Screen name="eventScreens/explore" />
-                  </Stack>
-                </VideoProvider>
+                <StripeProvider
+                  publishableKey={
+                    process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || ""
+                  }
+                >
+                  <VideoProvider>
+                    <Stack screenOptions={{ headerShown: false }}>
+                      <Stack.Screen name="(auth)" />
+                      <Stack.Screen name="(tabs)" />
+                      <Stack.Screen name="(admin)" />
+                      <Stack.Screen name="+not-found" />
+                      <Stack.Screen name="eventScreens/explore" />
+                    </Stack>
+                  </VideoProvider>
+                </StripeProvider>
               </ThemeProvider>
             </PersistGate>
           </Provider>

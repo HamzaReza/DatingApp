@@ -17,6 +17,7 @@ import {
   deleteUser,
   fetchTags,
   getUserByUid,
+  getUserByUidAsync,
   recordLike,
   updateUser,
   uploadMultipleImages,
@@ -66,7 +67,7 @@ export default function Profile() {
 
   const { user } = useSelector((state: RootState) => state.user);
 
-  const { id } = useLocalSearchParams();
+  const { id, isFriend } = useLocalSearchParams();
   const [galleryModalVisible, setGalleryModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [showFullAbout, setShowFullAbout] = useState(false);
@@ -103,7 +104,7 @@ export default function Profile() {
 
   useEffect(() => {
     getUserDetails();
-    if (user?.uid !== id) {
+    if (user?.uid !== id && isFriend === "false") {
       setShowActionButtons(true);
     }
   }, []);
@@ -202,29 +203,26 @@ export default function Profile() {
 
   const updateTrustScore = async (userId: string) => {
     try {
-      // Use real-time listener to get current user data
-      const unsubscribe = getUserByUid(userId, async currentUserData => {
-        if (currentUserData) {
-          let newTrustScore: number;
+      // Use async version to get current user data once
+      const currentUserData = await getUserByUidAsync(userId);
 
-          if (
-            currentUserData.trustScore !== undefined &&
-            currentUserData.trustScore !== null
-          ) {
-            // If trustScore exists, add 1 but don't go over 100
-            newTrustScore = Math.min(100, currentUserData.trustScore + 1);
-          } else {
-            // If trustScore doesn't exist, start with 1
-            newTrustScore = 1;
-          }
+      if (currentUserData) {
+        let newTrustScore: number;
 
-          // Update user with new trust score
-          await updateUser(userId, { trustScore: newTrustScore }, dispatch);
-
-          // Clean up the listener after updating
-          unsubscribe();
+        if (
+          currentUserData.trustScore !== undefined &&
+          currentUserData.trustScore !== null
+        ) {
+          // If trustScore exists, add 1 but don't go over 100
+          newTrustScore = Math.min(100, currentUserData.trustScore + 1);
+        } else {
+          // If trustScore doesn't exist, start with 1
+          newTrustScore = 1;
         }
-      });
+
+        // Update user with new trust score
+        await updateUser(userId, { trustScore: newTrustScore }, dispatch);
+      }
     } catch (error) {
       console.error("Error updating trust score:", error);
     }

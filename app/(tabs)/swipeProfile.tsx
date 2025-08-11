@@ -7,7 +7,7 @@ import {
   getCurrentAuth,
   getNextUserForSwipe,
   getRandomUser,
-  getUserByUid,
+  getUserByUidAsync,
   recordLike,
   updateUser,
 } from "@/firebase/auth";
@@ -74,34 +74,34 @@ export default function SwipeProfile() {
   };
 
   const handleUserPress = () => {
-    router.push(`/(tabs)/discover/${profileData?.uid}`);
+    router.push({
+      pathname: "/discover/[id]",
+      params: { id: profileData?.uid, isFriend: "false" },
+    });
   };
 
   const updateTrustScore = async (userId: string) => {
     try {
-      // Use real-time listener to get current user data
-      const unsubscribe = getUserByUid(userId, async currentUserData => {
-        if (currentUserData) {
-          let newTrustScore: number;
+      // Use async version to get current user data once
+      const currentUserData = await getUserByUidAsync(userId);
 
-          if (
-            currentUserData.trustScore !== undefined &&
-            currentUserData.trustScore !== null
-          ) {
-            // If trustScore exists, subtract 1 but don't go below 0
-            newTrustScore = Math.max(0, currentUserData.trustScore - 1);
-          } else {
-            // If trustScore doesn't exist, start with 100 - 1 = 99
-            newTrustScore = 99;
-          }
+      if (currentUserData) {
+        let newTrustScore: number;
 
-          // Update user with new trust score
-          await updateUser(userId, { trustScore: newTrustScore }, dispatch);
-
-          // Clean up the listener after updating
-          unsubscribe();
+        if (
+          currentUserData.trustScore !== undefined &&
+          currentUserData.trustScore !== null
+        ) {
+          // If trustScore exists, subtract 1 but don't go below 0
+          newTrustScore = Math.max(0, currentUserData.trustScore - 1);
+        } else {
+          // If trustScore doesn't exist, start with 100 - 1 = 99
+          newTrustScore = 99;
         }
-      });
+
+        // Update user with new trust score
+        await updateUser(userId, { trustScore: newTrustScore }, dispatch);
+      }
     } catch (error) {
       console.error("Error updating trust score:", error);
     }
@@ -177,7 +177,8 @@ export default function SwipeProfile() {
           subtitle: `${reduxUser.name} liked your profile`,
           type: "like",
           data: {
-            fromUserId: currentUser.uid,
+            id: currentUser.uid,
+            image: currentUser.photo,
           },
         });
       }
@@ -239,8 +240,8 @@ export default function SwipeProfile() {
           subtitle: `${currentUser.name || "Someone"} matched with you!`,
           type: "match",
           data: {
-            matchedUserId: currentUser.uid,
-            timestamp: Date.now(),
+            id: currentUser.uid,
+            image: currentUser.photo,
           },
         });
 

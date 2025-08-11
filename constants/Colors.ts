@@ -18,6 +18,7 @@ export const Colors = {
     backgroundSecondary: "#F5F5F5",
     bottomTab: "#FFB3BA",
     primaryOpaque: "rgba(118,202,187,0.4)",
+    notificationUnread: "#FFB3BA",
   },
   dark: {
     primary: "#76CABB",
@@ -38,5 +39,6 @@ export const Colors = {
     backgroundSecondary: "#F5F5F5",
     bottomTab: "#FFB3BA",
     primaryOpaque: "rgba(118,202,187,0.4)",
+    notificationUnread: "#FFB3BA",
   },
 };

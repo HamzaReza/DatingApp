@@ -2,12 +2,12 @@
 import createStyles from "@/app/tabStyles/messages.styles";
 import { MessageItem } from "@/components/MessageItem";
 import RnBottomSheet from "@/components/RnBottomSheet";
+import RnBottomSheetInput from "@/components/RnBottomSheetInput";
 import RnButton from "@/components/RnButton";
 import Container from "@/components/RnContainer";
 import RnDateTimePicker from "@/components/RnDateTimePicker";
 import RnDropdown from "@/components/RnDropdown";
 import RnImagePicker from "@/components/RnImagePicker";
-import RnInput from "@/components/RnInput";
 import RnText from "@/components/RnText";
 import RoundButton from "@/components/RoundButton";
 import { Colors } from "@/constants/Colors";
@@ -461,13 +461,16 @@ export default function Messages() {
         isVisible={isBottomSheetVisible}
         onClose={() => setIsBottomSheetVisible(false)}
         snapPoints={["90%"]}
+        keyboardBehavior="interactive"
+        keyboardBlurBehavior="restore"
+        android_keyboardInputMode="adjustResize"
       >
         <View style={styles.bottomSheetContent}>
           <RnText style={styles.bottomSheetTitle}>Create a hangout</RnText>
 
           <View style={styles.inputWrapper}>
             <RnText style={styles.inputLabel}>Group Name:</RnText>
-            <RnInput
+            <RnBottomSheetInput
               placeholder="Enter group name"
               maxLength={30}
               value={groupName}
@@ -478,8 +481,8 @@ export default function Messages() {
 
           <View style={styles.inputWrapper}>
             <RnText style={styles.inputLabel}>Group Description:</RnText>
-            <RnInput
-              placeholder="Enter group name"
+            <RnBottomSheetInput
+              placeholder="Enter group description"
               maxLength={30}
               value={groupDescription}
               onChangeText={setGroupDescription}
@@ -542,7 +545,7 @@ export default function Messages() {
               style={{ flexDirection: "row", justifyContent: "space-between" }}
             >
               <View style={{ width: wp(40) }}>
-                <RnInput
+                <RnBottomSheetInput
                   placeholder="Min"
                   keyboardType="numeric"
                   value={minAge}
@@ -552,7 +555,7 @@ export default function Messages() {
               </View>
               <View />
               <View style={{ width: wp(40) }}>
-                <RnInput
+                <RnBottomSheetInput
                   placeholder="Max"
                   keyboardType="numeric"
                   value={maxAge}

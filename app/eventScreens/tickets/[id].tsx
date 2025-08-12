@@ -206,7 +206,11 @@ const TicketDetails = () => {
               }
               router.push({
                 pathname: "/eventScreens/tickets/paymentScreen",
-                params: { ...params, eventId: eventId },
+                params: {
+                  ...params,
+                  eventId: eventId,
+                  currentPrice,
+                },
               });
             }}
             style={[styles.continueButton]}

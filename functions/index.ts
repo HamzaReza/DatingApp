@@ -68,9 +68,9 @@ async function handlePaymentIntentSucceeded(
 ) {
   try {
     // Extract payment details from metadata
-    const { paymentId, userId, matchId } = paymentIntent.metadata;
+    const { paymentId, userId, matchId, eventId } = paymentIntent.metadata;
 
-    if (!paymentId || !userId || !matchId) {
+    if (!paymentId || !userId) {
       console.error("Missing payment metadata:", paymentIntent.metadata);
       return;
     }
@@ -79,36 +79,102 @@ async function handlePaymentIntentSucceeded(
     const amount = paymentIntent.amount;
     const currency = paymentIntent.currency;
 
-    // Create payment document in Firestore only after successful payment
-    const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + 24); // 24 hours from now
-
-    const paymentData = {
-      userId: userId,
-      matchId: matchId,
-      amount: amount,
-      currency: currency,
-      status: "paid", // Directly set to paid since payment succeeded
-      stripePaymentIntentId: paymentIntent.id,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      expiresAt: expiresAt,
-    };
-
-    // Create the payment document
-    await db.collection("payments").doc(paymentId).set(paymentData);
-
-    // Create or update match payment record
-    await createOrUpdateMatchPaymentInFunction(matchId, userId, paymentId);
-
-    // Check if both users have paid
-    await checkAndUpdateMatchPaymentStatus(matchId);
-
-    console.log("Payment document created successfully:", paymentId);
+    // Determine if this is a match payment or event ticket payment
+    if (matchId) {
+      // Handle match payment
+      await handleMatchPaymentSuccess(
+        paymentIntent,
+        paymentId,
+        userId,
+        matchId,
+        amount,
+        currency
+      );
+    } else if (eventId) {
+      // Handle event ticket payment
+      await handleEventTicketPaymentSuccess(
+        paymentIntent,
+        paymentId,
+        userId,
+        eventId,
+        amount,
+        currency
+      );
+    } else {
+      console.error("Neither matchId nor eventId found in payment metadata");
+    }
   } catch (error) {
     console.error("Error handling payment success:", error);
     throw error;
   }
+}
+
+// Handle match payment success
+async function handleMatchPaymentSuccess(
+  paymentIntent: Stripe.PaymentIntent,
+  paymentId: string,
+  userId: string,
+  matchId: string,
+  amount: number,
+  currency: string
+) {
+  // Create payment document in Firestore only after successful payment
+  const expiresAt = new Date();
+  expiresAt.setHours(expiresAt.getHours() + 24); // 24 hours from now
+
+  const paymentData = {
+    userId: userId,
+    matchId: matchId,
+    amount: amount,
+    currency: currency,
+    status: "paid", // Directly set to paid since payment succeeded
+    stripePaymentIntentId: paymentIntent.id,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    expiresAt: expiresAt,
+  };
+
+  // Create the payment document
+  await db.collection("payments").doc(paymentId).set(paymentData);
+
+  // Create or update match payment record
+  await createOrUpdateMatchPaymentInFunction(matchId, userId, paymentId);
+
+  // Check if both users have paid
+  await checkAndUpdateMatchPaymentStatus(matchId);
+
+  console.log("Match payment document created successfully:", paymentId);
+}
+
+// Handle event ticket payment success
+async function handleEventTicketPaymentSuccess(
+  paymentIntent: Stripe.PaymentIntent,
+  paymentId: string,
+  userId: string,
+  eventId: string,
+  amount: number,
+  currency: string
+) {
+  const { ticketType, quantity } = paymentIntent.metadata;
+
+  // Create event ticket document in Firestore
+  const ticketData = {
+    userId: userId,
+    eventId: eventId,
+    amount: amount,
+    currency: currency,
+    status: "completed", // Event tickets are completed immediately
+    stripePaymentIntentId: paymentIntent.id,
+    ticketType: ticketType || "normal",
+    quantity: parseInt(quantity) || 1,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  // Create the event ticket document
+  await db.collection("eventTickets").doc(paymentId).set(ticketData);
+
+  console.log("Event ticket document created successfully:", paymentId);
 }
 
 // Handle failed payment
@@ -367,8 +433,8 @@ export const checkExpiredPayments = onSchedule("every 6 hours", async event => {
     throw error;
   }
 });
-// Function to create payment intent
-export const createStripePaymentIntent = onCall(
+// Function to create payment intent for match messages
+export const createMessagePaymentIntent = onCall(
   async (data: any, context: any) => {
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
       apiVersion: "2025-07-30.basil",
@@ -423,6 +489,58 @@ export const createStripePaymentIntent = onCall(
       return result;
     } catch (error) {
       console.error("Error creating payment intent:", error);
+      throw new HttpsError("internal", "Failed to create payment intent");
+    }
+  }
+);
+
+// Function to create payment intent for event tickets
+export const createEventTicketPaymentIntent = onCall(
+  async (data: any, context: any) => {
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
+      apiVersion: "2025-07-30.basil",
+    });
+
+    try {
+      // Get user ID from context or data
+      const userId = context?.auth?.uid || data.data?.userId || data.userId;
+
+      // Check if we have a valid user ID
+      if (!userId) {
+        throw new HttpsError("unauthenticated", "User ID is required");
+      }
+
+      const { paymentId, amount, eventId, ticketType, quantity } =
+        data.data || data;
+
+      if (!paymentId || !amount || !eventId) {
+        throw new HttpsError("invalid-argument", "Missing required parameters");
+      }
+
+      // Allow multiple ticket purchases for the same event
+      // No duplicate check needed - users can buy multiple tickets
+
+      // Create payment intent in Stripe
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: "usd",
+        metadata: {
+          paymentId: paymentId,
+          userId: userId,
+          eventId: eventId,
+          ticketType: ticketType || "normal",
+          quantity: quantity || "1",
+        },
+      });
+
+      // Return only the client secret - don't create Firestore document yet
+      const result = {
+        clientSecret: paymentIntent.client_secret,
+        paymentIntentId: paymentIntent.id,
+      };
+      return result;
+    } catch (error) {
+      console.error("Error creating event ticket payment intent:", error);
       throw new HttpsError("internal", "Failed to create payment intent");
     }
   }

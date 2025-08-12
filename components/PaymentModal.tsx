@@ -18,6 +18,8 @@ interface PaymentModalProps {
   onClose: () => void;
   onSuccess: () => void;
   paymentData?: any;
+  eventId?: string;
+  totalPrice?: number;
   isPreInitialized?: boolean;
 }
 
@@ -26,6 +28,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   onClose,
   onSuccess,
   paymentData,
+  eventId,
+  totalPrice,
   isPreInitialized = false,
 }) => {
   const colorScheme = useColorScheme();
@@ -96,7 +100,9 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
         Alert.alert(
           "Payment Successful!",
-          "Your payment of $5.00 has been processed successfully. You will be notified when the other user completes their payment.",
+          eventId
+            ? `Your payment of $${totalPrice} has been processed successfully.`
+            : `Your payment of $5.00 has been processed successfully. You will be notified when the other user completes their payment.`,
           [
             {
               text: "OK",
@@ -135,8 +141,9 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         <RnText style={styles.title}>Payment</RnText>
         <RnText style={styles.subtitle}>Book a Meetup</RnText>
         <RnText style={styles.description}>
-          Pay $5.00 to book a meetup with your match. You&apos;ll get a full
-          refund if the other person doesn&apos;t pay within 24 hours.
+          {eventId
+            ? `Pay $${totalPrice} to book a ticket for the event.`
+            : `Pay $5.00 to book a meetup with your match. You'll get a full refund if the other person doesn't pay within 24 hours.`}
         </RnText>
 
         {loading ? (
@@ -160,7 +167,11 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
             <View style={styles.buttonContainer}>
               <RnButton
-                title={loading ? "Processing..." : "Pay $5.00"}
+                title={
+                  loading
+                    ? "Processing..."
+                    : `Pay ${eventId ? totalPrice : "5.00"}`
+                }
                 onPress={handlePayment}
                 disabled={loading || !cardDetails?.complete}
                 style={[styles.payButton]}

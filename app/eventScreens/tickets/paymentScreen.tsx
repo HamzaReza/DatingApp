@@ -1,20 +1,22 @@
 import createStyles from "@/app/eventScreens/styles/paymentScreen.styles";
 import PaymentModal from "@/components/PaymentModal";
 import RnBottomSheet from "@/components/RnBottomSheet";
+import RnBottomSheetInput from "@/components/RnBottomSheetInput";
 import RnButton from "@/components/RnButton";
 import Container from "@/components/RnContainer";
-import RnInput from "@/components/RnInput";
 import RnText from "@/components/RnText";
 import RoundButton from "@/components/RoundButton";
 import { Colors } from "@/constants/Colors";
+import { createEventTicketPaymentIntent } from "@/firebase/stripe";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { RootState } from "@/redux/store";
-import { wp } from "@/utils";
+import { hp, wp } from "@/utils";
 import { AntDesign, FontAwesome5 } from "@expo/vector-icons";
+import { getFunctions } from "@react-native-firebase/functions";
 import { router, useLocalSearchParams } from "expo-router";
 import { Formik } from "formik";
 import React, { useState } from "react";
-import { TouchableOpacity, View } from "react-native";
+import { Alert, TouchableOpacity, View } from "react-native";
 import { useSelector } from "react-redux";
 import * as Yup from "yup";
 
@@ -51,13 +53,14 @@ const PaymentScreen = () => {
   const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
   const [isPaymentModalVisible, setIsPaymentModalVisible] = useState(false);
   const [paymentData, setPaymentData] = useState<any>(null);
+  const [isInitializing, setIsInitializing] = useState(false);
 
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
   const { user } = useSelector((state: RootState) => state.user);
 
-  const { eventId, normalTicketPurchased, vipTicketPurchased } =
+  const { eventId, normalTicketPurchased, vipTicketPurchased, currentPrice } =
     useLocalSearchParams();
 
   // Validation schema for payment form
@@ -109,7 +112,45 @@ const PaymentScreen = () => {
     console.log("Selected payment method:", selectedMethod);
 
     if (selectedMethod === "debit/credit") {
-      setIsPaymentModalVisible(true);
+      try {
+        setIsInitializing(true);
+
+        // Initialize payment before showing modal
+        const paymentId = await createEventTicketPaymentIntent(
+          user?.uid || "",
+          eventId as string
+        );
+
+        // Call Firebase function to create payment intent
+        const createEventTicketPaymentIntentFunction =
+          getFunctions().httpsCallable("createEventTicketPaymentIntent");
+        const result = await createEventTicketPaymentIntentFunction({
+          paymentId,
+          amount:
+            Number(currentPrice) *
+            100 *
+            (Number(normalTicketPurchased) || Number(vipTicketPurchased)), // Convert to cents
+          eventId: eventId as string,
+          ticketType: vipTicketPurchased ? "vip" : "normal",
+          quantity: Number(normalTicketPurchased) || Number(vipTicketPurchased),
+          userId: user?.uid || "",
+        });
+
+        const { clientSecret } = result.data as { clientSecret: string };
+
+        // Set payment data and show modal
+        setPaymentData({
+          paymentId,
+          clientSecret,
+        });
+
+        setIsPaymentModalVisible(true);
+      } catch (error) {
+        console.error("Error initializing payment:", error);
+        Alert.alert("Error", "Failed to initialize payment. Please try again.");
+      } finally {
+        setIsInitializing(false);
+      }
     } else {
       console.log(`User selected ${selectedMethod} payment method`);
     }
@@ -151,17 +192,12 @@ const PaymentScreen = () => {
         />
       </View>
 
-      <View style={styles.section}>
-        <RnText style={styles.label}>Payment Method</RnText>
-        <TouchableOpacity
-          style={styles.addCard}
-          onPress={() => setIsBottomSheetVisible(true)}
-        >
-          <RnText style={styles.addCardText}>Add New Card</RnText>
-        </TouchableOpacity>
-      </View>
+      <RnText
+        style={[styles.subtitle, { textAlign: "center", marginTop: hp(1) }]}
+      >
+        Choose your preferred payment method to buy tickets
+      </RnText>
 
-      {/* Payment Options */}
       {paymentMethods.map(item => (
         <TouchableOpacity
           key={item.id}
@@ -185,28 +221,23 @@ const PaymentScreen = () => {
         </TouchableOpacity>
       ))}
 
-      {selectedMethod === "debit/credit" && (
-        <View style={styles.cardItem}>
-          <View style={styles.radioRow}>
-            <View
-              style={
-                selectedMethod === "debit/credit"
-                  ? styles.selectedRadio
-                  : styles.unselectedRadio
-              }
-            >
-              {selectedMethod === "debit/credit" && (
-                <View style={styles.radioDot} />
-              )}
-            </View>
-            <FontAwesome5 name="cc-mastercard" size={24} color="#EB001B" />
-            <RnText style={styles.cardText}>**** **** **** 0213</RnText>
-          </View>
+      <View style={styles.paymentSection}>
+        <RnText style={styles.subtitle}>Payment Details</RnText>
+        <View style={styles.paymentRow}>
+          <RnText style={styles.label}>Ticket Price</RnText>
+          <RnText style={styles.value}>${currentPrice}</RnText>
         </View>
-      )}
+        <View style={styles.paymentRow}>
+          <RnText style={styles.label}>Total</RnText>
+          <RnText style={styles.value}>
+            $
+            {Number(currentPrice) *
+              (Number(normalTicketPurchased) || Number(vipTicketPurchased))}
+          </RnText>
+        </View>
+      </View>
 
-      {/* Voucher */}
-      <View style={styles.voucherSection}>
+      {/* <View style={styles.voucherSection}>
         <RnText style={styles.label}>Add Voucher</RnText>
         <View style={styles.voucherContainer}>
           <RnInput
@@ -222,18 +253,22 @@ const PaymentScreen = () => {
             style={[styles.applyButton, styles.applyText]}
           />
         </View>
-      </View>
+      </View> */}
 
       <RnButton
         title="Checkout"
         style={[styles.checkoutBtn]}
         onPress={onCheckoutPress}
+        loading={isInitializing}
       />
 
       <RnBottomSheet
         isVisible={isBottomSheetVisible}
         onClose={() => setIsBottomSheetVisible(false)}
         enableDynamicSizing={true}
+        keyboardBehavior="interactive"
+        keyboardBlurBehavior="restore"
+        android_keyboardInputMode="adjustResize"
       >
         <View style={styles.modalBackground}>
           <Formik
@@ -251,7 +286,7 @@ const PaymentScreen = () => {
             }) => (
               <View>
                 <RnText style={styles.inputlabel}>Card Number</RnText>
-                <RnInput
+                <RnBottomSheetInput
                   placeholder="3456 133112 50832"
                   value={values.cardNumber}
                   onChangeText={text =>
@@ -264,7 +299,7 @@ const PaymentScreen = () => {
                 <View style={styles.row}>
                   <View style={{ flex: 1, marginRight: wp(2) }}>
                     <RnText style={styles.inputlabel}>Expiry Date</RnText>
-                    <RnInput
+                    <RnBottomSheetInput
                       placeholder="07/22"
                       value={values.expiryDate}
                       onChangeText={text =>
@@ -276,7 +311,7 @@ const PaymentScreen = () => {
                   </View>
                   <View style={{ flex: 1 }}>
                     <RnText style={styles.inputlabel}>CVV</RnText>
-                    <RnInput
+                    <RnBottomSheetInput
                       placeholder="341"
                       value={values.cvv}
                       onChangeText={handleChange("cvv")}
@@ -304,10 +339,13 @@ const PaymentScreen = () => {
         visible={isPaymentModalVisible}
         onClose={handlePaymentClose}
         onSuccess={handlePaymentSuccess}
-        matchId={eventId as string}
-        userId={user?.uid || ""}
+        eventId={eventId as string}
+        totalPrice={
+          Number(currentPrice) *
+          (Number(normalTicketPurchased) || Number(vipTicketPurchased))
+        }
         paymentData={paymentData}
-        isPreInitialized={false}
+        isPreInitialized={true}
       />
     </Container>
   );

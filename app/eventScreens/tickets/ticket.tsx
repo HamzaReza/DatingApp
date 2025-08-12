@@ -18,7 +18,8 @@ const TicketScreen = () => {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
-  const { eventId } = useLocalSearchParams();
+  const { eventId, normalTicketPurchased, vipTicketPurchased } =
+    useLocalSearchParams();
 
   const [event, setEvent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -215,8 +216,10 @@ const TicketScreen = () => {
                   </RnText>
                 </View>
                 <View>
-                  <RnText style={styles.label}>Time</RnText>
-                  <RnText style={styles.value}>
+                  <RnText style={[styles.label, { textAlign: "right" }]}>
+                    Time
+                  </RnText>
+                  <RnText style={[styles.value, { textAlign: "right" }]}>
                     {formatEventTime(event.time)}
                   </RnText>
                 </View>
@@ -227,8 +230,12 @@ const TicketScreen = () => {
                   <RnText style={styles.value}>{event.venue}</RnText>
                 </View>
                 <View>
-                  <RnText style={styles.label}>Seat</RnText>
-                  <RnText style={styles.value}>05</RnText>
+                  <RnText style={[styles.label, { textAlign: "right" }]}>
+                    Seat
+                  </RnText>
+                  <RnText style={[styles.value, { textAlign: "right" }]}>
+                    {normalTicketPurchased || vipTicketPurchased}
+                  </RnText>
                 </View>
               </View>
               <View>

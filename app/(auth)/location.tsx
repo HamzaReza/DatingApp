@@ -188,6 +188,8 @@ export default function LocationScreen() {
           setGuardianModal(false);
         }}
         snapPoints={["40%"]}
+        keyboardBehavior="interactive"
+        keyboardBlurBehavior="restore"
       >
         <Formik
           initialValues={{ guardianPhone: "" }}

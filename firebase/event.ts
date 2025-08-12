@@ -27,7 +27,6 @@ const fetchNextUpcomingEvent = (callback: (event: any | null) => void) => {
   try {
     const db = getFirestore();
     const eventsRef = collection(db, "events");
-
     const now = new Date();
 
     const q = query(eventsRef, orderBy("date", "asc"));

@@ -5,7 +5,7 @@ import Container from "@/components/RnContainer";
 import RnText from "@/components/RnText";
 import RoundButton from "@/components/RoundButton";
 import { Colors } from "@/constants/Colors";
-import { createPaymentIntent } from "@/firebase/stripe";
+import { createMessagePaymentIntent } from "@/firebase/stripe";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { RootState } from "@/redux/store";
 import { hp } from "@/utils";
@@ -65,16 +65,16 @@ const MessagePaymentScreen = () => {
         setIsInitializing(true);
 
         // Initialize payment before showing modal
-        const paymentId = await createPaymentIntent(
+        const paymentId = await createMessagePaymentIntent(
           user?.uid || "",
           matchId as string
         );
 
         // Call Firebase function to create payment intent
-        const createStripePaymentIntent = getFunctions().httpsCallable(
-          "createStripePaymentIntent"
+        const createMessagePaymentIntentFunction = getFunctions().httpsCallable(
+          "createMessagePaymentIntent"
         );
-        const result = await createStripePaymentIntent({
+        const result = await createMessagePaymentIntentFunction({
           paymentId,
           amount: 500, // $5.00 in cents
           matchId: matchId as string,

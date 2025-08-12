@@ -36,8 +36,8 @@ export interface MatchPayment {
   expiresAt: Timestamp;
 }
 
-// Create a new payment intent for a user
-export const createPaymentIntent = async (
+// Create a new payment intent for match messages
+export const createMessagePaymentIntent = async (
   userId: string,
   matchId: string
 ): Promise<string> => {
@@ -69,6 +69,28 @@ export const createPaymentIntent = async (
     return paymentId;
   } catch (error) {
     console.error("Error creating payment intent:", error);
+    throw error;
+  }
+};
+
+// Create a new payment intent for event tickets
+export const createEventTicketPaymentIntent = async (
+  userId: string,
+  eventId: string
+): Promise<string> => {
+  try {
+    if (!userId || !eventId) {
+      throw new Error("userId and eventId are required");
+    }
+
+    // Generate a unique payment ID without creating the document yet
+    const paymentId = `event_ticket_${Date.now()}_${Math.random()
+      .toString(36)
+      .substr(2, 9)}`;
+
+    return paymentId;
+  } catch (error) {
+    console.error("Error creating event ticket payment intent:", error);
     throw error;
   }
 };

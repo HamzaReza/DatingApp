@@ -35,6 +35,28 @@ export interface RnInputProps {
   editable?: boolean;
 }
 
+export interface RnBottomSheetInputProps {
+  value: string;
+  maxLength?: number;
+  onChangeText(e: string): void;
+  onBlur?(e: any): void;
+  onFocus?(e: any): void;
+  keyboardType?: KeyboardTypeOptions;
+  error?: string;
+  errorStyle?: StyleProp<TextStyle>;
+  secureTextEntry?: boolean;
+  style?: StyleProp<TextStyle>;
+  containerStyle?: StyleProp<ViewStyle>;
+  inputContainerStyle?: StyleProp<ViewStyle>;
+  placeholder: string;
+  leftIcon?: ReactNode;
+  rightIcon?: ReactNode;
+  noError?: boolean;
+  multiline?: boolean;
+  numberOfLines?: number;
+  editable?: boolean;
+}
+
 export interface RnPhoneInputProps {
   value: string;
   onChangeText(e: string): void;

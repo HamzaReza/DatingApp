@@ -1,10 +1,10 @@
 import createStyles from "@/app/adminStyles/event.styles";
 import RnBottomSheet from "@/components/RnBottomSheet";
+import RnBottomSheetInput from "@/components/RnBottomSheetInput";
 import RnButton from "@/components/RnButton";
 import RnContainer from "@/components/RnContainer";
 import RnDateTimePicker from "@/components/RnDateTimePicker";
 import RnDropdown from "@/components/RnDropdown";
-import RnInput from "@/components/RnInput";
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
 import { Borders } from "@/constants/Borders";
@@ -18,6 +18,7 @@ import { uploadImage } from "@/firebase/auth";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { AdminEvent } from "@/types/Admin";
 import { hp, wp } from "@/utils";
+
 import * as ImagePicker from "expo-image-picker";
 import { Formik } from "formik";
 import React, { useEffect, useState } from "react";
@@ -241,6 +242,9 @@ export default function AdminEventTicketScreen() {
         enablePanDownToClose={false}
         enableContentPanningGesture={false}
         snapPoints={["75%"]}
+        keyboardBehavior="interactive"
+        keyboardBlurBehavior="none"
+        android_keyboardInputMode="adjustResize"
       >
         <ScrollContainer customStyle={styles.formContainer}>
           <Formik
@@ -269,14 +273,14 @@ export default function AdminEventTicketScreen() {
               setFieldValue,
             }) => (
               <View>
-                <RnInput
+                <RnBottomSheetInput
                   placeholder="Event Name"
                   value={values.eventName}
                   onChangeText={handleChange("eventName")}
                   onBlur={handleBlur("eventName")}
                   error={errors.eventName}
                 />
-                <RnInput
+                <RnBottomSheetInput
                   placeholder="Location"
                   value={values.eventLocation}
                   onChangeText={handleChange("eventLocation")}
@@ -284,56 +288,52 @@ export default function AdminEventTicketScreen() {
                   error={errors.eventLocation}
                 />
                 <View style={styles.formRowContainer}>
-                  <RnInput
-                    placeholder="Normal Ticket"
-                    value={values.normalTicket}
-                    onChangeText={handleChange("normalTicket")}
-                    onBlur={handleBlur("normalTicket")}
-                    keyboardType="numeric"
-                    error={errors.normalTicket}
-                    containerStyle={[
-                      styles.formHalfField,
-                      styles.formHalfFieldLeft,
-                    ]}
-                  />
-                  <RnInput
-                    placeholder="Normal Price"
-                    value={values.normalPrice}
-                    onChangeText={handleChange("normalPrice")}
-                    onBlur={handleBlur("normalPrice")}
-                    keyboardType="numeric"
-                    error={errors.normalPrice}
-                    containerStyle={[
-                      styles.formHalfField,
-                      styles.formHalfFieldRight,
-                    ]}
-                  />
+                  <View style={{ flex: 1 }}>
+                    <RnBottomSheetInput
+                      placeholder="Normal Ticket"
+                      value={values.normalTicket}
+                      onChangeText={handleChange("normalTicket")}
+                      onBlur={handleBlur("normalTicket")}
+                      keyboardType="numeric"
+                      error={errors.normalTicket}
+                      style={[styles.formHalfField, styles.formHalfFieldLeft]}
+                    />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <RnBottomSheetInput
+                      placeholder="Normal Price"
+                      value={values.normalPrice}
+                      onChangeText={handleChange("normalPrice")}
+                      onBlur={handleBlur("normalPrice")}
+                      keyboardType="numeric"
+                      error={errors.normalPrice}
+                      style={[styles.formHalfField, styles.formHalfFieldRight]}
+                    />
+                  </View>
                 </View>
                 <View style={styles.formRowContainer}>
-                  <RnInput
-                    placeholder="VIP Ticket"
-                    value={values.vipTicket}
-                    onChangeText={handleChange("vipTicket")}
-                    onBlur={handleBlur("vipTicket")}
-                    keyboardType="numeric"
-                    error={errors.vipTicket}
-                    containerStyle={[
-                      styles.formHalfField,
-                      styles.formHalfFieldLeft,
-                    ]}
-                  />
-                  <RnInput
-                    placeholder="VIP Price"
-                    value={values.vipPrice}
-                    onChangeText={handleChange("vipPrice")}
-                    onBlur={handleBlur("vipPrice")}
-                    keyboardType="numeric"
-                    error={errors.vipPrice}
-                    containerStyle={[
-                      styles.formHalfField,
-                      styles.formHalfFieldRight,
-                    ]}
-                  />
+                  <View style={{ flex: 1 }}>
+                    <RnBottomSheetInput
+                      placeholder="VIP Ticket"
+                      value={values.vipTicket}
+                      onChangeText={handleChange("vipTicket")}
+                      onBlur={handleBlur("vipTicket")}
+                      keyboardType="numeric"
+                      error={errors.vipTicket}
+                      style={[styles.formHalfField, styles.formHalfFieldLeft]}
+                    />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <RnBottomSheetInput
+                      placeholder="VIP Price"
+                      value={values.vipPrice}
+                      onChangeText={handleChange("vipPrice")}
+                      onBlur={handleBlur("vipPrice")}
+                      keyboardType="numeric"
+                      error={errors.vipPrice}
+                      style={[styles.formHalfField, styles.formHalfFieldRight]}
+                    />
+                  </View>
                 </View>
 
                 <RnDropdown
@@ -439,6 +439,8 @@ export default function AdminEventTicketScreen() {
         isVisible={isCreatorSheetVisible}
         onClose={handleCloseCreatorSheet}
         enableDynamicSizing
+        keyboardBlurBehavior="restore"
+        android_keyboardInputMode="adjustPan"
       >
         <RnContainer customStyle={styles.formScrollView}>
           <View style={styles.formContainer}>
@@ -462,7 +464,7 @@ export default function AdminEventTicketScreen() {
                 touched,
               }) => (
                 <View>
-                  <RnInput
+                  <RnBottomSheetInput
                     placeholder="Creator Name"
                     value={values.creatorName}
                     onChangeText={handleChange("creatorName")}

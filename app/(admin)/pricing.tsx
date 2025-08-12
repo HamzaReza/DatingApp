@@ -1,9 +1,9 @@
 import createStyles from "@/app/adminStyles/pricing.styles";
 import RnBottomSheet from "@/components/RnBottomSheet";
+import RnBottomSheetInput from "@/components/RnBottomSheetInput";
 import RnButton from "@/components/RnButton";
 import RnContainer from "@/components/RnContainer";
 import RnDropdown from "@/components/RnDropdown";
-import RnInput from "@/components/RnInput";
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
 import { Colors } from "@/constants/Colors";
@@ -134,6 +134,9 @@ export default function AdminPricingPlanScreen() {
         onClose={handleCloseBottomSheet}
         enableDynamicSizing={true}
         scroll
+        keyboardBehavior="interactive"
+        keyboardBlurBehavior="restore"
+        android_keyboardInputMode="adjustResize"
       >
         <View style={styles.formContainer}>
           <RnText style={styles.formTitle}>Create Pricing Plan</RnText>
@@ -158,7 +161,7 @@ export default function AdminPricingPlanScreen() {
             }) => (
               <ScrollContainer>
                 <View>
-                  <RnInput
+                  <RnBottomSheetInput
                     placeholder="Enter plan name"
                     value={values.name}
                     onChangeText={handleChange("name")}
@@ -167,7 +170,7 @@ export default function AdminPricingPlanScreen() {
                   />
                 </View>
                 <View>
-                  <RnInput
+                  <RnBottomSheetInput
                     placeholder="Enter description"
                     value={values.description}
                     onChangeText={handleChange("description")}
@@ -176,7 +179,7 @@ export default function AdminPricingPlanScreen() {
                   />
                 </View>
                 <View>
-                  <RnInput
+                  <RnBottomSheetInput
                     placeholder="Enter price"
                     value={values.price}
                     onChangeText={handleChange("price")}
@@ -208,7 +211,7 @@ export default function AdminPricingPlanScreen() {
                       {values.features.map((feature: string, idx: number) => (
                         <View key={idx} style={styles.featureRow}>
                           <View style={styles.featureInputContainer}>
-                            <RnInput
+                            <RnBottomSheetInput
                               placeholder={`Feature ${idx + 1}`}
                               value={feature}
                               onChangeText={handleChange(`features[${idx}]`)}

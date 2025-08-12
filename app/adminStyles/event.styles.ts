@@ -157,4 +157,7 @@ export default (theme: "light" | "dark") =>
       height: wp(40),
       marginVertical: hp(1),
     },
+    inputContainer: {
+      marginBottom: hp(2),
+    },
   });

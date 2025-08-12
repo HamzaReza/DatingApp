@@ -1,9 +1,9 @@
 import createStyles from "@/app/eventScreens/styles/paymentScreen.styles";
 import PaymentModal from "@/components/PaymentModal";
 import RnBottomSheet from "@/components/RnBottomSheet";
+import RnBottomSheetInput from "@/components/RnBottomSheetInput";
 import RnButton from "@/components/RnButton";
 import Container from "@/components/RnContainer";
-import RnInput from "@/components/RnInput";
 import RnText from "@/components/RnText";
 import RoundButton from "@/components/RoundButton";
 import { Colors } from "@/constants/Colors";
@@ -234,6 +234,9 @@ const PaymentScreen = () => {
         isVisible={isBottomSheetVisible}
         onClose={() => setIsBottomSheetVisible(false)}
         enableDynamicSizing={true}
+        keyboardBehavior="interactive"
+        keyboardBlurBehavior="restore"
+        android_keyboardInputMode="adjustResize"
       >
         <View style={styles.modalBackground}>
           <Formik
@@ -251,7 +254,7 @@ const PaymentScreen = () => {
             }) => (
               <View>
                 <RnText style={styles.inputlabel}>Card Number</RnText>
-                <RnInput
+                <RnBottomSheetInput
                   placeholder="3456 133112 50832"
                   value={values.cardNumber}
                   onChangeText={text =>
@@ -264,7 +267,7 @@ const PaymentScreen = () => {
                 <View style={styles.row}>
                   <View style={{ flex: 1, marginRight: wp(2) }}>
                     <RnText style={styles.inputlabel}>Expiry Date</RnText>
-                    <RnInput
+                    <RnBottomSheetInput
                       placeholder="07/22"
                       value={values.expiryDate}
                       onChangeText={text =>
@@ -276,7 +279,7 @@ const PaymentScreen = () => {
                   </View>
                   <View style={{ flex: 1 }}>
                     <RnText style={styles.inputlabel}>CVV</RnText>
-                    <RnInput
+                    <RnBottomSheetInput
                       placeholder="341"
                       value={values.cvv}
                       onChangeText={handleChange("cvv")}

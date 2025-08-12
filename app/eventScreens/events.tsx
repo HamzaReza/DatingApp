@@ -51,29 +51,6 @@ const Events = () => {
     };
   }, [params.creatorId]);
 
-  // const formatEventData = (event: any) => {
-  //   const eventDate = event.date ? new Date(event.date) : null;
-  //   const formattedDate = eventDate
-  //     ? eventDate.toLocaleDateString("en-US", {
-  //         day: "2-digit",
-  //         month: "long",
-  //         year: "2-digit",
-  //       })
-  //     : "TBD";
-
-  //   return {
-  //     id: event.id,
-  //     title: event.name || event.title,
-  //     date: formattedDate,
-  //     location: event.venue || event.location || "Location TBD",
-  //     price: event.price || "Free",
-  //     imageUrl:
-  //       event.image ||
-  //       event.imageUrl ||
-  //       "https://images.unsplash.com/photo-1521737604893-d14cc237f11d",
-  //   };
-  // };
-
   return (
     <Container>
       <View style={styles.headerContainer}>

@@ -81,7 +81,7 @@ export default function Home() {
 
   useEffect(() => {
     sendNotification(
-      ["ohHgiHwMW8bTvFLhl83YU9xIgo93"],
+      ["Ylb2MIBvcec996gaNCmmhOQL8WH3"],
       "Hello!",
       "Test notification from thishon"
     );

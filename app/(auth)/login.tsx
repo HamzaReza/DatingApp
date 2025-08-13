@@ -9,14 +9,16 @@ import {
 } from "@/firebase/auth";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { setConfirmation, setToken, setUser } from "@/redux/slices/userSlice";
+import { RootState } from "@/redux/store";
 import { LoginValues } from "@/types";
 import { SocialIcon } from "@rneui/base";
 import { router } from "expo-router";
 import { Formik } from "formik";
 import { useRef, useState } from "react";
 import { TouchableOpacity, View } from "react-native";
+import { OneSignal } from "react-native-onesignal";
 import PhoneInput from "react-native-phone-number-input";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import * as Yup from "yup";
 
 const loginSchema = Yup.object().shape({
@@ -30,6 +32,7 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const dispatch = useDispatch();
   const [googleLoading, setGoogleLoading] = useState(false);
+  const { user: reduxUser } = useSelector((state: RootState) => state.user);
 
   const phoneInput = useRef<PhoneInput>(null);
 
@@ -50,6 +53,10 @@ export default function Login() {
         pathname: "/otp",
         params: { phone: formattedPhone, login: "true" },
       });
+      if (reduxUser) {
+        OneSignal.login(reduxUser.uid);
+        console.log("OneSignal External User ID set:", reduxUser.uid);
+      }
     } catch (error: any) {
       console.error(error);
     } finally {
@@ -69,7 +76,12 @@ export default function Login() {
           },
         });
       } else {
+        if (reduxUser) {
+          OneSignal.login(reduxUser.uid);
+          console.log("OneSignal External User ID set:", reduxUser.uid);
+        }
         router.push("/main/home");
+
         dispatch(
           setUser({
             ...result.user,

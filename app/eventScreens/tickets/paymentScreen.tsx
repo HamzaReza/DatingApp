@@ -289,7 +289,10 @@ const PaymentScreen = () => {
         title="Checkout"
         style={[styles.checkoutBtn]}
         onPress={onCheckoutPress}
+<<<<<<< HEAD
         loading={isInitializing}
+=======
+>>>>>>> 167000e (changed the payment flow from message)
       />
 
       <RnBottomSheet
@@ -369,6 +372,7 @@ const PaymentScreen = () => {
         visible={isPaymentModalVisible}
         onClose={handlePaymentClose}
         onSuccess={handlePaymentSuccess}
+<<<<<<< HEAD
         eventId={eventId as string}
         totalPrice={
           Number(currentPrice) *
@@ -376,6 +380,12 @@ const PaymentScreen = () => {
         }
         paymentData={paymentData}
         isPreInitialized={true}
+=======
+        matchId={eventId as string}
+        userId={user?.uid || ""}
+        paymentData={paymentData}
+        isPreInitialized={false}
+>>>>>>> 167000e (changed the payment flow from message)
       />
     </Container>
   );

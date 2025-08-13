@@ -127,6 +127,7 @@ export interface RnToastProps {
   message: string;
   heading?: string;
   position?: ToastPosition;
+  onHide?: () => void;
 }
 
 export interface RnOtpProps {

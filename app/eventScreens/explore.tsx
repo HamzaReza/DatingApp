@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import createStyles from "@/app/eventScreens/styles/explore.styles";
 import RnInput from "@/components/RnInput";
 import ScrollContainer from "@/components/RnScrollContainer";
@@ -11,8 +10,7 @@ import {
   fetchNextUpcomingEvent,
 } from "@/firebase/event";
 import { Ionicons } from "@expo/vector-icons";
-import { reverseGeocodeAsync } from "expo-location";
-import { router, useLocalSearchParams } from "expo-router";
+import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { FlatList, TouchableOpacity, View, useColorScheme } from "react-native";
 import CreatorShow from "./components/CreatorShow";
@@ -23,24 +21,10 @@ const Explore = () => {
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
 
-  const params = useLocalSearchParams();
-
   const [searchValue, setSearchValue] = useState("");
-  const [address, setAddress] = useState("");
   const [nextEvent, setNextEvent] = useState<any>(null);
   const [creators, setCreators] = useState<any[]>([]);
   const [allEvents, setAllEvents] = useState<any[]>([]);
-
-  useEffect(() => {
-    const getAddress = async () => {
-      let address = await reverseGeocodeAsync({
-        latitude: parseFloat(params.latitude as string),
-        longitude: parseFloat(params.longitude as string),
-      });
-      setAddress(`${address[0].city}, ${address[0].region}` || "");
-    };
-    getAddress();
-  }, []);
 
   useEffect(() => {
     const unsubscribe = fetchNextUpcomingEvent(event => {
@@ -130,7 +114,7 @@ const Explore = () => {
           backgroundColour={Colors[theme].whiteText}
           onPress={() => router.back()}
         />
-        <RnText style={styles.locationText}>{address}</RnText>
+        {/* <RnText style={styles.locationText}>{address}</RnText> */}
         <RoundButton
           iconName="notifications-none"
           iconSize={22}

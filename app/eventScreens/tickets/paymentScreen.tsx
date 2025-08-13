@@ -132,7 +132,7 @@ const PaymentScreen = () => {
             100 *
             (Number(normalTicketPurchased) || Number(vipTicketPurchased)), // Convert to cents
           eventId: eventId as string,
-          ticketType: vipTicketPurchased ? "vip" : "normal",
+          ticketType: Number(vipTicketPurchased) ? "vip" : "normal",
           quantity: Number(normalTicketPurchased) || Number(vipTicketPurchased),
           userId: user?.uid || "",
         });

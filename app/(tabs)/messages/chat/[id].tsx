@@ -5,6 +5,7 @@ import RnInput from "@/components/RnInput";
 import RnModal from "@/components/RnModal";
 import ScrollContainer from "@/components/RnScrollContainer";
 import RnText from "@/components/RnText";
+import showToaster from "@/components/RnToast";
 import RoundButton from "@/components/RoundButton";
 import { Borders } from "@/constants/Borders";
 import { Colors } from "@/constants/Colors";
@@ -421,7 +422,10 @@ export default function Chat() {
 
       setMessage("");
     } catch (error: any) {
-      Alert.alert("Error", error.message || "Failed to send message");
+      showToaster({
+        message: error.message || "Failed to send message",
+        type: "error",
+      });
     }
   };
 
@@ -448,7 +452,10 @@ export default function Chat() {
       const userInGroup = group?.users?.find((i: any) => i.uid === user?.uid);
 
       if (!userInGroup) {
-        Alert.alert("Error", "User not found in group");
+        showToaster({
+          message: "User not found in group",
+          type: "error",
+        });
         return;
       }
 
@@ -456,18 +463,27 @@ export default function Chat() {
         users: arrayRemove(userInGroup),
       });
 
-      Alert.alert("Success", "You have left the group");
+      showToaster({
+        message: "You have left the group",
+        type: "success",
+      });
       router.back(); // Navigate back after leaving
     } catch (error) {
       console.error("Error leaving group:", error);
-      Alert.alert("Error", "Failed to leave group");
+      showToaster({
+        message: "Failed to leave group",
+        type: "error",
+      });
     }
   };
 
   // Initialize payment before opening modal
   const initializePayment = async () => {
     if (!user?.uid || !matchId) {
-      Alert.alert("Error", "Missing required data for payment");
+      showToaster({
+        message: "Missing required data for payment",
+        type: "error",
+      });
       return;
     }
 
@@ -479,7 +495,10 @@ export default function Chat() {
       });
     } catch (error) {
       console.error("Error navigating to payment:", error);
-      Alert.alert("Error", "Failed to navigate to payment. Please try again.");
+      showToaster({
+        message: "Failed to navigate to payment. Please try again.",
+        type: "error",
+      });
     }
   };
 
@@ -510,10 +529,16 @@ export default function Chat() {
         users: arrayRemove(user),
       });
 
-      Alert.alert("Success", `${user.name} has been removed from the group`);
+      showToaster({
+        message: `${user.name} has been removed from the group`,
+        type: "success",
+      });
     } catch (error) {
       console.error("Error removing user:", error);
-      Alert.alert("Error", "Failed to remove user");
+      showToaster({
+        message: "Failed to remove user",
+        type: "error",
+      });
     }
   };
 
@@ -767,7 +792,7 @@ export default function Chat() {
             />
 
             {/* Input Container */}
-            {messageLimitReached && !bothUsersPaid ? (
+            {messageLimitReached && !bothUsersPaid && !userHasPaid ? (
               <View style={teststyles.payNowContainer}>
                 <RnText style={teststyles.payNowText}>
                   Message limit reached. Pay to continue chatting!

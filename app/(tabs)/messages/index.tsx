@@ -26,11 +26,6 @@ import {
   onSnapshot,
 } from "@react-native-firebase/firestore";
 import { LinearGradient } from "expo-linear-gradient";
-import {
-  Accuracy,
-  getCurrentPositionAsync,
-  getForegroundPermissionsAsync,
-} from "expo-location";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -406,21 +401,9 @@ export default function Messages() {
               iconSize={22}
               iconColor={Colors[theme].primary}
               backgroundColour={Colors[theme].whiteText}
-              onPress={async () => {
-                let { status } = await getForegroundPermissionsAsync();
-                if (status === "granted") {
-                  const location = await getCurrentPositionAsync({
-                    accuracy: Accuracy.Highest,
-                  });
-                  router.push({
-                    pathname: "/eventScreens/explore",
-                    params: {
-                      latitude: location.coords.latitude,
-                      longitude: location.coords.longitude,
-                    },
-                  });
-                }
-              }}
+              onPress={async () =>
+                router.push({ pathname: "/eventScreens/explore" })
+              }
             />
           </View>
 

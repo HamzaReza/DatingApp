@@ -97,6 +97,12 @@
           "merchantIdentifier": "merchant.com.dating.app",
           "enableGooglePay": true
         }
+      ],
+      [
+        "onesignal-expo-plugin",
+        {
+          "mode": "development"
+        }
       ]
     ],
     "experiments": {

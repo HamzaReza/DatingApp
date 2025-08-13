@@ -139,7 +139,9 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     <RnModal show={visible} backButton={handleClose} backDrop={handleClose}>
       <View style={styles.container}>
         <RnText style={styles.title}>Payment</RnText>
-        <RnText style={styles.subtitle}>Book a Meetup</RnText>
+        <RnText style={styles.subtitle}>
+          {eventId ? "Book a seat" : "Book a meetup"}
+        </RnText>
         <RnText style={styles.description}>
           {eventId
             ? `Pay $${totalPrice} to book a ticket for the event.`

@@ -234,7 +234,9 @@ const TicketScreen = () => {
                     Seat
                   </RnText>
                   <RnText style={[styles.value, { textAlign: "right" }]}>
-                    {normalTicketPurchased || vipTicketPurchased}
+                    {normalTicketPurchased === "0"
+                      ? vipTicketPurchased
+                      : normalTicketPurchased}
                   </RnText>
                 </View>
               </View>

@@ -231,27 +231,13 @@ export default function Discover() {
     <ScrollContainer>
       <View style={styles.header}>
         <RnText style={styles.title}>Discover</RnText>
-
-        <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.actionButton}>
-            <RoundButton
-              iconName="search"
-              iconSize={24}
-              iconColor={Colors[theme].primary}
-              backgroundColour={Colors[theme].whiteText}
-              onPress={() => console.log("Pressed")}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
-            <RoundButton
-              iconName="tune"
-              iconSize={24}
-              iconColor={Colors[theme].primary}
-              backgroundColour={Colors[theme].whiteText}
-              onPress={() => setFilterModal(true)}
-            />
-          </TouchableOpacity>
-        </View>
+        <RoundButton
+          iconName="tune"
+          iconSize={24}
+          iconColor={Colors[theme].primary}
+          backgroundColour={Colors[theme].whiteText}
+          onPress={() => setFilterModal(true)}
+        />
       </View>
 
       <View style={styles.section}>

@@ -8,6 +8,7 @@ import RnText from "@/components/RnText";
 import RoundButton from "@/components/RoundButton";
 import { Colors } from "@/constants/Colors";
 import { createEventTicketPaymentIntent } from "@/firebase/stripe";
+import { addOrUpdateTicketSale } from "@/firebase/ticket";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { RootState } from "@/redux/store";
 import { hp, wp } from "@/utils";
@@ -157,6 +158,7 @@ const PaymentScreen = () => {
   };
 
   const handlePaymentSuccess = () => {
+    handleTicketPurchase();
     router.push({
       pathname: "/eventScreens/tickets/ticket",
       params: {
@@ -165,6 +167,30 @@ const PaymentScreen = () => {
         vipTicketPurchased: vipTicketPurchased,
       },
     });
+  };
+
+  const handleTicketPurchase = async () => {
+    if (!user?.uid || !eventId) {
+      console.error("User UID or Event ID not found");
+      return;
+    }
+
+    try {
+      const normalTickets = parseInt(normalTicketPurchased as string) || 0;
+      const vipTickets = parseInt(vipTicketPurchased as string) || 0;
+
+      await addOrUpdateTicketSale(
+        eventId as string,
+        user.uid,
+        normalTickets,
+        vipTickets,
+        selectedMethod
+      );
+
+      console.log("Ticket purchase successful!");
+    } catch (error) {
+      console.error("Error purchasing tickets:", error);
+    }
   };
 
   const handlePaymentClose = () => {

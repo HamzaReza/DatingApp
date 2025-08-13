@@ -5,6 +5,7 @@ import RnBottomSheetInput from "@/components/RnBottomSheetInput";
 import RnButton from "@/components/RnButton";
 import Container from "@/components/RnContainer";
 import RnText from "@/components/RnText";
+import showToaster from "@/components/RnToast";
 import RoundButton from "@/components/RoundButton";
 import { Colors } from "@/constants/Colors";
 import { createEventTicketPaymentIntent } from "@/firebase/stripe";
@@ -17,7 +18,7 @@ import { getFunctions } from "@react-native-firebase/functions";
 import { router, useLocalSearchParams } from "expo-router";
 import { Formik } from "formik";
 import React, { useState } from "react";
-import { Alert, TouchableOpacity, View } from "react-native";
+import { TouchableOpacity, View } from "react-native";
 import { useSelector } from "react-redux";
 import * as Yup from "yup";
 
@@ -148,7 +149,10 @@ const PaymentScreen = () => {
         setIsPaymentModalVisible(true);
       } catch (error) {
         console.error("Error initializing payment:", error);
-        Alert.alert("Error", "Failed to initialize payment. Please try again.");
+        showToaster({
+          message: "Error initializing payment",
+          type: "error",
+        });
       } finally {
         setIsInitializing(false);
       }

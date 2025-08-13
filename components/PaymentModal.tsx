@@ -1,17 +1,16 @@
 import { Borders } from "@/constants/Borders";
 import { FontFamily } from "@/constants/FontFamily";
 import { FontSize } from "@/constants/FontSize";
-import { RootState } from "@/redux/store";
 import { hp, wp } from "@/utils";
-import { CardField, useStripe } from "@stripe/stripe-react-native";
+import { useStripe } from "@stripe/stripe-react-native";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Alert, StyleSheet, View } from "react-native";
-import { useSelector } from "react-redux";
+import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { Colors } from "../constants/Colors";
 import { useColorScheme } from "../hooks/useColorScheme";
 import RnButton from "./RnButton";
 import RnModal from "./RnModal";
 import RnText from "./RnText";
+import showToaster from "./RnToast";
 
 interface PaymentModalProps {
   visible: boolean;
@@ -36,90 +35,92 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   const theme = colorScheme === "dark" ? "dark" : "light";
 
   const [loading, setLoading] = useState(false);
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
-  const [cardDetails, setCardDetails] = useState<any>(null);
+  const [paymentSheetReady, setPaymentSheetReady] = useState(false);
 
-  const { user } = useSelector((state: RootState) => state.user);
-
-  const { confirmPayment } = useStripe();
+  const { initPaymentSheet, presentPaymentSheet } = useStripe();
 
   useEffect(() => {
     if (visible && isPreInitialized && paymentData) {
       // Use pre-initialized data
-      setClientSecret(paymentData.clientSecret);
+
+      // Initialize PaymentSheet
+      const initializePaymentSheet = async () => {
+        try {
+          console.log("🚀 Starting PaymentSheet initialization...");
+          const { error } = await initPaymentSheet({
+            paymentIntentClientSecret: paymentData.clientSecret,
+            merchantDisplayName: "Your App Name",
+            style: "automatic", // or 'alwaysLight' based on your theme
+          });
+
+          if (error) {
+            showToaster({
+              message: "Failed to initialize payment. Please try again.",
+              type: "error",
+            });
+          } else {
+            setPaymentSheetReady(true);
+          }
+        } catch (err) {
+          console.log(
+            "🚀 ~ PaymentModal.tsx:67 ~ initializePaymentSheet ~ err:",
+            err
+          );
+          showToaster({
+            message: "Failed to initialize payment. Please try again.",
+            type: "error",
+          });
+        }
+      };
+
+      initializePaymentSheet();
     }
-  }, [visible, isPreInitialized, paymentData]);
+  }, [visible, isPreInitialized, paymentData, initPaymentSheet]);
 
   const handlePayment = async () => {
-    if (!cardDetails?.complete) {
-      Alert.alert("Error", "Please enter valid card details.");
-      return;
-    }
-
-    if (!clientSecret) {
-      Alert.alert("Error", "Payment not initialized. Please try again.");
+    if (!paymentSheetReady) {
+      showToaster({
+        message: "Payment not ready. Please wait a moment and try again.",
+        type: "error",
+      });
       return;
     }
 
     try {
       setLoading(true);
 
-      // Skip payment method creation and go directly to payment confirmation
-
-      // Try with different payment method type
-      const { error, paymentIntent } = await confirmPayment(clientSecret, {
-        paymentMethodType: "Card",
-        paymentMethodData: {
-          billingDetails: {
-            email: user?.email || "user@example.com", // Fallback email
-          },
-        },
-      });
+      // Present PaymentSheet
+      const { error } = await presentPaymentSheet();
 
       if (error) {
-        console.error("Payment confirmation error:", error);
-
-        // Handle specific network errors
-        if (error.message?.includes("kCFErrorDomainCFNetwork error -1001")) {
-          Alert.alert(
-            "Network Timeout",
-            "The payment request timed out. Please check your internet connection and try again."
-          );
-        } else {
-          Alert.alert(
-            "Payment Failed",
-            error.message ||
-              "There was an error processing your payment. Please try again."
-          );
+        if (error.code === "Canceled") {
+          return;
         }
+
+        showToaster({
+          message:
+            error.message ||
+            "There was an error processing your payment. Please try again.",
+          type: "error",
+        });
         return;
       }
 
-      if (paymentIntent) {
-        console.log("Payment successful:", paymentIntent);
+      onSuccess();
+      onClose();
 
-        Alert.alert(
-          "Payment Successful!",
-          eventId
-            ? `Your payment of $${totalPrice} has been processed successfully.`
-            : `Your payment of $5.00 has been processed successfully. You will be notified when the other user completes their payment.`,
-          [
-            {
-              text: "OK",
-              onPress: () => {
-                onSuccess();
-                onClose();
-              },
-            },
-          ]
-        );
-      }
+      showToaster({
+        message: eventId
+          ? `Your payment of $${totalPrice} has been processed successfully.`
+          : `Your payment of $5.00 has been processed successfully. You will be notified when the other user completes their payment.`,
+        type: "success",
+      });
     } catch (error) {
-      console.error("Payment error:", error);
-      Alert.alert(
-        "Payment Failed",
-        "There was an error processing your payment. Please try again."
-      );
+      showToaster({
+        message:
+          "There was an error processing your payment. Please try again.",
+        type: "error",
+      });
     } finally {
       setLoading(false);
     }
@@ -127,8 +128,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
   const handleClose = () => {
     setLoading(false);
-    setClientSecret(null);
-    setCardDetails(null);
+    setPaymentSheetReady(false);
 
     onClose();
   };
@@ -138,8 +138,9 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   return (
     <RnModal show={visible} backButton={handleClose} backDrop={handleClose}>
       <View style={styles.container}>
-        <RnText style={styles.title}>Payment</RnText>
-        <RnText style={styles.subtitle}>Book a Meetup</RnText>
+        <RnText style={styles.title}>
+          {eventId ? "Book a seat" : "Book a meetup"}
+        </RnText>
         <RnText style={styles.description}>
           {eventId
             ? `Pay $${totalPrice} to book a ticket for the event.`
@@ -153,27 +154,15 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           </View>
         ) : (
           <>
-            <View style={styles.cardContainer}>
-              <CardField
-                postalCodeEnabled={false}
-                placeholders={{
-                  number: "4242 4242 4242 4242",
-                }}
-                cardStyle={styles.card}
-                style={styles.cardField}
-                onCardChange={setCardDetails}
-              />
-            </View>
+            <RnText style={styles.cardInfo}>
+              Payment will be processed securely through Stripe
+            </RnText>
 
             <View style={styles.buttonContainer}>
               <RnButton
-                title={
-                  loading
-                    ? "Processing..."
-                    : `Pay ${eventId ? totalPrice : "5.00"}`
-                }
+                title={loading ? "Processing..." : "Pay"}
                 onPress={handlePayment}
-                disabled={loading || !cardDetails?.complete}
+                disabled={loading || !paymentSheetReady}
                 style={[styles.payButton]}
               />
 
@@ -200,23 +189,17 @@ const createStyles = (theme: "light" | "dark") =>
       margin: wp(4),
     },
     title: {
-      fontSize: FontSize.large,
+      fontSize: FontSize.extraLarge,
       fontFamily: FontFamily.bold,
       textAlign: "center",
       marginBottom: hp(1),
     },
-    subtitle: {
-      fontSize: FontSize.large,
-      textAlign: "center",
-      marginBottom: hp(1),
-      color: Colors[theme].primary,
-    },
     description: {
       fontSize: FontSize.medium,
+      fontFamily: FontFamily.semiBold,
       textAlign: "center",
       marginBottom: hp(1),
       color: Colors[theme].primary,
-      lineHeight: hp(2),
     },
     loadingContainer: {
       alignItems: "center",
@@ -226,19 +209,14 @@ const createStyles = (theme: "light" | "dark") =>
       marginTop: hp(3),
       color: Colors[theme].placeholderText,
     },
-    cardContainer: {
-      marginBottom: hp(3),
-    },
-    card: {
-      borderWidth: 1,
-      borderColor: Colors[theme].primary,
-      backgroundColor: Colors[theme].background,
-    },
-    cardField: {
-      height: hp(6),
+    cardInfo: {
+      fontSize: FontSize.small,
+      textAlign: "center",
+      color: Colors[theme].primary,
+      marginBottom: hp(2),
     },
     buttonContainer: {
-      gap: hp(3),
+      gap: hp(1),
     },
     payButton: {
       backgroundColor: Colors[theme].primary,

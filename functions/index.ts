@@ -157,9 +157,11 @@ async function handleEventTicketPaymentSuccess(
 ) {
   const { ticketType, quantity } = paymentIntent.metadata;
 
-  // Create event ticket document in Firestore
-  const ticketData = {
-    userId: userId,
+  // Append this purchase to the user's event tickets document as an array item
+  const userTicketsRef = db.collection("eventTickets").doc(userId);
+
+  const ticketItem = {
+    paymentId: paymentId,
     eventId: eventId,
     amount: amount,
     currency: currency,
@@ -171,10 +173,18 @@ async function handleEventTicketPaymentSuccess(
     updatedAt: new Date(),
   };
 
-  // Create the event ticket document
-  await db.collection("eventTickets").doc(paymentId).set(ticketData);
+  await userTicketsRef.set(
+    {
+      purchases: admin.firestore.FieldValue.arrayUnion(ticketItem),
+    },
+    { merge: true }
+  );
 
-  console.log("Event ticket document created successfully:", paymentId);
+  console.log(
+    "Event ticket purchase appended to user document:",
+    userId,
+    paymentId
+  );
 }
 
 // Handle failed payment

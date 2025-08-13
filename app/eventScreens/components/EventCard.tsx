@@ -82,8 +82,10 @@ const EventCard = ({ title, date, location, price, imageUrl, id }: Props) => {
           </Text>
           <View style={styles.subInfo}>
             <Text style={styles.date}>{formatEventDate(date)}</Text>
-            <Entypo name="dot-single" size={16} color="red" />
-            <Text style={styles.location}>{location}</Text>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <Entypo name="dot-single" size={16} color="red" />
+              <Text style={styles.location}>{location}</Text>
+            </View>
           </View>
         </View>
         <View style={styles.actionContainer}>
@@ -141,6 +143,8 @@ const createStyles = (theme: "dark" | "light") =>
     subInfo: {
       flexDirection: "row",
       alignItems: "center",
+      flexShrink: 1,
+      flexWrap: "wrap",
       marginTop: wp(1),
     },
     date: {

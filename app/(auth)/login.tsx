@@ -15,6 +15,7 @@ import { router } from "expo-router";
 import { Formik } from "formik";
 import { useRef, useState } from "react";
 import { TouchableOpacity, View } from "react-native";
+import { OneSignal } from "react-native-onesignal";
 import PhoneInput from "react-native-phone-number-input";
 import { useDispatch } from "react-redux";
 import * as Yup from "yup";
@@ -60,7 +61,11 @@ export default function Login() {
   const _handleGoogleSignIn = async () => {
     setGoogleLoading(true);
     const result = await signInWithGoogleFirebase(dispatch);
+
     if (result.success) {
+      OneSignal.login(result.user.uid);
+      console.log("OneSignal External User ID set:", result.user.uid);
+
       if (result.isNewUser) {
         router.push({
           pathname: "/signup",
@@ -81,6 +86,7 @@ export default function Login() {
     } else {
       console.log("Google sign-in failed:", result.error);
     }
+
     setGoogleLoading(false);
   };
 

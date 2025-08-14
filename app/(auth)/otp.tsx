@@ -25,6 +25,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { Formik } from "formik";
 import React, { useState } from "react";
 import { TouchableOpacity, View } from "react-native";
+import { OneSignal } from "react-native-onesignal";
 import { useDispatch, useSelector } from "react-redux";
 import * as Yup from "yup";
 
@@ -69,6 +70,13 @@ export default function OtpScreen() {
                 } else {
                   AsyncStorage.clear();
                   router.dismissAll();
+                  if (existingUser.uid) {
+                    OneSignal.login(existingUser.uid);
+                    console.log(
+                      "OneSignal External User ID set:",
+                      existingUser.uid
+                    );
+                  }
                   router.push("/main/home");
                   dispatch(setToken(true));
                   dispatch(setUser(existingUser));

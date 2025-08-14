@@ -26,10 +26,24 @@ import Toast, {
 } from "react-native-toast-message";
 import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
+import { OneSignal, LogLevel } from "react-native-onesignal";
+import { useEffect } from "react";
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
+
+  const APP_ID: any = process.env.EXPO_PUBLIC_ONESIGNAL_APP_ID;
+
+  useEffect(() => {
+    // Enable verbose logging for debugging (remove in production)
+    OneSignal.Debug.setLogLevel(LogLevel.Verbose);
+    // Initialize with your OneSignal App ID
+    OneSignal.initialize(APP_ID);
+    // Use this method to prompt for push notifications.
+    // We recommend removing this method after testing and instead use In-App Messages to prompt for notification permission.
+    OneSignal.Notifications.requestPermission(false);
+  }, []);
 
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),

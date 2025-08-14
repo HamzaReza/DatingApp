@@ -33,6 +33,7 @@ import {
 import { RootState } from "@/redux/store";
 import { encodeImagePath, hp, wp } from "@/utils";
 import { requestLocationPermission } from "@/utils/Permission";
+import { sendNotification } from "@/utils/sendPushNotification";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import { router } from "expo-router";
@@ -77,6 +78,14 @@ export default function Home() {
   const [commentListener, setCommentListener] = useState<(() => void) | null>(
     null
   );
+
+  useEffect(() => {
+    sendNotification(
+      ["Ylb2MIBvcec996gaNCmmhOQL8WH3"],
+      "Hello!",
+      "Test notification from thishon"
+    );
+  }, []);
 
   // Get user's current location
   const getCurrentLocation = async () => {

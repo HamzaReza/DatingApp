@@ -33,11 +33,13 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
 
+  const APP_ID: any = process.env.EXPO_PUBLIC_ONESIGNAL_APP_ID;
+
   useEffect(() => {
     // Enable verbose logging for debugging (remove in production)
     OneSignal.Debug.setLogLevel(LogLevel.Verbose);
     // Initialize with your OneSignal App ID
-    OneSignal.initialize("67730861-31d2-4f5c-b30d-6877e445d4cb");
+    OneSignal.initialize(APP_ID);
     // Use this method to prompt for push notifications.
     // We recommend removing this method after testing and instead use In-App Messages to prompt for notification permission.
     OneSignal.Notifications.requestPermission(false);

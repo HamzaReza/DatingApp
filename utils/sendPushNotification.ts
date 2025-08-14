@@ -1,11 +1,7 @@
 import axios from "axios";
 
-// const APP_ID = process.env.ONESIGNAL_APP_ID;
-// const API_KEY = process.env.ONESIGNAL_API_KEY;
-
-const APP_ID = "67730861-31d2-4f5c-b30d-6877e445d4cb";
-const API_KEY =
-  "os_v2_app_m5zqqyjr2jhvzmynnb36irouzoojreapj5heu7uxrv57qztpanfns43uaiduj33qnxss23gfectlpnbfwidld2lappg4f2x6idgsa2q";
+const APP_ID = process.env.EXPO_PUBLIC_ONESIGNAL_APP_ID;
+const API_KEY = process.env.EXPO_PUBLIC_ONESIGNAL_API_KEY;
 
 export async function sendNotification(
   userIds: string,

@@ -7,6 +7,7 @@ export default function showToaster({
   message,
   position,
   onHide,
+  onPress,
 }: RnToastProps) {
   Toast.show({
     type: type ?? "success",
@@ -14,5 +15,6 @@ export default function showToaster({
     text2: message,
     position: position ?? "top",
     onHide: onHide,
+    onPress: onPress,
   });
 }

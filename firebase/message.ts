@@ -1,5 +1,6 @@
-import { User } from "@/app/(tabs)/messages/types";
 import { store } from "@/redux/store";
+import { User } from "@/types/Messages";
+import { sendPushNotification } from "@/utils/sendPushNotification";
 import {
   arrayUnion,
   collection,
@@ -135,6 +136,16 @@ const sendDirectMessage = async (
     //     },
     //   });
     // }
+    await sendPushNotification({
+      toUserId: [receiverId],
+      title: "You got a new message!",
+      subtitle: `${store.getState().user.user?.name} sent you a message`,
+      data: {
+        matchId,
+        senderId,
+        image: store.getState().user.user?.photo,
+      },
+    });
   } catch (error) {
     console.error("Error sending message:", error);
     throw new Error("Failed to send message");

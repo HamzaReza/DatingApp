@@ -18,6 +18,7 @@ import { RootState, store } from "@/redux/store";
 import { encodeImagePath } from "@/utils";
 import getDistanceFromLatLonInMeters from "@/utils/Distance";
 import { calculateMatchScore } from "@/utils/MatchScore";
+import { sendPushNotification } from "@/utils/sendPushNotification";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useFocusEffect } from "expo-router";
@@ -155,6 +156,16 @@ export default function SwipeProfile() {
             image: currentUser.photo,
           },
         });
+        await sendPushNotification({
+          toUserId: [profileData.id],
+          title: "You got a Like!",
+          subtitle: `${reduxUser.name} liked your profile`,
+          data: {
+            id: currentUser.uid,
+            type: "like",
+            image: currentUser.photo,
+          },
+        });
       }
 
       const nextUser = await getNextUserForSwipe(currentUser.uid, [
@@ -215,6 +226,16 @@ export default function SwipeProfile() {
           type: "match",
           data: {
             id: currentUser.uid,
+            image: currentUser.photo,
+          },
+        });
+        await sendPushNotification({
+          toUserId: [profileData.id],
+          title: "It's a Match!",
+          subtitle: `${currentUser.name || "Someone"} matched with you!`,
+          data: {
+            id: currentUser.uid,
+            type: "match",
             image: currentUser.photo,
           },
         });

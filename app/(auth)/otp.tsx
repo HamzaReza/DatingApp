@@ -70,13 +70,7 @@ export default function OtpScreen() {
                 } else {
                   AsyncStorage.clear();
                   router.dismissAll();
-                  if (existingUser.uid) {
-                    OneSignal.login(existingUser.uid);
-                    console.log(
-                      "OneSignal External User ID set:",
-                      existingUser.uid
-                    );
-                  }
+                  OneSignal.login(existingUser.uid);
                   router.push("/main/home");
                   dispatch(setToken(true));
                   dispatch(setUser(existingUser));
@@ -106,6 +100,7 @@ export default function OtpScreen() {
                           router.dismissAll();
                           router.push("/main/home");
                           dispatch(setToken(true));
+                          OneSignal.login(userWithGuardian.uid);
                           dispatch(setUser(userWithGuardian));
                         }
                       })

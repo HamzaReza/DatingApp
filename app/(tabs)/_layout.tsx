@@ -6,7 +6,11 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { router, Tabs, usePathname } from "expo-router";
 import { useCallback, useEffect } from "react";
 import { Pressable, StyleSheet, useColorScheme, View } from "react-native";
-import { OneSignal } from "react-native-onesignal";
+import {
+  NotificationClickEvent,
+  NotificationWillDisplayEvent,
+  OneSignal,
+} from "react-native-onesignal";
 import Toast from "react-native-toast-message";
 
 export default function TabLayout() {
@@ -110,15 +114,18 @@ export default function TabLayout() {
   );
 
   useEffect(() => {
-    OneSignal.Notifications.addEventListener("click", (event: any) => {
-      const data = event.notification?.additionalData;
-      if (!data) return;
-      handleNotificationPress(data);
-    });
+    OneSignal.Notifications.addEventListener(
+      "click",
+      (event: NotificationClickEvent) => {
+        const data = event.notification?.additionalData;
+        if (!data) return;
+        handleNotificationPress(data);
+      }
+    );
 
     OneSignal.Notifications.addEventListener(
       "foregroundWillDisplay",
-      (event: any) => {
+      (event: NotificationWillDisplayEvent) => {
         event.preventDefault();
 
         const notification = event.notification;
@@ -131,9 +138,7 @@ export default function TabLayout() {
           position: "top",
           onPress: () => {
             Toast.hide();
-            if (data) {
-              handleNotificationPress(data);
-            }
+            if (data) handleNotificationPress(data);
           },
         });
       }

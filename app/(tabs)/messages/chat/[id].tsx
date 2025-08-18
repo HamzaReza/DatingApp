@@ -22,6 +22,7 @@ import {
 } from "@/firebase/message";
 import { checkBothUsersPaid } from "@/firebase/stripe";
 import { RootState } from "@/redux/store";
+import { GroupMessage } from "@/types/Messages";
 import { encodeImagePath, hp, wp } from "@/utils";
 import { MaterialIcons } from "@expo/vector-icons";
 import {
@@ -65,7 +66,6 @@ import {
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useSelector } from "react-redux";
-import { GroupMessage } from "../types";
 
 export default function Chat() {
   const colorScheme = useColorScheme();

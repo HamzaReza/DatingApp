@@ -1,5 +1,5 @@
-import { User } from "@/app/(tabs)/messages/types";
 import { store } from "@/redux/store";
+import { User } from "@/types/Messages";
 import { sendPushNotification } from "@/utils/sendPushNotification";
 import {
   arrayUnion,

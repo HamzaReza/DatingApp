@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { VideoProvider } from "@/components/VideoContext";
 import { Colors } from "@/constants/Colors";
 import { FontSize } from "@/constants/FontSize";
@@ -14,8 +15,10 @@ import {
 import { StripeProvider } from "@stripe/stripe-react-native";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
+import { useEffect } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { OneSignal } from "react-native-onesignal";
 import "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Toast, {
@@ -26,8 +29,6 @@ import Toast, {
 } from "react-native-toast-message";
 import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
-import { OneSignal, LogLevel } from "react-native-onesignal";
-import { useEffect } from "react";
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -36,13 +37,9 @@ export default function RootLayout() {
   const APP_ID: any = process.env.EXPO_PUBLIC_ONESIGNAL_APP_ID;
 
   useEffect(() => {
-    // Enable verbose logging for debugging (remove in production)
-    OneSignal.Debug.setLogLevel(LogLevel.Verbose);
-    // Initialize with your OneSignal App ID
+    console.log("🚀 ~ _layout.tsx:41 ~ RootLayout ~ APP_ID:", APP_ID);
     OneSignal.initialize(APP_ID);
-    // Use this method to prompt for push notifications.
-    // We recommend removing this method after testing and instead use In-App Messages to prompt for notification permission.
-    OneSignal.Notifications.requestPermission(false);
+    OneSignal.Notifications.requestPermission(true);
   }, []);
 
   const [loaded] = useFonts({
@@ -53,7 +50,6 @@ export default function RootLayout() {
     InterBold: require("../assets/fonts/Inter-Bold.ttf"),
   });
 
-  // Configure Firebase emulators for local development
   configureFirebaseEmulators();
 
   if (!loaded) {

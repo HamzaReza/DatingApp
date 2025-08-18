@@ -1,3 +1,5 @@
+import { sendInAppNotification } from "@/helpers/notificationHelper";
+import { sendPushNotification } from "@/utils/sendPushNotification";
 import { FirebaseAuthTypes } from "@react-native-firebase/auth";
 import {
   addDoc,
@@ -21,7 +23,6 @@ import {
   putFile,
   ref,
 } from "@react-native-firebase/storage";
-import { sendInAppNotification } from "../helpers/notificationHelper";
 export interface Reel {
   id: string;
   userId: string;
@@ -172,6 +173,18 @@ const likeDislikeReel = async (
           title: "Reel Rejected",
           subtitle: `Your reel captioned ${reelData?.caption} has been rejected due to community feedback. It received too many dislikes.`,
           type: "reel",
+          data: {
+            id: reelOwnerId,
+            reelId: reelId,
+            action: "reel_rejected",
+            caption: reelData?.caption || "",
+            image: reelData?.thumbnailUrl || "",
+          },
+        });
+        await sendPushNotification({
+          toUserId: [reelOwnerId],
+          title: "Reel Rejected",
+          subtitle: `Your reel captioned ${reelData?.caption} has been rejected due to community feedback. It received too many dislikes.`,
           data: {
             id: reelOwnerId,
             reelId: reelId,

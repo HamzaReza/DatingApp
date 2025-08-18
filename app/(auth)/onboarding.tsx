@@ -10,6 +10,7 @@ import { wp } from "@/utils";
 import { router } from "expo-router";
 import { useState } from "react";
 import { ImageBackground, TouchableOpacity, View } from "react-native";
+import { OneSignal } from "react-native-onesignal";
 import { useDispatch } from "react-redux";
 
 export default function Onboarding({ navigation }: any) {
@@ -38,6 +39,7 @@ export default function Onboarding({ navigation }: any) {
             role: "user",
           })
         );
+        OneSignal.login(result.user.uid);
         dispatch(setToken(true));
       }
     } else {

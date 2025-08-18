@@ -63,9 +63,6 @@ export default function Login() {
     const result = await signInWithGoogleFirebase(dispatch);
 
     if (result.success) {
-      OneSignal.login(result.user.uid);
-      console.log("OneSignal External User ID set:", result.user.uid);
-
       if (result.isNewUser) {
         router.push({
           pathname: "/signup",
@@ -74,6 +71,8 @@ export default function Login() {
           },
         });
       } else {
+        OneSignal.login(result.user.uid);
+        console.log("OneSignal External User ID set:", result.user.uid);
         router.push("/main/home");
         dispatch(
           setUser({

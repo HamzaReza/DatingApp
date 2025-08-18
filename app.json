@@ -14,6 +14,13 @@
       "googleServicesFile": "./GoogleService-Info.plist",
       "config": {
         "googleMapsApiKey": "process.env.IOS_GOOGLE_MAPS_API_KEY"
+      },
+      "infoPlist": {
+        "UIBackgroundModes": ["remote-notification"]
+      },
+      "entitlements": {
+        "aps-environment": "development",
+        "com.apple.security.application-groups": ["group.com.dating.app.onesignal"]
       }
     },
     "android": {
@@ -44,6 +51,12 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
+      [
+        "onesignal-expo-plugin",
+        {
+          "mode": "development"
+        }
+      ],
       "@react-native-firebase/app",
       "@react-native-firebase/auth",
       "expo-router",
@@ -96,18 +109,6 @@
         {
           "merchantIdentifier": "merchant.com.dating.app",
           "enableGooglePay": true
-        }
-      ],
-      [
-        "onesignal-expo-plugin",
-        {
-          "mode": "development"
-        }
-      ],
-      [
-        "onesignal-expo-plugin",
-        {
-          "mode": "development"
         }
       ]
     ],

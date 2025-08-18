@@ -4,6 +4,7 @@ import { setUser } from "@/redux/slices/userSlice";
 import { AppDispatch, store } from "@/redux/store";
 import getDistanceFromLatLonInMeters from "@/utils/Distance";
 import { calculateMatchScore } from "@/utils/MatchScore";
+import { sendPushNotification } from "@/utils/sendPushNotification";
 import {
   FirebaseAuthTypes,
   getAuth,
@@ -785,6 +786,21 @@ export const sendGroupInvitesByTags = async (
           inviterId: invitedBy,
           inviterName,
           image: inviterData?.photo,
+        },
+      });
+      await sendPushNotification({
+        toUserId: [user.uid],
+        title: groupName,
+        subtitle: `${inviterName} has invited you for a hangout. Want to join?`,
+        data: {
+          id: groupId,
+          type: "groupMessage",
+          image: inviterData?.photo,
+          tags: selectedTags,
+          maxParticipants,
+          createdAt: now.toDate(),
+          inviterId: invitedBy,
+          inviterName,
         },
       });
     }

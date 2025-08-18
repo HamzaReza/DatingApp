@@ -36,18 +36,12 @@ export async function sendPushNotification({
       notification.data = data;
     }
 
-    const response = await axios.post(
-      "https://api.onesignal.com/notifications",
-      notification,
-      {
-        headers: {
-          "Content-Type": "application/json; charset=utf-8",
-          Authorization: `Basic ${API_KEY}`,
-        },
-      }
-    );
-
-    console.log("Notification sent:", response.data);
+    await axios.post("https://api.onesignal.com/notifications", notification, {
+      headers: {
+        "Content-Type": "application/json; charset=utf-8",
+        Authorization: `Basic ${API_KEY}`,
+      },
+    });
   } catch (error: any) {
     console.error(
       "Error sending notification:",

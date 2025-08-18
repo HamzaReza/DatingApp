@@ -72,7 +72,6 @@ export default function Login() {
         });
       } else {
         OneSignal.login(result.user.uid);
-        console.log("OneSignal External User ID set:", result.user.uid);
         router.push("/main/home");
         dispatch(
           setUser({

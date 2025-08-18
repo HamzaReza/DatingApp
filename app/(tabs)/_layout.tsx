@@ -1,9 +1,13 @@
+import showToaster from "@/components/RnToast";
 import { Borders } from "@/constants/Borders";
 import { Colors } from "@/constants/Colors";
 import { hp, wp } from "@/utils";
 import { MaterialIcons } from "@expo/vector-icons";
 import { router, Tabs, usePathname } from "expo-router";
+import { useCallback, useEffect } from "react";
 import { Pressable, StyleSheet, useColorScheme, View } from "react-native";
+import { OneSignal } from "react-native-onesignal";
+import Toast from "react-native-toast-message";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -29,6 +33,112 @@ export default function TabLayout() {
       position: "absolute",
     },
   });
+
+  // Notification handling functions (same as in notification.tsx)
+  const handleReelNotificationPress = useCallback((userId: string) => {
+    router.push({
+      pathname: "/(tabs)/discover/[id]",
+      params: {
+        id: userId,
+        isFriend: "false",
+      },
+    });
+  }, []);
+
+  const handleLikeNotificationPress = useCallback((userId: string) => {
+    router.push({
+      pathname: "/(tabs)/discover/[id]",
+      params: {
+        id: userId,
+        isFriend: "false",
+      },
+    });
+  }, []);
+
+  const handleMatchNotificationPress = useCallback((userId: string) => {
+    router.push({
+      pathname: "/(tabs)/discover/[id]",
+      params: {
+        id: userId,
+        isFriend: "true",
+      },
+    });
+  }, []);
+
+  const handleMessageNotificationPress = useCallback((messageId: string) => {
+    router.push({
+      pathname: "/messages/chat/[id]",
+      params: { id: messageId },
+    });
+  }, []);
+
+  const handleGroupNotificationPress = useCallback((groupId: string) => {
+    router.push(`/mainScreens/hangoutDetails?groupId=${groupId}`);
+  }, []);
+
+  // Unified notification handler
+  const handleNotificationPress = useCallback(
+    (data: any) => {
+      switch (data.type) {
+        case "reel":
+          handleReelNotificationPress(data.id);
+          break;
+        case "like":
+          handleLikeNotificationPress(data.id);
+          break;
+        case "match":
+          handleMatchNotificationPress(data.id);
+          break;
+        case "message":
+          handleMessageNotificationPress(data.chatId || data.id);
+          break;
+        case "groupMessage":
+          handleGroupNotificationPress(data.groupId);
+          break;
+        default:
+          console.log("Unknown notification type:", data.type);
+          break;
+      }
+    },
+    [
+      handleReelNotificationPress,
+      handleLikeNotificationPress,
+      handleMatchNotificationPress,
+      handleMessageNotificationPress,
+      handleGroupNotificationPress,
+    ]
+  );
+
+  useEffect(() => {
+    OneSignal.Notifications.addEventListener("click", (event: any) => {
+      const data = event.notification?.additionalData;
+      if (!data) return;
+      handleNotificationPress(data);
+    });
+
+    OneSignal.Notifications.addEventListener(
+      "foregroundWillDisplay",
+      (event: any) => {
+        event.preventDefault();
+
+        const notification = event.notification;
+        const data = notification?.additionalData;
+
+        showToaster({
+          type: "info",
+          heading: notification?.title || "New Notification",
+          message: notification?.body || "You have a new notification",
+          position: "top",
+          onPress: () => {
+            Toast.hide();
+            if (data) {
+              handleNotificationPress(data);
+            }
+          },
+        });
+      }
+    );
+  }, [handleNotificationPress]);
 
   return (
     <Tabs

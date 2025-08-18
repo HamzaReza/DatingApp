@@ -10,7 +10,7 @@ import {
 } from "@/firebase/auth";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { RootState } from "@/redux/store";
-import { encodeImagePath } from "@/utils";
+import { encodeImagePath, hp } from "@/utils";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { FlatList, Image, TouchableOpacity, View } from "react-native";
@@ -105,46 +105,57 @@ export default function NotificationScreen() {
     });
   };
 
-  const renderItem = ({ item }: { item: NotificationItem }) => (
-    <TouchableOpacity
-      style={[styles.card, !item.read && styles.unreadCard]}
-      onPress={() => handleNotificationPress(item)}
-    >
-      <Image
-        source={{ uri: encodeImagePath(item.image) }}
-        style={styles.avatar}
-      />
-      <View style={styles.content}>
-        <RnText style={[styles.title, item.read && styles.readTitle]}>
-          {item.title}
-        </RnText>
-        <RnText
-          style={[styles.description, item.read && styles.readDescription]}
-        >
-          {item.description}
-        </RnText>
+  const renderItem = ({ item }: { item: NotificationItem }) => {
+    const type = item.type;
+    let image = item.image;
 
-        {item.type === "groupMessage" && item.status === "pending" && (
-          <RnButton
-            style={[styles.buttonContainer, styles.buttonText]}
-            title="View Details"
-            onPress={() => handleGroupNotificationPress(item.id)}
-          />
-        )}
+    if (
+      type === "like" ||
+      type === "match" ||
+      type === "groupMessage" ||
+      type === "message"
+    ) {
+      image = encodeImagePath(item.image);
+    }
 
-        {item.type === "groupMessage" && item.status === "accepted" && (
-          <RnText style={styles.acceptedText}>✓ Accepted</RnText>
-        )}
+    return (
+      <TouchableOpacity
+        style={[styles.card, !item.read && styles.unreadCard]}
+        onPress={() => handleNotificationPress(item)}
+      >
+        <Image source={{ uri: image }} style={styles.avatar} />
+        <View style={styles.content}>
+          <RnText style={[styles.title, item.read && styles.readTitle]}>
+            {item.title}
+          </RnText>
+          <RnText
+            style={[styles.description, item.read && styles.readDescription]}
+          >
+            {item.description}
+          </RnText>
 
-        {item.type === "groupMessage" && item.status === "rejected" && (
-          <RnText style={styles.rejectedText}>✗ Declined</RnText>
-        )}
+          {item.type === "groupMessage" && item.status === "pending" && (
+            <RnButton
+              style={[styles.buttonContainer, styles.buttonText]}
+              title="View Details"
+              onPress={() => handleGroupNotificationPress(item.id)}
+            />
+          )}
 
-        <RnText style={styles.time}>{item.time}</RnText>
-      </View>
-      {!item.read && <View style={styles.unreadDot} />}
-    </TouchableOpacity>
-  );
+          {item.type === "groupMessage" && item.status === "accepted" && (
+            <RnText style={styles.acceptedText}>✓ Accepted</RnText>
+          )}
+
+          {item.type === "groupMessage" && item.status === "rejected" && (
+            <RnText style={styles.rejectedText}>✗ Declined</RnText>
+          )}
+
+          <RnText style={styles.time}>{item.time}</RnText>
+        </View>
+        {!item.read && <View style={styles.unreadDot} />}
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <Container>
@@ -171,6 +182,7 @@ export default function NotificationScreen() {
             <RnText style={styles.emptyText}>No notifications</RnText>
           </View>
         }
+        ListFooterComponent={() => <View style={{ height: hp(30) }} />}
       />
     </Container>
   );

@@ -37,7 +37,6 @@ export default function RootLayout() {
   const APP_ID: any = process.env.EXPO_PUBLIC_ONESIGNAL_APP_ID;
 
   useEffect(() => {
-    console.log("🚀 ~ _layout.tsx:41 ~ RootLayout ~ APP_ID:", APP_ID);
     OneSignal.initialize(APP_ID);
     OneSignal.Notifications.requestPermission(true);
   }, []);
@@ -77,20 +76,20 @@ export default function RootLayout() {
     successToast: {
       borderLeftColor: Colors[theme].primary,
       borderLeftWidth: wp(3),
-      marginTop: hp(2),
-      height: hp(9),
+      height: undefined,
+      paddingVertical: hp(0.5),
     },
     errorToast: {
       borderLeftColor: Colors[theme].pink,
       borderLeftWidth: wp(3),
-      marginTop: hp(2),
-      height: hp(9),
+      height: undefined,
+      paddingVertical: hp(0.5),
     },
     infoToast: {
       borderLeftColor: Colors[theme].primary,
       borderLeftWidth: wp(3),
-      marginTop: hp(2),
-      height: hp(9),
+      height: undefined,
+      paddingVertical: hp(0.5),
     },
   });
 
@@ -101,8 +100,8 @@ export default function RootLayout() {
         text1Style={styles.headingText}
         text2Style={styles.messageText}
         style={styles.successToast}
-        text1NumberOfLines={3}
-        text2NumberOfLines={3}
+        text1NumberOfLines={10}
+        text2NumberOfLines={10}
       />
     ),
     error: (props: ToastProps) => (
@@ -111,8 +110,8 @@ export default function RootLayout() {
         text1Style={styles.headingText}
         text2Style={styles.messageText}
         style={styles.errorToast}
-        text1NumberOfLines={3}
-        text2NumberOfLines={3}
+        text1NumberOfLines={10}
+        text2NumberOfLines={10}
       />
     ),
     info: (props: ToastProps) => (
@@ -121,8 +120,8 @@ export default function RootLayout() {
         text1Style={styles.headingText}
         text2Style={styles.messageText}
         style={styles.infoToast}
-        text1NumberOfLines={3}
-        text2NumberOfLines={3}
+        text1NumberOfLines={10}
+        text2NumberOfLines={10}
       />
     ),
   };

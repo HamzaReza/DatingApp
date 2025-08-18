@@ -188,7 +188,7 @@ const likeDislikeReel = async (
           data: {
             id: reelOwnerId,
             reelId: reelId,
-            action: "reel_rejected",
+            type: "reel",
             caption: reelData?.caption || "",
             image: reelData?.thumbnailUrl || "",
           },

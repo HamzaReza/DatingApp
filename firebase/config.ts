@@ -1,7 +1,4 @@
-import {
-  connectFunctionsEmulator,
-  getFunctions,
-} from "@react-native-firebase/functions";
+import { getFunctions } from "@react-native-firebase/functions";
 
 // Configure Firebase to use local emulators in development
 export const configureFirebaseEmulators = () => {
@@ -11,11 +8,11 @@ export const configureFirebaseEmulators = () => {
       // const db = getFirestore();
       // connectFirestoreEmulator(db, "localhost", 8080);
 
-      // Configure Functions emulator using new modular API
+      // Configure Functions emulator
       // Use localhost for emulator, IP for real device
       const host = "localhost";
-      // const host = "192.168.34.12";
-      connectFunctionsEmulator(getFunctions(), host, 5001);
+      // const host = "192.168.110.12";
+      getFunctions().useEmulator(host, 5001);
 
       console.log(`✅ Firebase emulators configured (host: ${host})`);
     } catch (error) {

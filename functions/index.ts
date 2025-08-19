@@ -445,6 +445,10 @@ export const checkExpiredPayments = onSchedule("every 6 hours", async event => {
 });
 // Function to create payment intent for match messages
 export const createMessagePaymentIntent = onCall(
+  {
+    timeoutSeconds: 60,
+    memory: "256MiB",
+  },
   async (data: any, context: any) => {
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
       apiVersion: "2025-07-30.basil",
@@ -506,6 +510,10 @@ export const createMessagePaymentIntent = onCall(
 
 // Function to create payment intent for event tickets
 export const createEventTicketPaymentIntent = onCall(
+  {
+    timeoutSeconds: 60,
+    memory: "256MiB",
+  },
   async (data: any, context: any) => {
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
       apiVersion: "2025-07-30.basil",

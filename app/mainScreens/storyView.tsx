@@ -1,12 +1,9 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import createStyles from "@/app/mainScreens/styles/storyView.styles";
-import RnInput from "@/components/RnInput";
 import RnText from "@/components/RnText";
-import { Colors } from "@/constants/Colors";
 import { fetchStoriesForUser, getUserByUid } from "@/firebase/auth"; // your function
 import { useScreenCapture } from "@/hooks/useScreenCapture";
 import { encodeImagePath } from "@/utils";
-import Feather from "@expo/vector-icons/Feather";
 import {
   collection,
   getDocs,
@@ -21,8 +18,6 @@ import {
   Image,
   ImageBackground,
   Keyboard,
-  KeyboardAvoidingView,
-  Platform,
   TouchableOpacity,
   useColorScheme,
   View,
@@ -246,7 +241,7 @@ export default function StoryView() {
 
   return (
     <ImageBackground
-      source={{ uri: imageUri }}
+      source={{ uri: encodeImagePath(imageUri) }}
       style={{ flex: 1 }}
       resizeMode="cover"
       onLoadStart={() => setIsImageLoading(true)}
@@ -293,7 +288,7 @@ export default function StoryView() {
           </View>
         </View>
 
-        <KeyboardAvoidingView
+        {/* <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : undefined}
           style={styles.inputWrapper}
         >
@@ -313,7 +308,7 @@ export default function StoryView() {
               <Feather name="send" size={25} color={Colors[theme].whiteText} />
             </TouchableOpacity>
           </View>
-        </KeyboardAvoidingView>
+        </KeyboardAvoidingView> */}
       </TouchableOpacity>
       {isImageLoading && (
         <View>

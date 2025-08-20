@@ -169,7 +169,7 @@ export default function Messages() {
   };
 
   const updateChatStatus = (convoId: any, statusUpdateFn: any) => {
-    setChatStatusMap(prev => ({
+    setChatStatusMap((prev: any) => ({
       ...prev,
       [convoId]: statusUpdateFn(prev[convoId] || {}),
     }));

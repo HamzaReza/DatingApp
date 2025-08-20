@@ -160,3 +160,83 @@ export const checkBothUsersPaid = async (matchId: string): Promise<boolean> => {
     return false;
   }
 };
+
+// Check if the other user (not current user) has paid for a match
+export const checkOtherUserPaid = async (
+  matchId: string,
+  currentUserId: string
+): Promise<boolean> => {
+  try {
+    const db = getFirestore();
+
+    // Get the match payment record
+    const matchPaymentQuery = query(
+      collection(db, "matchPayments"),
+      where("matchId", "==", matchId)
+    );
+
+    const matchPaymentSnapshot = await getDocs(matchPaymentQuery);
+
+    if (matchPaymentSnapshot.empty) {
+      return false;
+    }
+
+    const matchPayment = matchPaymentSnapshot.docs[0].data() as MatchPayment;
+
+    // Check if the other user has paid by looking at their payment ID
+    if (matchPayment.user1Id === currentUserId) {
+      // Current user is user1, check if user2 has paid
+      return !!matchPayment.user2PaymentId;
+    } else if (matchPayment.user2Id === currentUserId) {
+      // Current user is user2, check if user1 has paid
+      return !!matchPayment.user1PaymentId;
+    }
+
+    return false;
+  } catch (error) {
+    console.error("Error checking if other user paid:", error);
+    return false;
+  }
+};
+
+// Real-time listener for checking if other user has paid
+export const onOtherUserPaidChange = (
+  matchId: string,
+  currentUserId: string,
+  callback: (otherUserPaid: boolean) => void
+) => {
+  const db = getFirestore();
+
+  // Get the match payment record
+  const matchPaymentQuery = query(
+    collection(db, "matchPayments"),
+    where("matchId", "==", matchId)
+  );
+
+  return onSnapshot(
+    matchPaymentQuery,
+    snapshot => {
+      if (snapshot.empty) {
+        callback(false);
+        return;
+      }
+
+      const matchPayment = snapshot.docs[0].data() as MatchPayment;
+
+      // Check if the other user has paid by looking at their payment ID
+      if (matchPayment.user1Id === currentUserId) {
+        // Current user is user1, check if user2 has paid
+        callback(!!matchPayment.user2PaymentId);
+      } else if (matchPayment.user2Id === currentUserId) {
+        // Current user is user2, check if user1 has paid
+        callback(!!matchPayment.user1PaymentId);
+      } else {
+        callback(false);
+      }
+    },
+    error => {
+      console.error("Error listening to other user payment status:", error);
+      callback(false);
+    }
+  );
+};

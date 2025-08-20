@@ -2,6 +2,7 @@ import { sendInAppNotification } from "@/helpers/notificationHelper";
 import { addViewedUser, resetViewedUsers } from "@/redux/slices/swipeSlice";
 import { setUser } from "@/redux/slices/userSlice";
 import { AppDispatch, store } from "@/redux/store";
+import { encodeImagePath } from "@/utils";
 import getDistanceFromLatLonInMeters from "@/utils/Distance";
 import { calculateMatchScore } from "@/utils/MatchScore";
 import { sendPushNotification } from "@/utils/sendPushNotification";
@@ -538,7 +539,8 @@ const fetchAllUserStories = async (userId: string) => {
     const usersData = usersSnapshot.docs.map((doc: any) => ({
       id: doc.id,
       username: doc.data().name || "User",
-      profilePic: doc.data().photo || "https://example.com/default.jpg",
+      profilePic:
+        encodeImagePath(doc.data().photo) || "https://example.com/default.jpg",
       isOwn: doc.id === userId,
     }));
 

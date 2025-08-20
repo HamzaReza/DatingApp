@@ -82,7 +82,7 @@ async function handlePaymentIntentSucceeded(paymentIntent) {
 async function handleMatchPaymentSuccess(paymentIntent, paymentId, userId, matchId, amount, currency) {
     // Create payment document in Firestore only after successful payment
     const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + 24); // 24 hours from now
+    expiresAt.setHours(expiresAt.getHours() + 6); // 6 hours from now
     const paymentData = {
         userId: userId,
         matchId: matchId,
@@ -164,6 +164,35 @@ async function handleChargeRefunded(charge) {
             refundedAt: new Date(),
             refundReason: "Refunded via Stripe",
         });
+        // Also reset the userPaymentId in matchPayments collection
+        try {
+            const paymentData = paymentDoc.data();
+            if (paymentData.matchId) {
+                const matchPaymentsRef = db.collection("matchPayments");
+                const matchPaymentQuery = matchPaymentsRef.where("matchId", "==", paymentData.matchId);
+                const matchPaymentSnapshot = await matchPaymentQuery.get();
+                if (!matchPaymentSnapshot.empty) {
+                    const matchPaymentDoc = matchPaymentSnapshot.docs[0];
+                    const matchPaymentData = matchPaymentDoc.data();
+                    // Determine which user's payment was refunded and reset their paymentId
+                    if (matchPaymentData.user1PaymentId === paymentDoc.id) {
+                        await matchPaymentDoc.ref.update({
+                            user1PaymentId: null,
+                            updatedAt: new Date(),
+                        });
+                    }
+                    else if (matchPaymentData.user2PaymentId === paymentDoc.id) {
+                        await matchPaymentDoc.ref.update({
+                            user2PaymentId: null,
+                            updatedAt: new Date(),
+                        });
+                    }
+                }
+            }
+        }
+        catch (error) {
+            console.error("Error updating match payment record:", error);
+        }
         console.log("Payment refunded:", charge.id);
     }
     catch (error) {
@@ -251,7 +280,7 @@ async function createOrUpdateMatchPaymentInFunction(matchId, userId, paymentId) 
         if (matchPaymentSnapshot.empty) {
             // Create new match payment record
             const expiresAt = new Date();
-            expiresAt.setHours(expiresAt.getHours() + 24); // 24 hours from now
+            expiresAt.setHours(expiresAt.getHours() + 6); // 6 hours from now
             const matchPaymentData = {
                 matchId,
                 user1Id,
@@ -282,8 +311,8 @@ async function createOrUpdateMatchPaymentInFunction(matchId, userId, paymentId) 
         throw error;
     }
 }
-// Scheduled function to check for expired payments and process refunds
-exports.checkExpiredPayments = (0, scheduler_1.onSchedule)("every 6 hours", async (event) => {
+// Scheduled function to check for expired payments and process refunds (runs every 2 hours)
+exports.checkExpiredPayments = (0, scheduler_1.onSchedule)("every 2 hours", async (event) => {
     const stripe = new stripe_1.default(process.env.STRIPE_SECRET_KEY || "", {
         apiVersion: "2025-07-30.basil",
     });
@@ -312,8 +341,34 @@ exports.checkExpiredPayments = (0, scheduler_1.onSchedule)("every 6 hours", asyn
                 await doc.ref.update({
                     status: "refunded",
                     refundedAt: new Date(),
-                    refundReason: "Payment expired - 24 hour payment window passed",
+                    refundReason: "Payment expired - 6 hour payment window passed",
                 });
+                // Also reset the userPaymentId in matchPayments collection
+                try {
+                    const matchPaymentsRef = db.collection("matchPayments");
+                    const matchPaymentQuery = matchPaymentsRef.where("matchId", "==", paymentData.matchId);
+                    const matchPaymentSnapshot = await matchPaymentQuery.get();
+                    if (!matchPaymentSnapshot.empty) {
+                        const matchPaymentDoc = matchPaymentSnapshot.docs[0];
+                        const matchPaymentData = matchPaymentDoc.data();
+                        // Determine which user's payment was refunded and reset their paymentId
+                        if (matchPaymentData.user1PaymentId === doc.id) {
+                            await matchPaymentDoc.ref.update({
+                                user1PaymentId: null,
+                                updatedAt: new Date(),
+                            });
+                        }
+                        else if (matchPaymentData.user2PaymentId === doc.id) {
+                            await matchPaymentDoc.ref.update({
+                                user2PaymentId: null,
+                                updatedAt: new Date(),
+                            });
+                        }
+                    }
+                }
+                catch (error) {
+                    console.error("Error updating match payment record:", error);
+                }
                 refundCount++;
                 console.log("Refunded expired payment:", doc.id);
             }

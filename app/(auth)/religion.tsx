@@ -57,6 +57,7 @@ export default function Religion() {
         religion: values.religion,
         role: "user",
         status: "pending",
+        isSubscribed: false,
         trustScore: 100,
         isProfileComplete: true,
       };

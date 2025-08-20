@@ -144,8 +144,7 @@ export default (theme: "dark" | "light") =>
       alignItems: "center",
       justifyContent: "space-between",
       paddingHorizontal: wp(4),
-      paddingTop: hp(6),
-      paddingBottom: hp(2),
+      paddingVertical: hp(2),
       borderTopLeftRadius: wp(6),
       borderTopRightRadius: wp(6),
     },
@@ -239,15 +238,40 @@ export default (theme: "dark" | "light") =>
     leftText: {
       color: Colors[theme].whiteText,
     },
+  });
 
-    //
+// Payment Timer Styles
+export const paymentStyles = (theme: "dark" | "light") =>
+  StyleSheet.create({
+    timerContainer: {
+      alignItems: "center",
+      justifyContent: "center",
+      paddingVertical: hp(1),
+      paddingHorizontal: wp(4),
+      marginTop: hp(1),
+    },
+    timerLabel: {
+      textAlign: "center",
+      fontFamily: FontFamily.semiBold,
+    },
+    timerText: {
+      color: Colors[theme].primary,
+      textAlign: "center",
+      fontSize: FontSize.large,
+      fontFamily: FontFamily.bold,
+    },
+  });
+
+// UI Component Styles
+export const uiStyles = (theme: "dark" | "light") =>
+  StyleSheet.create({
     finalButton: {
-      backgroundColor: Colors[theme].pink, // Dodger Blue
-      paddingVertical: 10,
-      paddingHorizontal: 20,
-      borderRadius: 10,
+      backgroundColor: Colors[theme].primary,
+      paddingVertical: hp(1.5),
+      paddingHorizontal: wp(4),
+      borderRadius: Borders.radius3,
       alignSelf: "center",
-      marginVertical: 10,
+      marginVertical: hp(2),
     },
     finalText: {
       color: "white",
@@ -256,9 +280,74 @@ export default (theme: "dark" | "light") =>
       textAlign: "center",
     },
     text: {
-      color: Colors.dark.primary,
+      color: Colors[theme].primary,
       textAlign: "center",
       fontSize: FontSize.small,
+      marginHorizontal: wp(1.5),
+      fontFamily: FontFamily.bold,
     },
-    // ...existing code...
+    payNowContainer: {
+      alignItems: "center",
+      justifyContent: "center",
+      paddingVertical: hp(2),
+      paddingHorizontal: wp(4),
+    },
+    payNowText: {
+      color: Colors[theme].redText,
+      textAlign: "center",
+      fontSize: FontSize.medium,
+      marginBottom: hp(2),
+      fontFamily: FontFamily.medium,
+    },
+    payNowButton: {
+      backgroundColor: Colors[theme].primary,
+      width: wp(40),
+      height: hp(5),
+    },
+    waitingContainer: {
+      alignItems: "center",
+      justifyContent: "center",
+      paddingVertical: hp(2),
+      paddingHorizontal: wp(4),
+    },
+    waitingText: {
+      color: Colors[theme].redText,
+      textAlign: "center",
+      fontSize: FontSize.medium,
+      fontFamily: FontFamily.medium,
+    },
+    modalBackground: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.4)",
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    meetModalContainer: {
+      width: "80%",
+      backgroundColor: "white",
+      padding: 20,
+      borderRadius: 15,
+      alignItems: "center",
+    },
+    modalTitle: {
+      fontSize: 18,
+      fontWeight: "bold",
+      marginBottom: 15,
+    },
+    modalText: {
+      fontSize: 16,
+      marginVertical: 5,
+      textAlign: "center",
+    },
+    modalCloseButton: {
+      marginTop: 20,
+      backgroundColor: "#FF6347",
+      paddingVertical: 8,
+      paddingHorizontal: 20,
+      borderRadius: 10,
+    },
+    modalCloseText: {
+      color: "white",
+      fontSize: 16,
+    },
   });

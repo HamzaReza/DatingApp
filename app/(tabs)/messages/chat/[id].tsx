@@ -21,6 +21,7 @@ import {
   setupGroupMessagesListener,
 } from "@/firebase/message";
 import { checkBothUsersPaid } from "@/firebase/stripe";
+import { useScreenCapture } from "@/hooks/useScreenCapture";
 import { RootState } from "@/redux/store";
 import { GroupMessage } from "@/types/Messages";
 import { encodeImagePath, hp, wp } from "@/utils";
@@ -107,6 +108,8 @@ export default function Chat() {
       return () => unsubscribe(); // Cleanup on unmount
     }
   }, [matchId, user?.uid]);
+
+  useScreenCapture();
 
   // Check payment status and message limit when component mounts
   useFocusEffect(

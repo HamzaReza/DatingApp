@@ -13,7 +13,7 @@ import RoundButton from "@/components/RoundButton";
 import { Colors } from "@/constants/Colors";
 import {
   fetchTags,
-  getUserByUid,
+  getUserByUidAsync,
   sendGroupInvitesByTags,
 } from "@/firebase/auth";
 import { setupChatListeners } from "@/firebase/message";
@@ -204,8 +204,9 @@ export default function Messages() {
         setRecieverId(otherUserId);
         if (!otherUserId) continue;
 
-        const unsubscribe = getUserByUid(otherUserId, user => {
-          if (!user) return;
+        try {
+          const userData = await getUserByUidAsync(otherUserId);
+          if (!userData) continue;
 
           const lastMessage = convo.messages?.[convo.messages.length - 1];
           const timestamp =
@@ -220,12 +221,12 @@ export default function Messages() {
 
           const chatData = {
             id: convoId,
-            groupName: user.name,
+            groupName: userData.name,
             message: lastMessage?.text || "No message yet",
             time: formatTimestamp(timestamp),
             rawTime: timestamp,
-            image: encodeImagePath(user.photo) || null,
-            isOnline: user.isOnline || false,
+            image: encodeImagePath(userData.photo) || null,
+            isOnline: userData.isOnline || false,
             unread: convo.unread || false,
             lastMessage: lastMessage?.content || "No message yet",
             type: "single",
@@ -235,9 +236,9 @@ export default function Messages() {
           allChats.push(chatData);
 
           unsubListeners.push(...listenToMeetStatus(convoId, updateChatStatus));
-        });
-
-        unsubListeners.push(unsubscribe);
+        } catch (error) {
+          console.error("Error fetching user:", error);
+        }
       }
 
       allChats.sort((a: any, b: any) => {

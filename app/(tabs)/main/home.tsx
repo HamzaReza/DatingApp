@@ -424,7 +424,7 @@ export default function Home() {
           keyExtractor={item => item.id}
           renderItem={({ item }) => (
             <StoryCircle
-              image={encodeImagePath(item.image)}
+              image={item.image}
               username={item.username || "user"}
               isOwn={item.isOwn}
               onPress={() => handleStoryPress(item)}

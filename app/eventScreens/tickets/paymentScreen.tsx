@@ -123,10 +123,19 @@ const PaymentScreen = () => {
           eventId as string
         );
 
-        // Call Firebase function to create payment intent
+        // Call Firebase function to create payment intent with extended timeout
         const createEventTicketPaymentIntentFunction =
           getFunctions().httpsCallable("createEventTicketPaymentIntent");
-        const result = await createEventTicketPaymentIntentFunction({
+
+        // Add client-side timeout handling
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(
+            () => reject(new Error("Client timeout after 60 seconds")),
+            60000
+          );
+        });
+
+        const functionPromise = createEventTicketPaymentIntentFunction({
           paymentId,
           amount:
             Number(currentPrice) *
@@ -137,6 +146,11 @@ const PaymentScreen = () => {
           quantity: Number(normalTicketPurchased) || Number(vipTicketPurchased),
           userId: user?.uid || "",
         });
+
+        const result = (await Promise.race([
+          functionPromise,
+          timeoutPromise,
+        ])) as any;
 
         const { clientSecret } = result.data as { clientSecret: string };
 

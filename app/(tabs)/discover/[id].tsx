@@ -23,6 +23,7 @@ import {
   uploadMultipleImages,
 } from "@/firebase/auth";
 import { deleteReelWithFiles, updateReel, uploadReel } from "@/firebase/reels";
+import { useScreenCapture } from "@/hooks/useScreenCapture";
 import { setToken } from "@/redux/slices/userSlice";
 import { RootState } from "@/redux/store";
 import { encodeImagePath, hp, wp } from "@/utils";
@@ -181,6 +182,8 @@ export default function Profile() {
         .filter(Boolean)
     );
   }, [profileData, dropdownItems]);
+
+  useScreenCapture();
 
   const player = useVideoPlayer(selectedReel, (player: any) => {
     player.loop = true;

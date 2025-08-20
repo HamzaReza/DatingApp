@@ -25,16 +25,6 @@ export default function MessagesLayout() {
           // tabBarStyle: { display: "none" }, // Removed because not supported in NativeStack
         }}
       />
-
-      <Stack.Screen
-        name="connection/[id]"
-        options={
-          {
-            // tabBarStyle: { display: "none" }, // Removed because not supported in NativeStack
-          }
-        }
-      />
-
       <Stack.Screen
         name="payment"
         options={{

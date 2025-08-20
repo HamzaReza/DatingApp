@@ -1,10 +1,9 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import createStyles from "@/app/mainScreens/styles/storyView.styles";
-import RnInput from "@/components/RnInput";
 import RnText from "@/components/RnText";
-import { Colors } from "@/constants/Colors";
 import { fetchStoriesForUser, getUserByUid } from "@/firebase/auth"; // your function
+import { useScreenCapture } from "@/hooks/useScreenCapture";
 import { encodeImagePath } from "@/utils";
-import Feather from "@expo/vector-icons/Feather";
 import {
   collection,
   getDocs,
@@ -19,8 +18,6 @@ import {
   Image,
   ImageBackground,
   Keyboard,
-  KeyboardAvoidingView,
-  Platform,
   TouchableOpacity,
   useColorScheme,
   View,
@@ -51,8 +48,8 @@ export default function StoryView() {
   const [isImageLoading, setIsImageLoading] = useState(true);
 
   const progress = useRef(new Animated.Value(0)).current;
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const longPressTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<number | null>(null);
+  const longPressTimeoutRef = useRef<number | null>(null);
   const animationStartTimeRef = useRef<number>(0);
   const elapsedTimeRef = useRef<number>(0);
   const isLongPressRef = useRef(false);
@@ -60,27 +57,6 @@ export default function StoryView() {
   const currentUser = allUsers[currentUserIndex];
   const currentStories = currentUser?.stories || [];
   const currentStory = currentStories[currentStoryIndex];
-
-  const startStoryTimer = (remainingTime = STORY_DURATION) => {
-    timeoutRef.current && clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(goToNextStory, remainingTime);
-  };
-
-  const startProgressAnimation = (elapsedTime = 0) => {
-    const remainingTime = STORY_DURATION - elapsedTime;
-    const progressValue = elapsedTime / STORY_DURATION;
-
-    progress.setValue(progressValue);
-    animationStartTimeRef.current = Date.now() - elapsedTime;
-
-    const anim = Animated.timing(progress, {
-      toValue: 1,
-      duration: remainingTime,
-      useNativeDriver: false,
-    });
-    anim.start();
-    return anim;
-  };
 
   const goToNextStory = async () => {
     if (currentStoryIndex < currentStories.length - 1) {
@@ -94,7 +70,9 @@ export default function StoryView() {
         setCurrentStoryIndex(0);
       } else {
         try {
-          const nextUserId = await getNextUserIdFromBackend(currentUser.id); // 💡 Using dynamic helper
+          const nextUserId = await getNextUserIdFromBackend(
+            currentUser.id as string
+          );
 
           if (!nextUserId) {
             return router.back();
@@ -140,12 +118,12 @@ export default function StoryView() {
       // 🔁 Example: get all users and find the next user by index
       const snapshot = await getDocs(collection(db, "users"));
 
-      const allUsers = snapshot.docs.map(doc => ({
+      const allUsers = snapshot.docs.map((doc: any) => ({
         id: doc.id,
         ...doc.data(),
       }));
       const currentIndex = allUsers.findIndex(
-        user => user.id === currentUserId
+        (user: any) => user.id === currentUserId
       );
 
       if (currentIndex !== -1 && currentIndex + 1 < allUsers.length) {
@@ -216,6 +194,8 @@ export default function StoryView() {
     }
   };
 
+  useScreenCapture();
+
   useEffect(() => {
     progress.setValue(0);
     elapsedTimeRef.current = 0;
@@ -231,7 +211,7 @@ export default function StoryView() {
     if (nextIndex < allUsers.length) {
       const nextUser = allUsers[nextIndex];
       if (!nextUser?.stories || nextUser.stories.length === 0) {
-        const fetched = await fetchStoriesForUser(nextUser.id);
+        const fetched = await fetchStoriesForUser(nextUser.id as string);
         const updatedUsers = [...allUsers];
         updatedUsers[nextIndex] = { ...nextUser, stories: fetched };
         setAllUsers(updatedUsers);
@@ -261,7 +241,7 @@ export default function StoryView() {
 
   return (
     <ImageBackground
-      source={{ uri: imageUri }}
+      source={{ uri: encodeImagePath(imageUri) }}
       style={{ flex: 1 }}
       resizeMode="cover"
       onLoadStart={() => setIsImageLoading(true)}
@@ -276,7 +256,7 @@ export default function StoryView() {
       >
         <View>
           <View style={styles.timelineContainer}>
-            {currentStories.map((_, idx) => (
+            {currentStories.map((_: any, idx: number) => (
               <View key={idx} style={styles.timelineBarBg}>
                 {idx < currentStoryIndex ? (
                   <View style={styles.timelineBarFilled} />
@@ -299,14 +279,16 @@ export default function StoryView() {
 
           <View style={styles.profileContainer}>
             <Image
-              source={{ uri: encodeImagePath(currentUser?.profilePic) }}
+              source={{
+                uri: encodeImagePath(currentUser?.profilePic as string),
+              }}
               style={styles.profileImage}
             />
             <RnText style={styles.profileName}>{currentUser?.username}</RnText>
           </View>
         </View>
 
-        <KeyboardAvoidingView
+        {/* <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : undefined}
           style={styles.inputWrapper}
         >
@@ -326,10 +308,10 @@ export default function StoryView() {
               <Feather name="send" size={25} color={Colors[theme].whiteText} />
             </TouchableOpacity>
           </View>
-        </KeyboardAvoidingView>
+        </KeyboardAvoidingView> */}
       </TouchableOpacity>
       {isImageLoading && (
-        <View style={styles.loaderContainer}>
+        <View>
           <ActivityIndicator size="large" color="#fff" />
         </View>
       )}

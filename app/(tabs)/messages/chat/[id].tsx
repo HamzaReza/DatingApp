@@ -1,5 +1,8 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import createStyles from "@/app/tabStyles/chat.styles";
+import createStyles, {
+  paymentStyles,
+  uiStyles,
+} from "@/app/tabStyles/chat.styles";
 import RnButton from "@/components/RnButton";
 import RnInput from "@/components/RnInput";
 import RnModal from "@/components/RnModal";
@@ -9,7 +12,6 @@ import showToaster from "@/components/RnToast";
 import RoundButton from "@/components/RoundButton";
 import { Borders } from "@/constants/Borders";
 import { Colors } from "@/constants/Colors";
-import { FontFamily } from "@/constants/FontFamily";
 import { FontSize } from "@/constants/FontSize";
 import { getUserByUid } from "@/firebase/auth";
 import {
@@ -20,7 +22,8 @@ import {
   setupDirectMessageListener,
   setupGroupMessagesListener,
 } from "@/firebase/message";
-import { checkBothUsersPaid } from "@/firebase/stripe";
+import { checkBothUsersPaid, onOtherUserPaidChange } from "@/firebase/stripe";
+import { useScreenCapture } from "@/hooks/useScreenCapture";
 import { RootState } from "@/redux/store";
 import { GroupMessage } from "@/types/Messages";
 import { encodeImagePath, hp, wp } from "@/utils";
@@ -59,7 +62,6 @@ import {
   Modal,
   Platform,
   StatusBar,
-  StyleSheet,
   TouchableOpacity,
   useColorScheme,
   View,
@@ -67,10 +69,122 @@ import {
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useSelector } from "react-redux";
 
+// Timer component for payment countdown
+const PaymentTimer = ({
+  matchId,
+  theme,
+  styles,
+  currentUserId,
+}: {
+  matchId: string;
+  theme: string;
+  styles: any;
+  currentUserId: string;
+}) => {
+  const [timeLeft, setTimeLeft] = useState<number>(0);
+  const [otherUserPaid, setOtherUserPaid] = useState(false);
+
+  useEffect(() => {
+    const db = getFirestore();
+
+    // Real-time listener for match payments to check if other user has paid
+    const unsubscribeMatchPayments = onOtherUserPaidChange(
+      matchId,
+      currentUserId,
+      otherUserPaid => {
+        setOtherUserPaid(otherUserPaid);
+      }
+    );
+
+    // Real-time listener for payment expiry time
+    const paymentsRef = collection(db, "payments");
+    const paymentsQuery = query(
+      paymentsRef,
+      where("matchId", "==", matchId),
+      where("status", "==", "paid")
+    );
+
+    const unsubscribePayments = onSnapshot(
+      paymentsQuery,
+      snapshot => {
+        if (!snapshot.empty) {
+          // Get the single active payment expiry time
+          const paymentDoc = snapshot.docs[0]; // Only one active payment per match
+          const paymentData = paymentDoc.data();
+          const expiryTime = paymentData.expiresAt?.toDate();
+
+          if (expiryTime) {
+            const updateTimer = () => {
+              const now = new Date();
+              const diff = expiryTime.getTime() - now.getTime();
+
+              if (diff <= 0) {
+                setTimeLeft(0);
+              } else {
+                setTimeLeft(Math.floor(diff / 1000));
+              }
+            };
+
+            updateTimer();
+            const interval = setInterval(updateTimer, 1000);
+
+            // Clean up interval when component unmounts or payment changes
+            return () => clearInterval(interval);
+          }
+        }
+      },
+      error => {
+        console.error("Error listening to payments:", error);
+      }
+    );
+
+    // Cleanup both listeners
+    return () => {
+      unsubscribeMatchPayments();
+      unsubscribePayments();
+    };
+  }, [matchId, currentUserId]);
+
+  const formatTime = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hours.toString().padStart(2, "0")}:${minutes
+      .toString()
+      .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  // Only render timer if other user has paid
+  if (!otherUserPaid) {
+    return null;
+  }
+
+  return (
+    <View style={styles.timerContainer}>
+      <RnText style={styles.timerLabel}>
+        ⏰ Other user has paid! You have:
+      </RnText>
+      <RnText
+        style={[
+          styles.timerText,
+          { color: Colors[theme as keyof typeof Colors].primary },
+        ]}
+      >
+        {formatTime(timeLeft)}
+      </RnText>
+      <RnText style={styles.timerLabel}>
+        to pay, or the first user gets refunded
+      </RnText>
+    </View>
+  );
+};
+
 export default function Chat() {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
   const styles = createStyles(theme);
+  const paymentStyleSheet = paymentStyles(theme);
+  const uiStyleSheet = uiStyles(theme);
   const { user } = useSelector((state: RootState) => state.user);
   const { id, matchId, otherUserId, chatType } = useLocalSearchParams();
   const groupId = Array.isArray(id) ? id[0] : id;
@@ -107,6 +221,8 @@ export default function Chat() {
       return () => unsubscribe(); // Cleanup on unmount
     }
   }, [matchId, user?.uid]);
+
+  useScreenCapture();
 
   // Check payment status and message limit when component mounts
   useFocusEffect(
@@ -707,6 +823,15 @@ export default function Chat() {
           >
             {/* Header */}
 
+            {isSingleChat && !userHasPaid && !bothUsersPaid && (
+              <PaymentTimer
+                matchId={matchId as string}
+                theme={theme}
+                styles={paymentStyleSheet}
+                currentUserId={user?.uid || ""}
+              />
+            )}
+
             <View style={styles.chatHeaderGradient}>
               <View style={styles.userInfo}>
                 <RoundButton
@@ -723,7 +848,6 @@ export default function Chat() {
                     }}
                     style={styles.userAvatar}
                   />
-                  <View style={styles.avatarBorder} />
                 </View>
                 <View style={styles.userDetails}>
                   <RnText style={styles.userName}>
@@ -760,7 +884,7 @@ export default function Chat() {
             {isSingleChat && (
               <>
                 {statusMessage?.type === "text" && (
-                  <RnText style={teststyles.text}>
+                  <RnText style={uiStyleSheet.text}>
                     {statusMessage.message}
                   </RnText>
                 )}
@@ -768,9 +892,9 @@ export default function Chat() {
                 {statusMessage?.type === "button" && (
                   <TouchableOpacity
                     onPress={handleDetailsPress}
-                    style={teststyles.finalButton}
+                    style={uiStyleSheet.finalButton}
                   >
-                    <RnText style={teststyles.finalText}>
+                    <RnText style={uiStyleSheet.finalText}>
                       {statusMessage.label}
                     </RnText>
                   </TouchableOpacity>
@@ -793,31 +917,31 @@ export default function Chat() {
 
             {/* Input Container */}
             {messageLimitReached && !bothUsersPaid && !userHasPaid ? (
-              <View style={teststyles.payNowContainer}>
-                <RnText style={teststyles.payNowText}>
+              <View style={uiStyleSheet.payNowContainer}>
+                <RnText style={uiStyleSheet.payNowText}>
                   Message limit reached. Pay to continue chatting!
                 </RnText>
                 <RnButton
                   title="Pay Now"
                   onPress={initializePayment}
-                  style={[teststyles.payNowButton]}
+                  style={[uiStyleSheet.payNowButton]}
                 />
               </View>
             ) : userHasPaid && !bothUsersPaid ? (
-              <View style={teststyles.waitingContainer}>
-                <RnText style={teststyles.waitingText}>
+              <View style={uiStyleSheet.waitingContainer}>
+                <RnText style={uiStyleSheet.waitingText}>
                   You&apos;ve paid! Waiting for the other user to pay.
                 </RnText>
               </View>
             ) : isInputDisabled ? (
-              <View style={teststyles.waitingContainer}>
-                <RnText style={teststyles.waitingText}>
+              <View style={uiStyleSheet.waitingContainer}>
+                <RnText style={uiStyleSheet.waitingText}>
                   Messaging disabled until 24 hours before event
                 </RnText>
               </View>
             ) : eventHasPassed ? (
-              <View style={teststyles.waitingContainer}>
-                <RnText style={teststyles.waitingText}>
+              <View style={uiStyleSheet.waitingContainer}>
+                <RnText style={uiStyleSheet.waitingText}>
                   Event has passed for more than 24 hours. Messaging is now
                   disabled.
                 </RnText>
@@ -919,27 +1043,27 @@ export default function Chat() {
             visible={meetDataModalVisible}
             onRequestClose={() => setMeetDataModalVisible(false)}
           >
-            <View style={teststyles.modalBackground}>
-              <View style={teststyles.modalContainer}>
-                <RnText style={teststyles.modalTitle}>
+            <View style={uiStyleSheet.modalBackground}>
+              <View style={uiStyleSheet.meetModalContainer}>
+                <RnText style={uiStyleSheet.modalTitle}>
                   Final Meet Details
                 </RnText>
 
-                <RnText style={teststyles.modalText}>
+                <RnText style={uiStyleSheet.modalText}>
                   Location: {statusMessage?.finalData?.finalPlace}
                 </RnText>
-                <RnText style={teststyles.modalText}>
+                <RnText style={uiStyleSheet.modalText}>
                   Date: {statusMessage?.finalData?.finalDate}
                 </RnText>
-                <RnText style={teststyles.modalText}>
+                <RnText style={uiStyleSheet.modalText}>
                   Time: {statusMessage?.finalData?.finalTime}
                 </RnText>
 
                 <TouchableOpacity
                   onPress={() => setMeetDataModalVisible(false)}
-                  style={teststyles.modalCloseButton}
+                  style={uiStyleSheet.modalCloseButton}
                 >
-                  <RnText style={teststyles.modalCloseText}>Close</RnText>
+                  <RnText style={uiStyleSheet.modalCloseText}>Close</RnText>
                 </TouchableOpacity>
               </View>
             </View>
@@ -949,91 +1073,3 @@ export default function Chat() {
     </GestureHandlerRootView>
   );
 }
-
-const teststyles = StyleSheet.create({
-  finalButton: {
-    backgroundColor: Colors.light.primary,
-    paddingVertical: hp(1.5),
-    paddingHorizontal: wp(4),
-    borderRadius: Borders.radius3,
-    alignSelf: "center",
-    marginVertical: hp(2),
-  },
-  finalText: {
-    color: "white",
-    fontSize: 16,
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-  text: {
-    color: Colors.dark.primary,
-    textAlign: "center",
-    fontSize: FontSize.small,
-    marginHorizontal: wp(1.5),
-    fontFamily: FontFamily.bold,
-  },
-  payNowContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: hp(2),
-    paddingHorizontal: wp(4),
-  },
-  payNowText: {
-    color: Colors.light.redText,
-    textAlign: "center",
-    fontSize: FontSize.medium,
-    marginBottom: hp(2),
-    fontFamily: FontFamily.medium,
-  },
-  payNowButton: {
-    backgroundColor: Colors.light.primary,
-    width: wp(40),
-    height: hp(5),
-  },
-  waitingContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: hp(2),
-    paddingHorizontal: wp(4),
-  },
-  waitingText: {
-    color: Colors.light.redText,
-    textAlign: "center",
-    fontSize: FontSize.medium,
-    fontFamily: FontFamily.medium,
-  },
-  modalBackground: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContainer: {
-    width: "80%",
-    backgroundColor: "white",
-    padding: 20,
-    borderRadius: 15,
-    alignItems: "center",
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 15,
-  },
-  modalText: {
-    fontSize: 16,
-    marginVertical: 5,
-    textAlign: "center",
-  },
-  modalCloseButton: {
-    marginTop: 20,
-    backgroundColor: "#FF6347",
-    paddingVertical: 8,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-  },
-  modalCloseText: {
-    color: "white",
-    fontSize: 16,
-  },
-});

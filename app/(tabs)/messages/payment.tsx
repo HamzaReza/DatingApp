@@ -70,16 +70,30 @@ const MessagePaymentScreen = () => {
           matchId as string
         );
 
-        // Call Firebase function to create payment intent
+        // Call Firebase function to create payment intent with extended timeout
         const createMessagePaymentIntentFunction = getFunctions().httpsCallable(
           "createMessagePaymentIntent"
         );
-        const result = await createMessagePaymentIntentFunction({
+
+        // Add client-side timeout handling
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(
+            () => reject(new Error("Client timeout after 60 seconds")),
+            60000
+          );
+        });
+
+        const functionPromise = createMessagePaymentIntentFunction({
           paymentId,
           amount: 500, // $5.00 in cents
           matchId: matchId as string,
           userId: user?.uid || "",
         });
+
+        const result = (await Promise.race([
+          functionPromise,
+          timeoutPromise,
+        ])) as any;
 
         const { clientSecret } = result.data as { clientSecret: string };
 

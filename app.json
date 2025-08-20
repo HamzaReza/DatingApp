@@ -78,7 +78,9 @@
             "modular_headers": true
           },
           "android": {
-            "enableProguardInReleaseBuilds": false
+            "enableProguardInReleaseBuilds": false,
+            "largeHeap": true,
+            "hardwareAccelerated": true
           }
         }
       ],

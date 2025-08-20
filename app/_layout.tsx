@@ -2,7 +2,6 @@
 import { VideoProvider } from "@/components/VideoContext";
 import { Colors } from "@/constants/Colors";
 import { FontSize } from "@/constants/FontSize";
-import { configureFirebaseEmulators } from "@/firebase/config";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { persistor, store } from "@/redux/store";
 import { hp, wp } from "@/utils/Dimensions";
@@ -49,7 +48,16 @@ export default function RootLayout() {
     InterBold: require("../assets/fonts/Inter-Bold.ttf"),
   });
 
-  configureFirebaseEmulators();
+  // configureFirebaseEmulators();
+
+  //TODO:
+  //Reel limit -> If subscribed then 10 reels else 2 reels
+  //Gallery limit -> If subscribed then 10 images else 5 images
+
+  //TODO:
+  // Hangout Invite
+  // Rotate the users -> Max 2 invites per day
+  //Either this or let the user choose how many invites they want to receive
 
   if (!loaded) {
     return null;

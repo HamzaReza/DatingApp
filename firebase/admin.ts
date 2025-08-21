@@ -213,58 +213,6 @@ const fetchUsers = (callback: (users: any[]) => void) => {
   }
 };
 
-// const fetchEarningsLast30Days = async () => {
-//   const db = getFirestore();
-//   const today = new Date();
-//   const startDate = new Date(today.getTime() - 29 * 24 * 60 * 60 * 1000); // rolling 30 days
-
-//   const dailyEarnings: Record<string, number> = {};
-
-//   // Init all 30 days with 0
-//   for (let i = 0; i < 30; i++) {
-//     const d = new Date(startDate.getTime() + i * 24 * 60 * 60 * 1000);
-//     const key = d.toISOString().split("T")[0];
-//     dailyEarnings[key] = 0;
-//   }
-
-//   // ---- payments ----
-//   const paymentsSnap = await getDocs(collection(db, "payments"));
-//   paymentsSnap.forEach(doc => {
-//     const data = doc.data();
-//     if (["paid", "completed"].includes(data.status)) {
-//       const date = data.createdAt?.toDate?.() || new Date(data.createdAt);
-//       const key = date.toISOString().split("T")[0];
-//       if (dailyEarnings[key] !== undefined) {
-//         dailyEarnings[key] += data.amount / 100;
-//       }
-//     }
-//   });
-
-//   // ---- eventTickets ----
-//   const ticketsSnap = await getDocs(collection(db, "eventTickets"));
-//   ticketsSnap.forEach(doc => {
-//     const purchases = doc.data().purchases || [];
-//     purchases.forEach((purchase: any) => {
-//       if (["paid", "completed"].includes(purchase.status)) {
-//         const date =
-//           purchase.createdAt?.toDate?.() || new Date(purchase.createdAt);
-//         const key = date.toISOString().split("T")[0];
-//         if (dailyEarnings[key] !== undefined) {
-//           dailyEarnings[key] += purchase.amount / 100;
-//         }
-//       }
-//     });
-//   });
-
-//   // Chart data for 30 days
-//   const chartData = Object.entries(dailyEarnings).map(([date, value]) => ({
-//     label: date.slice(5), // "MM-DD"
-//     value: Number(value.toFixed(2)),
-//   }));
-
-//   return chartData;
-// };
-
 const fetchAllEarnings = async (): Promise<any[]> => {
   const db = getFirestore();
   const earnings: Earning[] = [];
@@ -383,5 +331,4 @@ export {
   fetchUsers,
   fetchAllEarnings,
   buildChartsFromEarnings,
-  // fetchEarningsLast30Days,
 };

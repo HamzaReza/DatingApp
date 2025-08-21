@@ -11,7 +11,12 @@ import {
   monthlyProgressData,
 } from "@/constants/dashboardData";
 import { FontSize } from "@/constants/FontSize";
-import { fetchEvents, fetchUsers } from "@/firebase/admin";
+import {
+  buildChartsFromEarnings,
+  fetchAllEarnings,
+  fetchEvents,
+  fetchUsers,
+} from "@/firebase/admin";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { setToken, setUser } from "@/redux/slices/userSlice";
 import { hp, wp } from "@/utils";
@@ -33,7 +38,7 @@ export default function Dashboard() {
   const dispatch = useDispatch();
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [selectedPeriod, setSelectedPeriod] = useState("monthly");
+  const [selectedPeriod, setSelectedPeriod] = useState<any>("monthly");
   const [dropdownItems, setDropdownItems] = useState([
     { label: "Monthly", value: "monthly" },
     { label: "Yearly", value: "yearly" },
@@ -57,6 +62,21 @@ export default function Dashboard() {
     pendingUserGrowthPercentage: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [last30DaysData, setLast30DaysData] = useState<any[]>([]);
+  const [progressData, setProgressData] = useState<any[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const earnings = await fetchAllEarnings();
+      const { last30DaysChart, progressChart } = buildChartsFromEarnings(
+        earnings,
+        selectedPeriod
+      );
+
+      setLast30DaysData(last30DaysChart);
+      setProgressData(progressChart);
+    })();
+  }, [selectedPeriod]);
 
   useEffect(() => {
     const unsubscribeUsers = fetchUsers(usersData => {
@@ -179,21 +199,21 @@ export default function Dashboard() {
     return 0;
   };
 
-  const progressData = useMemo(() => {
-    if (selectedPeriod === "monthly") {
-      return monthlyProgressData;
-    } else {
-      const currentYear = new Date().getFullYear();
-      const years = [];
-      for (let year = 2025; year <= currentYear; year++) {
-        years.push({
-          value: Math.floor(Math.random() * 100) + 20,
-          label: year.toString(),
-        });
-      }
-      return years;
-    }
-  }, [selectedPeriod]);
+  // const progressData = useMemo(() => {
+  //   if (selectedPeriod === "monthly") {
+  //     return monthlyProgressData;
+  //   } else {
+  //     const currentYear = new Date().getFullYear();
+  //     const years = [];
+  //     for (let year = 2025; year <= currentYear; year++) {
+  //       years.push({
+  //         value: Math.floor(Math.random() * 100) + 20,
+  //         label: year.toString(),
+  //       });
+  //     }
+  //     return years;
+  //   }
+  // }, [selectedPeriod]);
 
   const statIcons = [
     <FontAwesome5
@@ -314,7 +334,7 @@ export default function Dashboard() {
       <View style={styles.chartCard}>
         <RnText style={styles.sectionTitle}>Earning Overview</RnText>
         <LineChart
-          data={earningOverviewData}
+          data={last30DaysData}
           areaChart
           curved
           hideDataPoints={false}
@@ -362,7 +382,7 @@ export default function Dashboard() {
           xAxisLabelTextStyle={{ fontSize: FontSize.extraSmall }}
           yAxisTextStyle={{ fontSize: FontSize.extraSmall }}
           noOfSections={6}
-          maxValue={120}
+          // maxValue={120}
           height={hp(20)}
           width={wp(75)}
           hideRules

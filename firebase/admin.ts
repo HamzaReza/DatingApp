@@ -2,6 +2,7 @@ import {
   addDoc,
   collection,
   FirebaseFirestoreTypes,
+  getDocs,
   getFirestore,
   onSnapshot,
   query,
@@ -212,6 +213,114 @@ const fetchUsers = (callback: (users: any[]) => void) => {
   }
 };
 
+const fetchAllEarnings = async (): Promise<any[]> => {
+  const db = getFirestore();
+  const earnings: Earning[] = [];
+
+  // ---- payments ----
+  const paymentsSnap = await getDocs(collection(db, "payments"));
+  paymentsSnap.forEach(doc => {
+    const data = doc.data();
+    if (["paid", "completed"].includes(data.status)) {
+      const date = data.createdAt?.toDate?.() || new Date(data.createdAt);
+      earnings.push({ date, amount: data.amount / 100 }); // convert cents to currency
+    }
+  });
+
+  // ---- eventTickets ----
+  const ticketsSnap = await getDocs(collection(db, "eventTickets"));
+  ticketsSnap.forEach(doc => {
+    const purchases = doc.data().purchases || [];
+    purchases.forEach((purchase: any) => {
+      if (["paid", "completed"].includes(purchase.status)) {
+        const date =
+          purchase.createdAt?.toDate?.() || new Date(purchase.createdAt);
+        earnings.push({ date, amount: purchase.amount / 100 }); // convert cents to currency
+      }
+    });
+  });
+
+  return earnings;
+};
+
+const buildChartsFromEarnings = (
+  earnings: any[],
+  period: "monthly" | "yearly"
+): { last30DaysChart: any[]; progressChart: any[] } => {
+  const today = new Date();
+
+  // ---- Chart 1: Last 30 days ----
+  const startDate = new Date(today.getTime() - 29 * 24 * 60 * 60 * 1000);
+  const dailyEarnings: Record<string, number> = {};
+  for (let i = 0; i < 30; i++) {
+    const d = new Date(startDate.getTime() + i * 24 * 60 * 60 * 1000);
+    dailyEarnings[d.toISOString().split("T")[0]] = 0;
+  }
+
+  earnings.forEach(({ date, amount }) => {
+    const key = date.toISOString().split("T")[0];
+    if (dailyEarnings[key] !== undefined) {
+      dailyEarnings[key] += amount;
+    }
+  });
+
+  const last30DaysChart: any[] = Object.entries(dailyEarnings).map(
+    ([date, value]) => ({
+      label: date.slice(5), // "MM-DD"
+      value: Number(value.toFixed(2)),
+    })
+  );
+
+  // ---- Chart 2: Progress ----
+  let progressChart: any[] = [];
+
+  if (period === "monthly") {
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const daysInMonth = new Date(
+      today.getFullYear(),
+      today.getMonth() + 1,
+      0
+    ).getDate();
+    const daily: Record<string, number> = {};
+    for (let i = 1; i <= daysInMonth; i++) {
+      const d = new Date(today.getFullYear(), today.getMonth(), i);
+      daily[d.toISOString().split("T")[0]] = 0;
+    }
+
+    earnings.forEach(({ date, amount }) => {
+      if (date >= startOfMonth) {
+        const key = date.toISOString().split("T")[0];
+        if (daily[key] !== undefined) daily[key] += amount;
+      }
+    });
+
+    progressChart = Object.entries(daily).map(([date, value]) => ({
+      label: date.split("-")[2], // DD
+      value: Number(value.toFixed(2)),
+    }));
+  } else if (period === "yearly") {
+    const startOfYear = new Date(today.getFullYear(), 0, 1);
+    const monthly: Record<number, number> = {};
+    for (let m = 0; m < 12; m++) monthly[m] = 0;
+
+    earnings.forEach(({ date, amount }) => {
+      const d = new Date(date); // force conversion
+      if (d >= startOfYear) {
+        monthly[d.getMonth()] += amount;
+      }
+    });
+
+    progressChart = Object.entries(monthly).map(([month, value]) => ({
+      label: new Date(today.getFullYear(), Number(month), 1).toLocaleString(
+        "default",
+        { month: "short" }
+      ),
+      value: Number(value.toFixed(2)),
+    }));
+  }
+
+  return { last30DaysChart, progressChart };
+};
 export {
   addCreator,
   createEvent,
@@ -220,4 +329,6 @@ export {
   fetchEvents,
   fetchPricingPlans,
   fetchUsers,
+  fetchAllEarnings,
+  buildChartsFromEarnings,
 };

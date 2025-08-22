@@ -21,7 +21,12 @@ import {
   recordLike,
   updateUser,
 } from "@/firebase/auth";
-import { GalleryImage, uploadGalleryImage } from "@/firebase/gallery";
+import {
+  deleteGalleryImageWithFile,
+  GalleryImage,
+  updateGalleryImage,
+  uploadGalleryImage,
+} from "@/firebase/gallery";
 import { deleteReelWithFiles, updateReel, uploadReel } from "@/firebase/reels";
 import { useScreenCapture } from "@/hooks/useScreenCapture";
 import { setToken } from "@/redux/slices/userSlice";
@@ -97,6 +102,11 @@ export default function Profile() {
   const [deleteReelModalVisible, setDeleteReelModalVisible] = useState(false);
   const [reelToDelete, setReelToDelete] = useState<string | null>(null);
   const [deletingReel, setDeletingReel] = useState(false);
+  const [deleteGalleryModalVisible, setDeleteGalleryModalVisible] =
+    useState(false);
+  const [galleryImageToDelete, setGalleryImageToDelete] =
+    useState<GalleryImage | null>(null);
+  const [deletingGalleryImage, setDeletingGalleryImage] = useState(false);
   const [deleteAccountModalVisible, setDeleteAccountModalVisible] =
     useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
@@ -398,6 +408,25 @@ export default function Profile() {
     }
   };
 
+  const handleGalleryVisibilityToggle = async (
+    galleryId: string,
+    currentVisibility: string
+  ) => {
+    try {
+      const newVisibility =
+        currentVisibility === "public" ? "private" : "public";
+      await updateGalleryImage(galleryId, user.uid, {
+        visibility: newVisibility,
+      });
+
+      // Refresh user details to show the updated reel
+      await getUserDetails();
+    } catch (error) {
+      console.error("Error updating gallery visibility:", error);
+      Alert.alert("Error", "Failed to update gallery visibility");
+    }
+  };
+
   const handleReelDelete = (reelId: string) => {
     setReelToDelete(reelId);
     setDeleteReelModalVisible(true);
@@ -443,6 +472,43 @@ export default function Profile() {
     setDeleteReelModalVisible(false);
     setReelToDelete(null);
     setDeletingReel(false);
+  };
+
+  const handleGalleryImageDelete = (image: GalleryImage) => {
+    setGalleryImageToDelete(image);
+    setDeleteGalleryModalVisible(true);
+  };
+
+  const confirmDeleteGalleryImage = async () => {
+    if (!galleryImageToDelete) return;
+
+    try {
+      setDeletingGalleryImage(true);
+
+      await deleteGalleryImageWithFile(galleryImageToDelete.id, user.uid);
+
+      // Reset form and close modal
+      setDeleteGalleryModalVisible(false);
+      setGalleryImageToDelete(null);
+
+      // Refresh user details to show the updated gallery
+      await getUserDetails();
+    } catch (error: any) {
+      console.error("Error deleting gallery image:", error);
+      showToaster({
+        type: "error",
+        heading: "Delete Failed",
+        message: error.message || "Failed to delete image. Please try again.",
+      });
+    } finally {
+      setDeletingGalleryImage(false);
+    }
+  };
+
+  const cancelDeleteGalleryImage = () => {
+    setDeleteGalleryModalVisible(false);
+    setGalleryImageToDelete(null);
+    setDeletingGalleryImage(false);
   };
 
   const handleDeletePress = async () => {
@@ -794,6 +860,41 @@ export default function Profile() {
                     source={{ uri: item.imageUrl }}
                     style={styles.galleryImage}
                   />
+                  {user.uid === id && (
+                    <TouchableOpacity
+                      style={styles.reelTopLeftButton}
+                      onPress={e => {
+                        handleGalleryVisibilityToggle(
+                          item.id,
+                          item.visibility || "public"
+                        );
+                      }}
+                    >
+                      <Ionicons
+                        name={
+                          item.visibility === "public" ? "globe" : "lock-closed"
+                        }
+                        size={20}
+                        color={Colors[theme].whiteText}
+                      />
+                    </TouchableOpacity>
+                  )}
+
+                  {/* Top-right delete button */}
+                  {user.uid === id && (
+                    <TouchableOpacity
+                      style={styles.reelTopRightButton}
+                      onPress={e => {
+                        handleGalleryImageDelete(item);
+                      }}
+                    >
+                      <Ionicons
+                        name="trash-outline"
+                        size={20}
+                        color={Colors[theme].redText}
+                      />
+                    </TouchableOpacity>
+                  )}
                 </TouchableOpacity>
               )}
             />
@@ -861,7 +962,7 @@ export default function Profile() {
                         name={
                           item.visibility === "public" ? "globe" : "lock-closed"
                         }
-                        size={16}
+                        size={20}
                         color={Colors[theme].whiteText}
                       />
                     </TouchableOpacity>
@@ -878,7 +979,7 @@ export default function Profile() {
                     >
                       <Ionicons
                         name="trash-outline"
-                        size={16}
+                        size={20}
                         color={Colors[theme].redText}
                       />
                     </TouchableOpacity>
@@ -1173,6 +1274,36 @@ export default function Profile() {
               title="Delete"
               onPress={confirmDeleteReel}
               loading={deletingReel}
+              style={[styles.reelButton]}
+            />
+          </View>
+        </View>
+      </RnModal>
+
+      {/* Delete Gallery Image Warning Modal */}
+      <RnModal
+        show={deleteGalleryModalVisible}
+        backDrop={cancelDeleteGalleryImage}
+        backButton={cancelDeleteGalleryImage}
+      >
+        <View style={styles.deleteModalContainer}>
+          <RnText style={styles.sectionTitle}>Delete Image</RnText>
+          <RnText style={styles.deleteModalText}>
+            Are you sure you want to delete this image? This action cannot be
+            undone.
+          </RnText>
+
+          <View style={styles.deleteModalButtons}>
+            <RnButton
+              title="Cancel"
+              onPress={cancelDeleteGalleryImage}
+              style={[[styles.reelButton, styles.cancelButton]]}
+              disabled={deletingGalleryImage}
+            />
+            <RnButton
+              title="Delete"
+              onPress={confirmDeleteGalleryImage}
+              loading={deletingGalleryImage}
               style={[styles.reelButton]}
             />
           </View>

@@ -618,6 +618,25 @@ export default function Profile() {
     }
   };
 
+  const _handleReelUpload = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: "videos",
+      quality: 0.7,
+    });
+    if (!result.canceled) {
+      const videoUri = result.assets[0].uri;
+      setSelectedVideoUri(videoUri);
+      try {
+        const thumbnailUri = await generateThumbnail(videoUri);
+        setSelectedVideoThumbnail(thumbnailUri);
+      } catch (error) {
+        console.warn("Failed to generate thumbnail:", error);
+        setSelectedVideoThumbnail(null);
+      }
+      setReelUploadModalVisible(true);
+    }
+  };
+
   return (
     <Container>
       <View style={styles.header}>
@@ -830,7 +849,31 @@ export default function Profile() {
                     handleGalleryUpload(Array.isArray(uri) ? uri : [uri])
                   }
                   visible={imagePickerVisible}
-                  showPicker={() => setImagePickerVisible(true)}
+                  showPicker={() => {
+                    if (user.isSubscribed) {
+                      if (profileData?.gallery.length < 10) {
+                        setImagePickerVisible(true);
+                      } else {
+                        showToaster({
+                          type: "error",
+                          heading: "Limit Reached",
+                          message:
+                            "You have reached the maximum number of images",
+                        });
+                      }
+                    } else {
+                      if (profileData?.gallery.length < 5) {
+                        setImagePickerVisible(true);
+                      } else {
+                        showToaster({
+                          type: "error",
+                          heading: "Limit Reached",
+                          message:
+                            "You need to be subscribed to upload more images",
+                        });
+                      }
+                    }
+                  }}
                   hidePicker={() => setImagePickerVisible(false)}
                   multiple={true}
                 >
@@ -908,22 +951,28 @@ export default function Profile() {
                 <RnText
                   style={styles.seeAll}
                   onPress={async () => {
-                    const result = await ImagePicker.launchImageLibraryAsync({
-                      mediaTypes: "videos",
-                      quality: 0.7,
-                    });
-                    if (!result.canceled) {
-                      const videoUri = result.assets[0].uri;
-                      setSelectedVideoUri(videoUri);
-                      try {
-                        const thumbnailUri = await generateThumbnail(videoUri);
-                        setSelectedVideoThumbnail(thumbnailUri);
-                      } catch (error) {
-                        console.warn("Failed to generate thumbnail:", error);
-                        setSelectedVideoThumbnail(null);
+                    if (user.isSubscribed) {
+                      if (profileData?.reels.length < 10) {
+                        _handleReelUpload();
+                      } else {
+                        showToaster({
+                          type: "error",
+                          heading: "Limit Reached",
+                          message:
+                            "You have reached the maximum number of reels",
+                        });
                       }
-
-                      setReelUploadModalVisible(true);
+                    } else {
+                      if (profileData?.reels.length < 2) {
+                        _handleReelUpload();
+                      } else {
+                        showToaster({
+                          type: "error",
+                          heading: "Limit Reached",
+                          message:
+                            "You need to be subscribed to upload more reels",
+                        });
+                      }
                     }
                   }}
                 >

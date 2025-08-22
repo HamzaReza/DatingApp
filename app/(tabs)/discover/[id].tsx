@@ -20,8 +20,8 @@ import {
   getUserByUidAsync,
   recordLike,
   updateUser,
-  uploadMultipleImages,
 } from "@/firebase/auth";
+import { GalleryImage, uploadGalleryImage } from "@/firebase/gallery";
 import { deleteReelWithFiles, updateReel, uploadReel } from "@/firebase/reels";
 import { useScreenCapture } from "@/hooks/useScreenCapture";
 import { setToken } from "@/redux/slices/userSlice";
@@ -70,7 +70,7 @@ export default function Profile() {
 
   const { id, isFriend } = useLocalSearchParams();
   const [galleryModalVisible, setGalleryModalVisible] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<GalleryImage | null>(null);
   const [showFullAbout, setShowFullAbout] = useState(false);
   const [profileData, setProfileData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -335,18 +335,19 @@ export default function Profile() {
     setGalleryLoading(true);
     let imageUris: string[] = [];
     uri.map(img => imageUris.push(img.uri));
-    let galleryUrl = await uploadMultipleImages(
-      imageUris,
-      "user",
-      user.uid,
-      "gallery"
-    );
 
-    const updatedGallery = [...(profileData?.gallery || []), ...galleryUrl];
-
-    await updateUser(user.uid, { gallery: updatedGallery }, dispatch);
-    setGalleryLoading(false);
-    await getUserDetails();
+    try {
+      await uploadGalleryImage(imageUris, user, "public");
+      setGalleryLoading(false);
+      await getUserDetails();
+    } catch (error) {
+      console.error("Error uploading gallery images:", error);
+      setGalleryLoading(false);
+      showToaster({
+        type: "error",
+        message: "Error uploading images. Please try again.",
+      });
+    }
   };
 
   const handleReelUpload = async (uri: string, caption: string) => {
@@ -789,7 +790,10 @@ export default function Profile() {
                     setGalleryModalVisible(true);
                   }}
                 >
-                  <Image source={{ uri: item }} style={styles.galleryImage} />
+                  <Image
+                    source={{ uri: item.imageUrl }}
+                    style={styles.galleryImage}
+                  />
                 </TouchableOpacity>
               )}
             />
@@ -918,7 +922,7 @@ export default function Profile() {
       >
         {selectedImage && (
           <Image
-            source={{ uri: selectedImage }}
+            source={{ uri: selectedImage.imageUrl }}
             style={styles.modalMainImage}
             resizeMode="contain"
           />
@@ -1203,6 +1207,13 @@ export default function Profile() {
               style={[styles.reelButton]}
             />
           </View>
+        </View>
+      </RnModal>
+      <RnModal show={galleryLoading}>
+        <View
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        >
+          <ActivityIndicator size="large" color={Colors[theme].primary} />
         </View>
       </RnModal>
     </Container>

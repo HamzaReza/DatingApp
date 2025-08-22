@@ -51,10 +51,6 @@ export default function RootLayout() {
   // configureFirebaseEmulators();
 
   //TODO:
-  //Reel limit -> If subscribed then 10 reels else 2 reels
-  //Gallery limit -> If subscribed then 10 images else 5 images
-
-  //TODO:
   // Hangout Invite
   // Rotate the users -> Max 2 invites per day
   //Either this or let the user choose how many invites they want to receive

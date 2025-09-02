@@ -316,6 +316,7 @@ export default function Profile() {
         router.push({
           pathname: `/(tabs)/messages/chat/[id]`,
           params: {
+            id: matchId,
             matchId: matchId,
             otherUserId: profileViewingUserId,
             chatType: "single",

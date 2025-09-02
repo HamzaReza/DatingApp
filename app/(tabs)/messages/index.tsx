@@ -291,15 +291,21 @@ export default function Messages() {
     }
   };
 
+  const getotherUserId = (matchId: string, currentUserId: string): string => {
+    const ids = matchId.split("_");
+    return ids.find(id => id !== currentUserId) || "";
+  };
+
   const handleMessagePress = (messageId: string, type: string) => {
-    if (type == "group") {
+    if (type === "group") {
       router.push(`/messages/chat/${messageId}`);
     } else {
       router.push({
         pathname: "/(tabs)/messages/chat/[id]",
         params: {
+          id: messageId,
           matchId: messageId,
-          otherUserId: receiverId,
+          otherUserId: getotherUserId(messageId, user.uid),
           chatType: "single",
         },
       });
@@ -336,8 +342,8 @@ export default function Messages() {
         groupName,
         groupDescription,
         selectedGender,
-        minAge,
-        maxAge,
+        Number(minAge),
+        Number(maxAge),
         eventDate
       );
       setIsBottomSheetVisible(false);
@@ -532,7 +538,7 @@ export default function Messages() {
                 <RnBottomSheetInput
                   placeholder="Min"
                   keyboardType="numeric"
-                  value={minAge}
+                  value={minAge || ""}
                   onChangeText={setMinAge}
                   style={{ width: wp(40) }}
                 />
@@ -571,7 +577,7 @@ export default function Messages() {
             </View>
             <View style={{ marginTop: wp(3) }}>
               <RnDateTimePicker
-                value={eventDate}
+                value={eventDate || new Date()}
                 onChange={(_, date) => setEventDate(date)}
                 label="Event Date"
                 placeholder="event date"

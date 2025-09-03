@@ -103,7 +103,7 @@ export default function Messages() {
   const { user } = useSelector((state: RootState) => state.user);
 
   const [isBottomSheetVisible, setIsBottomSheetVisible] = React.useState(false);
-
+  const [isLoading, setIsLoading] = useState(false);
   const [tagsOpen, setTagsOpen] = useState(false);
   const [selectedTags, setSelectedTags] = useState<any[]>([]);
   const [tagsItems, setTagsItems] = useState<Tag[]>([]);
@@ -334,6 +334,7 @@ export default function Messages() {
     }
 
     try {
+      setIsLoading(true);
       await sendGroupInvitesByTags(
         user.uid,
         selectedTags,
@@ -346,10 +347,38 @@ export default function Messages() {
         Number(maxAge),
         eventDate
       );
+      setIsLoading(false);
       setIsBottomSheetVisible(false);
-      alert("Invites sent successfully");
+      setGroupName("");
+      setGroupDescription("");
+      setSelectedTags([]);
+      setSelectedGender(null);
+      setParticipantCount(5);
+      setMinAge("");
+      setMaxAge("");
+      setPickedImageUri(null);
+      setEventDate(undefined);
+      Toast.show({
+        type: "success",
+        text1: "Invites sent successfully",
+        visibilityTime: 2000,
+      });
     } catch (error: any) {
-      alert(error.message || "Failed to send invites");
+      setIsLoading(false);
+      Toast.show({
+        type: "error",
+        text1: error.message || "Failed to send invites",
+        visibilityTime: 2000,
+      });
+      setGroupName("");
+      setGroupDescription("");
+      setSelectedTags([]);
+      setSelectedGender(null);
+      setParticipantCount(5);
+      setMinAge("");
+      setMaxAge("");
+      setPickedImageUri(null);
+      setEventDate(undefined);
     }
   };
 
@@ -590,6 +619,8 @@ export default function Messages() {
             style={[styles.createButton, styles.createButtonText]}
             onPress={handleCreateHangout}
             title="Create Hangout"
+            disabled={isLoading}
+            loading={isLoading}
           />
         </View>
       </RnBottomSheet>

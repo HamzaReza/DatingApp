@@ -647,7 +647,7 @@ export const getNearbyUsers = async (currentUserLocation: Location) => {
 
   return nearbyUsers;
 };
-
+// sendGroupInvitesByTags
 export const sendGroupInvitesByTags = async (
   invitedBy: string,
   selectedTags: string[],
@@ -660,12 +660,11 @@ export const sendGroupInvitesByTags = async (
   maxAge: number,
   eventDate: any
 ) => {
+  const db = getFirestore();
   try {
-    const db = getFirestore();
-
+    // inviter details
     const inviterDoc = await getDoc(doc(db, "users", invitedBy));
     const inviterData = inviterDoc.data();
-
     if (!inviterData?.location?.latitude || !inviterData?.location?.longitude) {
       throw new Error("Inviter's location not available");
     }
@@ -673,19 +672,17 @@ export const sendGroupInvitesByTags = async (
     const inviterLat = inviterData.location.latitude;
     const inviterLon = inviterData.location.longitude;
 
+    // get all users
     const usersSnapshot = await getDocs(collection(db, "users"));
 
-    const matchingUsers = usersSnapshot.docs
+    // filter matching users
+    const allMatchingUsers = usersSnapshot.docs
       .filter((userDoc: any) => {
         const data = userDoc.data();
-
-        // Skip inviter (already added later)
         if (userDoc.id === invitedBy) return false;
 
-        // Location filter (within 12 km)
         const userLat = data.location?.latitude;
         const userLon = data.location?.longitude;
-
         if (userLat == null || userLon == null) return false;
 
         const distance = getDistanceFromLatLonInMeters(
@@ -696,34 +693,67 @@ export const sendGroupInvitesByTags = async (
         );
         if (distance > 12000) return false;
 
-        // Tag filter
         const userTags = data.interests?.split(",") || [];
         const hasMatchingTag = selectedTags.some(tag => userTags.includes(tag));
+        if (!hasMatchingTag) return false;
 
-        // Gender filter
         const userGender = data.gender?.toLowerCase();
         const genderMatch =
           selectedGender === "mixed" || userGender === selectedGender;
+        if (!genderMatch) return false;
 
-        // Age filter
         const userAge = parseInt(data.age, 10);
         const ageMatch =
           !isNaN(userAge) && userAge >= minAge && userAge <= maxAge;
-
-        return hasMatchingTag && genderMatch && ageMatch;
+        return ageMatch;
       })
-      .slice(0, maxParticipants)
       .map((userDoc: any) => ({
         uid: userDoc.id,
         name: userDoc.data().name || "User",
+        fcmToken: userDoc.data().fcmToken,
       }));
 
-    if (matchingUsers.length === 0) {
+    if (allMatchingUsers.length === 0) {
       throw new Error("No users found matching the selected criteria");
     }
 
-    const inviterName = inviterData?.name || "Someone";
+    // shuffle
+    const shuffledUsers = allMatchingUsers.sort(() => 0.5 - Math.random());
 
+    // rate limit check
+    const canReceiveNotification = async (userId: string) => {
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const endOfDay = new Date();
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const notifsRef = collection(db, "notifications");
+      const q = query(
+        notifsRef,
+        where("toUserId", "==", userId),
+        where("type", "==", "groupMessage"),
+        where("createdAt", ">=", Timestamp.fromDate(startOfDay)),
+        where("createdAt", "<=", Timestamp.fromDate(endOfDay))
+      );
+
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.size < 2;
+    };
+
+    // select final users
+    const finalUsers = [];
+    for (const user of shuffledUsers) {
+      if (finalUsers.length >= 20) break;
+      const isAllowed = await canReceiveNotification(user.uid);
+      if (isAllowed) finalUsers.push(user);
+    }
+
+    if (finalUsers.length === 0) {
+      throw new Error("No users available to invite today.");
+    }
+
+    const inviterName = inviterData?.name || "Someone";
     const groupRef = doc(collection(db, "messages"));
     const groupId = groupRef.id;
     const invitedAt = Timestamp.now();
@@ -738,8 +768,39 @@ export const sendGroupInvitesByTags = async (
       );
     }
 
+    const now = Timestamp.now();
+    for (const user of finalUsers) {
+      try {
+        await sendInAppNotification({
+          toUserId: user.uid,
+          title: groupName,
+          subtitle: `${inviterName} has invited you for a hangout. Want to join?`,
+          type: "groupMessage",
+          data: { id: groupId },
+        });
+
+        await sendPushNotification({
+          toUserId: [user.uid],
+          title: groupName,
+          subtitle: `${inviterName} has invited you for a hangout. Want to join?`,
+          data: { id: groupId },
+        });
+
+        const notifRef = doc(collection(db, "notifications"));
+        await setDoc(notifRef, {
+          toUserId: user.uid,
+          type: "groupMessage",
+          createdAt: now,
+          groupId: groupId,
+        });
+      } catch (err) {
+        console.error("Notification failed for", user.uid, err);
+        throw new Error("Notification failed, group not created.");
+      }
+    }
+
     await setDoc(groupRef, {
-      noOfInvitors: matchingUsers.length,
+      noOfInvitors: finalUsers.length,
       maxParticipants,
       id: groupId,
       invitedBy,
@@ -748,7 +809,6 @@ export const sendGroupInvitesByTags = async (
       image: imageUrl,
       type: "group",
       tags: selectedTags,
-
       groupName,
       groupDescription,
       minAge,
@@ -756,13 +816,8 @@ export const sendGroupInvitesByTags = async (
       eventDate,
       genderFilter: selectedGender,
       users: [
-        {
-          uid: invitedBy,
-          name: inviterName,
-          status: "accepted",
-          invitedAt,
-        },
-        ...matchingUsers.map((user: { uid: string; name: string }) => ({
+        { uid: invitedBy, name: inviterName, status: "accepted", invitedAt },
+        ...finalUsers.map(user => ({
           uid: user.uid,
           name: user.name,
           status: "pending",
@@ -772,46 +827,13 @@ export const sendGroupInvitesByTags = async (
       createdAt: Timestamp.now(),
     });
 
-    // Send notifications
-    const now = Timestamp.now();
-    for (const user of matchingUsers) {
-      await sendInAppNotification({
-        toUserId: user.uid,
-        title: groupName,
-        subtitle: `${inviterName} has invited you for a hangout. Want to join?`,
-        type: "groupMessage",
-        data: {
-          id: groupId,
-          tags: selectedTags,
-          maxParticipants,
-          createdAt: now.toDate(),
-          inviterId: invitedBy,
-          inviterName,
-          image: inviterData?.photo,
-        },
-      });
-      await sendPushNotification({
-        toUserId: [user.uid],
-        title: groupName,
-        subtitle: `${inviterName} has invited you for a hangout. Want to join?`,
-        data: {
-          id: groupId,
-          type: "groupMessage",
-          image: inviterData?.photo,
-          tags: selectedTags,
-          maxParticipants,
-          createdAt: now.toDate(),
-          inviterId: invitedBy,
-          inviterName,
-        },
-      });
-    }
     return { success: true };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error sending group invites:", error);
-    return { success: false, error: (error as Error).message };
+    return { success: false, error: error.message };
   }
 };
+
 export const getUserNotifications = async (userId: string) => {
   const db = getFirestore();
   try {

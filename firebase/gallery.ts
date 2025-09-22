@@ -1,4 +1,4 @@
-import { uploadImage } from "@/firebase/auth";
+import { deleteImage, uploadImage } from "@/firebase/auth";
 import { sendInAppNotification } from "@/helpers/notificationHelper";
 import { sendPushNotification } from "@/utils/sendPushNotification";
 import { FirebaseAuthTypes } from "@react-native-firebase/auth";
@@ -13,9 +13,11 @@ import {
   onSnapshot,
   orderBy,
   query,
+  runTransaction,
   serverTimestamp,
   updateDoc,
 } from "@react-native-firebase/firestore";
+import { verifyFaceMatch } from "./faceVerification";
 
 export interface GalleryImage {
   id: string;
@@ -242,17 +244,50 @@ const uploadGalleryImage = async (
 
     const userData = userDoc.data();
 
-    // Upload all images to storage first
-    const uploadPromises = imageUris.map(imageUri =>
-      uploadImage(imageUri, "user", user.uid, "gallery")
-    );
+    // Verify faces before uploading
+    const verifiedImageUris: string[] = [];
 
-    const imageDownloadURLs = await Promise.all(uploadPromises);
+    for (const imageUri of imageUris) {
+      try {
+        // Upload image first
+        const imageUrl = await uploadImage(
+          imageUri,
+          "user",
+          user.uid,
+          "gallery"
+        );
+
+        // Verify face matches profile
+        if (userData?.photo) {
+          const verificationResult = await verifyFaceMatch(
+            user.uid,
+            imageUrl,
+            userData.photo
+          );
+
+          if (!verificationResult.isMatch) {
+            // Delete the uploaded image if verification fails
+            await deleteImage(imageUrl);
+            throw new Error(
+              verificationResult.error ||
+                "Face verification failed. Please upload an image that clearly shows your face and matches your profile picture."
+            );
+          }
+        }
+
+        verifiedImageUris.push(imageUrl);
+      } catch (error: any) {
+        console.error(`Face verification failed for image ${imageUri}:`, error);
+        throw error;
+      }
+    }
+
+    const imageDownloadURLs = verifiedImageUris;
 
     // Use a transaction to ensure all images are added atomically
     const imageIds: string[] = [];
 
-    await db.runTransaction(async transaction => {
+    await runTransaction(db, async transaction => {
       const userDocSnapshot = await transaction.get(userRef);
       if (!userDocSnapshot.exists()) {
         throw new Error("User data not found during transaction");

@@ -97,12 +97,14 @@ export default function Photo() {
                     "user",
                     currentUser.uid,
                     "profile"
-                  ).finally(() => setIsLoading(false));
+                  );
 
                   // Set the download URL in the form
                   setFieldValue("photo", imageUrl);
-                } catch (error) {
+                } catch (error: any) {
                   console.error("Error uploading image:", error);
+                } finally {
+                  setIsLoading(false);
                 }
               }}
             >

@@ -1,3 +1,4 @@
+import * as AWS from "aws-sdk";
 import * as admin from "firebase-admin";
 import { HttpsError, onCall, onRequest } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";
@@ -5,6 +6,131 @@ import Stripe from "stripe";
 
 // Initialize Firebase Admin
 admin.initializeApp();
+
+// Configure AWS
+AWS.config.update({
+  region: process.env.AWS_REGION || "us-east-1",
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+});
+
+const rekognition = new AWS.Rekognition();
+
+// AWS Rekognition Helper Functions
+export interface FaceVerificationResult {
+  isMatch: boolean;
+  confidence: number;
+  error?: string;
+}
+
+export interface FaceDetectionResult {
+  facesDetected: number;
+  faceId?: string;
+  confidence?: number;
+  error?: string;
+}
+
+const compareFaces = async (
+  sourceImageBuffer: Buffer,
+  targetImageBuffer: Buffer,
+  similarityThreshold: number = 80
+): Promise<FaceVerificationResult> => {
+  try {
+    const params = {
+      SourceImage: {
+        Bytes: sourceImageBuffer,
+      },
+      TargetImage: {
+        Bytes: targetImageBuffer,
+      },
+      SimilarityThreshold: similarityThreshold,
+    };
+
+    const result = await rekognition.compareFaces(params).promise();
+
+    if (result.FaceMatches && result.FaceMatches.length > 0) {
+      const match = result.FaceMatches[0];
+      return {
+        isMatch: true,
+        confidence: match.Similarity || 0,
+      };
+    }
+
+    return {
+      isMatch: false,
+      confidence: 0,
+      error: "No matching faces found",
+    };
+  } catch (error: any) {
+    console.error("Error comparing faces:", error);
+    return {
+      isMatch: false,
+      confidence: 0,
+      error: error.message || "Failed to compare faces",
+    };
+  }
+};
+
+// Helper function to download image from URL
+async function downloadImageFromUrl(url: string): Promise<Buffer> {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to download image: ${response.statusText}`);
+    }
+    const arrayBuffer = await response.arrayBuffer();
+    return Buffer.from(arrayBuffer);
+  } catch (error: any) {
+    console.error("Error downloading image:", error);
+    throw new Error(`Failed to download image: ${error.message}`);
+  }
+}
+
+// Face Verification Functions
+
+export const verifyFaceMatch = onCall(async (data: any, context: any) => {
+  try {
+    // Get user ID from context or data
+    const userId = context?.auth?.uid || data.data?.userId || data.userId;
+
+    // Check if we have a valid user ID
+    if (!userId) {
+      throw new Error("User must be authenticated");
+    }
+
+    const { newImageUrl, profileImageUrl } = data.data || data;
+
+    if (!userId || !newImageUrl || !profileImageUrl) {
+      throw new Error("Missing required parameters");
+    }
+
+    // Download images from Firebase Storage
+    const [newImageBuffer, profileImageBuffer] = await Promise.all([
+      downloadImageFromUrl(newImageUrl),
+      downloadImageFromUrl(profileImageUrl),
+    ]);
+
+    // Compare faces
+    const result = await compareFaces(
+      newImageBuffer,
+      profileImageBuffer,
+      80 // 80% similarity threshold
+    );
+
+    if (result.error) {
+      throw new Error(result.error);
+    }
+
+    return {
+      isMatch: result.isMatch,
+      confidence: result.confidence,
+    };
+  } catch (error: any) {
+    console.error("Error in verifyFaceMatch:", error);
+    throw new Error(error.message || "Face verification failed");
+  }
+});
+
 const db = admin.firestore();
 // const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
 //   apiVersion: "2025-07-30.basil",

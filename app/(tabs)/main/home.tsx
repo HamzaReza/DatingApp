@@ -18,7 +18,11 @@ import {
   listenToUserNotifications,
   updateUser,
 } from "@/firebase/auth";
-import { fetchUserGallery, GalleryImage } from "@/firebase/gallery";
+import {
+  fetchUserGallery,
+  GalleryImage,
+  likeDislikeImage,
+} from "@/firebase/gallery";
 import {
   addCommentToReel,
   fetchUserReels,
@@ -410,8 +414,6 @@ export default function Home() {
           }));
 
           try {
-            // Import and use likeDislikeImage for gallery images
-            const { likeDislikeImage } = await import("@/firebase/gallery");
             await likeDislikeImage(
               contentId,
               user.uid,
@@ -635,6 +637,7 @@ export default function Home() {
           } else {
             // This is a GalleryImage
             const image = item as GalleryImage;
+            const optimisticState = optimisticUpdates[image.id];
             const isLiked = user
               ? (image.likes || []).includes(user.uid)
               : false;
@@ -647,10 +650,18 @@ export default function Home() {
                 image={image}
                 onLike={() => handleReelAction("like", image.id)}
                 onDislike={() => handleReelAction("dislike", image.id)}
-                optimisticLikes={optimisticUpdates[image.id]?.likes}
-                optimisticDislikes={optimisticUpdates[image.id]?.dislikes}
-                isLiked={isLiked}
-                isDisliked={isDisliked}
+                optimisticLikes={optimisticState?.likes}
+                optimisticDislikes={optimisticState?.dislikes}
+                isLiked={
+                  optimisticState?.isLiked !== undefined
+                    ? optimisticState.isLiked
+                    : isLiked
+                }
+                isDisliked={
+                  optimisticState?.isDisliked !== undefined
+                    ? optimisticState.isDisliked
+                    : isDisliked
+                }
               />
             );
           }

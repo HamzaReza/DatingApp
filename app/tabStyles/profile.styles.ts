@@ -225,6 +225,18 @@ export default (theme: "dark" | "light") =>
       borderRadius: Borders.radius2,
       overflow: "hidden",
     },
+    galleryPairContainer: {
+      flexDirection: "column",
+      marginRight: wp(2),
+      gap: wp(1),
+    },
+    pairedGalleryItem: {
+      height: hp(12),
+      width: wp(38),
+      borderRadius: Borders.radius2,
+      overflow: "hidden",
+      position: "relative",
+    },
     galleryImage: {
       width: "100%",
       height: "100%",

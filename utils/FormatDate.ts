@@ -77,5 +77,14 @@ export const formatTimeAgo = (
   if (diffInSeconds < 60) return "Just now";
   if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
   if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-  return `${Math.floor(diffInSeconds / 86400)}d ago`;
+
+  const diffInDays = Math.floor(diffInSeconds / 86400);
+
+  // If more than 30 days, calculate months
+  if (diffInDays >= 30) {
+    const months = Math.floor(diffInDays / 30);
+    return `${months} month${months === 1 ? "" : "s"} ago`;
+  }
+
+  return `${diffInDays}d ago`;
 };

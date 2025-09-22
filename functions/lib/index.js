@@ -1,12 +1,104 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createEventTicketPaymentIntent = exports.createMessagePaymentIntent = exports.checkExpiredPayments = exports.stripeWebhook = void 0;
+exports.createEventTicketPaymentIntent = exports.createMessagePaymentIntent = exports.checkExpiredPayments = exports.stripeWebhook = exports.verifyFaceMatch = void 0;
+const AWS = require("aws-sdk");
 const admin = require("firebase-admin");
 const https_1 = require("firebase-functions/v2/https");
 const scheduler_1 = require("firebase-functions/v2/scheduler");
 const stripe_1 = require("stripe");
 // Initialize Firebase Admin
 admin.initializeApp();
+// Configure AWS
+AWS.config.update({
+    region: process.env.AWS_REGION || "us-east-1",
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+});
+const rekognition = new AWS.Rekognition();
+const compareFaces = async (sourceImageBuffer, targetImageBuffer, similarityThreshold = 80) => {
+    try {
+        const params = {
+            SourceImage: {
+                Bytes: sourceImageBuffer,
+            },
+            TargetImage: {
+                Bytes: targetImageBuffer,
+            },
+            SimilarityThreshold: similarityThreshold,
+        };
+        const result = await rekognition.compareFaces(params).promise();
+        if (result.FaceMatches && result.FaceMatches.length > 0) {
+            const match = result.FaceMatches[0];
+            return {
+                isMatch: true,
+                confidence: match.Similarity || 0,
+            };
+        }
+        return {
+            isMatch: false,
+            confidence: 0,
+            error: "No matching faces found",
+        };
+    }
+    catch (error) {
+        console.error("Error comparing faces:", error);
+        return {
+            isMatch: false,
+            confidence: 0,
+            error: error.message || "Failed to compare faces",
+        };
+    }
+};
+// Helper function to download image from URL
+async function downloadImageFromUrl(url) {
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Failed to download image: ${response.statusText}`);
+        }
+        const arrayBuffer = await response.arrayBuffer();
+        return Buffer.from(arrayBuffer);
+    }
+    catch (error) {
+        console.error("Error downloading image:", error);
+        throw new Error(`Failed to download image: ${error.message}`);
+    }
+}
+// Face Verification Functions
+exports.verifyFaceMatch = (0, https_1.onCall)(async (data, context) => {
+    var _a, _b;
+    try {
+        // Get user ID from context or data
+        const userId = ((_a = context === null || context === void 0 ? void 0 : context.auth) === null || _a === void 0 ? void 0 : _a.uid) || ((_b = data.data) === null || _b === void 0 ? void 0 : _b.userId) || data.userId;
+        // Check if we have a valid user ID
+        if (!userId) {
+            throw new Error("User must be authenticated");
+        }
+        const { newImageUrl, profileImageUrl } = data.data || data;
+        if (!userId || !newImageUrl || !profileImageUrl) {
+            throw new Error("Missing required parameters");
+        }
+        // Download images from Firebase Storage
+        const [newImageBuffer, profileImageBuffer] = await Promise.all([
+            downloadImageFromUrl(newImageUrl),
+            downloadImageFromUrl(profileImageUrl),
+        ]);
+        // Compare faces
+        const result = await compareFaces(newImageBuffer, profileImageBuffer, 80 // 80% similarity threshold
+        );
+        if (result.error) {
+            throw new Error(result.error);
+        }
+        return {
+            isMatch: result.isMatch,
+            confidence: result.confidence,
+        };
+    }
+    catch (error) {
+        console.error("Error in verifyFaceMatch:", error);
+        throw new Error(error.message || "Face verification failed");
+    }
+});
 const db = admin.firestore();
 // const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
 //   apiVersion: "2025-07-30.basil",

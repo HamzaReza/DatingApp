@@ -1,6 +1,8 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import createStyles from "@/app/tabStyles/profile.styles";
+import FaceVerificationStatus from "@/components/FaceVerificationStatus";
 import InterestTag from "@/components/InterestTag";
+import RnAvatar from "@/components/RnAvatar";
 import RnButton from "@/components/RnButton";
 import Container from "@/components/RnContainer";
 import RnDropdown from "@/components/RnDropdown";
@@ -20,6 +22,7 @@ import {
   getUserByUidAsync,
   recordLike,
   updateUser,
+  uploadImage,
 } from "@/firebase/auth";
 import {
   deleteGalleryImageWithFile,
@@ -92,6 +95,10 @@ export default function Profile() {
   const [showActionButtons, setShowActionButtons] = useState(false);
   const [imagePickerVisible, setImagePickerVisible] = useState(false);
   const [galleryLoading, setGalleryLoading] = useState(false);
+  const [reelLoading, setReelLoading] = useState(false);
+  const [faceVerificationStatus, setFaceVerificationStatus] = useState<
+    "idle" | "failed" | "verifying" | "verified"
+  >("idle");
   const [reelModalVisible, setReelModalVisible] = useState(false);
   const [selectedReel, setSelectedReel] = useState<string | null>(null);
   const [reelUploadModalVisible, setReelUploadModalVisible] = useState(false);
@@ -344,26 +351,46 @@ export default function Profile() {
     }[]
   ) => {
     setGalleryLoading(true);
+    setFaceVerificationStatus("verifying");
+
     let imageUris: string[] = [];
     uri.map(img => imageUris.push(img.uri));
 
     try {
+      // Keep the modal open during the entire process
       await uploadGalleryImage(imageUris, user, "public");
+
+      // Show success status
+      setFaceVerificationStatus("verified");
+
+      // Wait a bit to show the success message
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Close modal and refresh data
       setGalleryLoading(false);
+      setFaceVerificationStatus("idle");
       await getUserDetails();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error uploading gallery images:", error);
+      setFaceVerificationStatus("failed");
+
+      // Wait a bit to show the error message
+      await new Promise(resolve => setTimeout(resolve, 3000));
+
+      // Close modal
       setGalleryLoading(false);
+      setFaceVerificationStatus("idle");
+
       showToaster({
         type: "error",
-        message: "Error uploading images. Please try again.",
+        message: error.message || "Error uploading images. Please try again.",
       });
     }
   };
 
   const handleReelUpload = async (uri: string, caption: string) => {
     try {
-      setGalleryLoading(true);
+      setReelLoading(true);
 
       // Generate thumbnail from video
       const thumbnailUri = await generateThumbnail(uri);
@@ -386,7 +413,7 @@ export default function Profile() {
         message: error.message || "Failed to upload reel. Please try again.",
       });
     } finally {
-      setGalleryLoading(false);
+      setReelLoading(false);
     }
   };
 
@@ -888,59 +915,184 @@ export default function Profile() {
               horizontal
               showsHorizontalScrollIndicator={false}
               keyExtractor={(item, index) => index.toString()}
-              renderItem={({ item, index }) => (
-                <TouchableOpacity
-                  style={
-                    index === 0
-                      ? styles.largeGalleryItem
-                      : styles.smallGalleryItem
-                  }
-                  onPress={() => {
-                    setSelectedImage(item);
-                    setGalleryModalVisible(true);
-                  }}
-                >
-                  <Image
-                    source={{ uri: item.imageUrl }}
-                    style={styles.galleryImage}
-                  />
-                  {user.uid === id && (
+              renderItem={({ item, index }) => {
+                // First item - keep it large
+                if (index === 0) {
+                  return (
                     <TouchableOpacity
-                      style={styles.reelTopLeftButton}
-                      onPress={e => {
-                        handleGalleryVisibilityToggle(
-                          item.id,
-                          item.visibility || "public"
-                        );
+                      style={styles.largeGalleryItem}
+                      onPress={() => {
+                        setSelectedImage(item);
+                        setGalleryModalVisible(true);
                       }}
                     >
-                      <Ionicons
-                        name={
-                          item.visibility === "public" ? "globe" : "lock-closed"
-                        }
-                        size={20}
-                        color={Colors[theme].whiteText}
+                      <Image
+                        source={{ uri: item.imageUrl }}
+                        style={styles.galleryImage}
                       />
-                    </TouchableOpacity>
-                  )}
+                      {user.uid === id && (
+                        <TouchableOpacity
+                          style={styles.reelTopLeftButton}
+                          onPress={e => {
+                            handleGalleryVisibilityToggle(
+                              item.id,
+                              item.visibility || "public"
+                            );
+                          }}
+                        >
+                          <Ionicons
+                            name={
+                              item.visibility === "public"
+                                ? "globe"
+                                : "lock-closed"
+                            }
+                            size={20}
+                            color={Colors[theme].whiteText}
+                          />
+                        </TouchableOpacity>
+                      )}
 
-                  {/* Top-right delete button */}
-                  {user.uid === id && (
+                      {/* Top-right delete button */}
+                      {user.uid === id && (
+                        <TouchableOpacity
+                          style={styles.reelTopRightButton}
+                          onPress={e => {
+                            handleGalleryImageDelete(item);
+                          }}
+                        >
+                          <Ionicons
+                            name="trash-outline"
+                            size={20}
+                            color={Colors[theme].redText}
+                          />
+                        </TouchableOpacity>
+                      )}
+                    </TouchableOpacity>
+                  );
+                }
+
+                // For remaining items, group them in pairs
+                const galleryData = profileData?.gallery || [];
+                const remainingItems = galleryData.slice(1);
+                const pairIndex = Math.floor((index - 1) / 2);
+                const isFirstInPair = (index - 1) % 2 === 0;
+
+                // Only render the first item of each pair, the second will be rendered within the same container
+                if (!isFirstInPair) {
+                  return null;
+                }
+
+                const firstItem = remainingItems[pairIndex * 2];
+                const secondItem = remainingItems[pairIndex * 2 + 1];
+
+                return (
+                  <View style={styles.galleryPairContainer}>
+                    {/* First item in pair */}
                     <TouchableOpacity
-                      style={styles.reelTopRightButton}
-                      onPress={e => {
-                        handleGalleryImageDelete(item);
+                      style={styles.pairedGalleryItem}
+                      onPress={() => {
+                        setSelectedImage(firstItem);
+                        setGalleryModalVisible(true);
                       }}
                     >
-                      <Ionicons
-                        name="trash-outline"
-                        size={20}
-                        color={Colors[theme].redText}
+                      <Image
+                        source={{ uri: firstItem.imageUrl }}
+                        style={styles.galleryImage}
                       />
+                      {user.uid === id && (
+                        <TouchableOpacity
+                          style={styles.reelTopLeftButton}
+                          onPress={e => {
+                            handleGalleryVisibilityToggle(
+                              firstItem.id,
+                              firstItem.visibility || "public"
+                            );
+                          }}
+                        >
+                          <Ionicons
+                            name={
+                              firstItem.visibility === "public"
+                                ? "globe"
+                                : "lock-closed"
+                            }
+                            size={20}
+                            color={Colors[theme].whiteText}
+                          />
+                        </TouchableOpacity>
+                      )}
+
+                      {/* Top-right delete button */}
+                      {user.uid === id && (
+                        <TouchableOpacity
+                          style={styles.reelTopRightButton}
+                          onPress={e => {
+                            handleGalleryImageDelete(firstItem);
+                          }}
+                        >
+                          <Ionicons
+                            name="trash-outline"
+                            size={20}
+                            color={Colors[theme].redText}
+                          />
+                        </TouchableOpacity>
+                      )}
                     </TouchableOpacity>
-                  )}
-                </TouchableOpacity>
-              )}
+
+                    {/* Second item in pair (if exists) */}
+                    {secondItem && (
+                      <TouchableOpacity
+                        style={styles.pairedGalleryItem}
+                        onPress={() => {
+                          setSelectedImage(secondItem);
+                          setGalleryModalVisible(true);
+                        }}
+                      >
+                        <Image
+                          source={{ uri: secondItem.imageUrl }}
+                          style={styles.galleryImage}
+                        />
+                        {user.uid === id && (
+                          <TouchableOpacity
+                            style={styles.reelTopLeftButton}
+                            onPress={e => {
+                              handleGalleryVisibilityToggle(
+                                secondItem.id,
+                                secondItem.visibility || "public"
+                              );
+                            }}
+                          >
+                            <Ionicons
+                              name={
+                                secondItem.visibility === "public"
+                                  ? "globe"
+                                  : "lock-closed"
+                              }
+                              size={20}
+                              color={Colors[theme].whiteText}
+                            />
+                          </TouchableOpacity>
+                        )}
+
+                        {/* Top-right delete button */}
+                        {user.uid === id && (
+                          <TouchableOpacity
+                            style={styles.reelTopRightButton}
+                            onPress={e => {
+                              handleGalleryImageDelete(secondItem);
+                            }}
+                          >
+                            <Ionicons
+                              name="trash-outline"
+                              size={20}
+                              color={Colors[theme].redText}
+                            />
+                          </TouchableOpacity>
+                        )}
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                );
+              }}
             />
           </View>
 
@@ -1086,6 +1238,35 @@ export default function Profile() {
         backButton={() => setEditModalVisible(false)}
       >
         <View style={styles.editModalContainer}>
+          <RnImagePicker
+            setUri={async image => {
+              console.log("🚀 ~ [id].tsx:1118 ~ image:", image);
+
+              const imageUrl = await uploadImage(
+                (image as { uri: string }).uri,
+                "user",
+                user.uid,
+                "profile"
+              );
+              console.log("🚀 ~ [id].tsx:1127 ~ imageUrl:", imageUrl);
+
+              await updateUser(user.uid, {
+                photo: imageUrl,
+              });
+              setImagePickerVisible(false);
+              await getUserDetails();
+            }}
+            visible={imagePickerVisible}
+            showPicker={() => setImagePickerVisible(true)}
+            hidePicker={() => setImagePickerVisible(false)}
+          >
+            <RnAvatar
+              source={encodeImagePath(profileData?.photo)}
+              avatarHeight={wp(30)}
+              showAvatarIcon={!profileData?.photo}
+              style={{ alignSelf: "center", marginBottom: hp(1) }}
+            />
+          </RnImagePicker>
           <Formik
             enableReinitialize
             initialValues={{
@@ -1285,12 +1466,12 @@ export default function Profile() {
                       setSelectedVideoThumbnail(null);
                     }}
                     style={[[styles.reelButton, styles.cancelButton]]}
-                    disabled={galleryLoading}
+                    disabled={reelLoading}
                   />
                   <RnButton
                     title="Upload"
                     onPress={handleSubmit}
-                    loading={galleryLoading}
+                    loading={reelLoading}
                     style={[styles.reelButton]}
                   />
                 </View>
@@ -1391,6 +1572,15 @@ export default function Profile() {
         </View>
       </RnModal>
       <RnModal show={galleryLoading}>
+        <View
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        >
+          <ActivityIndicator size="large" color={Colors[theme].primary} />
+          <FaceVerificationStatus status={faceVerificationStatus} />
+        </View>
+      </RnModal>
+
+      <RnModal show={reelLoading}>
         <View
           style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
         >

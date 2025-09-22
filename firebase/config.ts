@@ -11,7 +11,7 @@ export const configureFirebaseEmulators = () => {
       // Configure Functions emulator
       // Use localhost for emulator, IP for real device
       const host = "localhost";
-      // const host = "192.168.110.12";
+      // const host = "192.168.110.231";
       getFunctions().useEmulator(host, 5001);
 
       console.log(`✅ Firebase emulators configured (host: ${host})`);

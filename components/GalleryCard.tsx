@@ -5,7 +5,7 @@ import { FontSize } from "@/constants/FontSize";
 import { GalleryImage } from "@/firebase/gallery";
 import { encodeImagePath, hp, wp } from "@/utils";
 import { formatTimeAgo } from "@/utils/FormatDate";
-import { AntDesign } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import {
   Image,
@@ -44,32 +44,32 @@ const GalleryCard: React.FC<GalleryCardProps> = ({
       <Image
         source={{ uri: image.imageUrl }}
         style={styles.image}
-        resizeMode="contain"
+        resizeMode="cover"
       />
 
       <View style={styles.overlay} />
 
-      <View style={styles.content}>
-        <View style={styles.bottomContainer}>
-          <View style={styles.userInfo}>
-            <Image
-              source={{ uri: encodeImagePath(image.userPhoto) }}
-              style={styles.avatar}
-            />
-            <View style={styles.userDetails}>
-              <RnText style={styles.userName}>{image.username}</RnText>
-              <RnText style={styles.timeAgo}>
-                {formatTimeAgo(image.createdAt)}
-              </RnText>
-            </View>
+      {/* User info at the top */}
+      <View style={styles.topContainer}>
+        <View style={styles.userInfo}>
+          <Image
+            source={{ uri: encodeImagePath(image.userPhoto) }}
+            style={styles.avatar}
+          />
+          <View style={styles.userDetails}>
+            <RnText style={styles.userName}>{image.username}</RnText>
+            <RnText style={styles.timeAgo}>
+              {formatTimeAgo(image.createdAt)}
+            </RnText>
           </View>
         </View>
       </View>
 
-      <View style={styles.actions}>
+      {/* Action buttons at the bottom */}
+      <View style={styles.bottomActions}>
         <TouchableOpacity style={styles.actionButton} onPress={onLike}>
-          <AntDesign
-            name="like1"
+          <Ionicons
+            name="heart"
             size={24}
             color={isLiked ? Colors[theme].redText : Colors[theme].whiteText}
           />
@@ -85,8 +85,8 @@ const GalleryCard: React.FC<GalleryCardProps> = ({
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.actionButton} onPress={onDislike}>
-          <AntDesign
-            name="dislike1"
+          <Ionicons
+            name="heart-dislike"
             size={24}
             color={isDisliked ? Colors[theme].redText : Colors[theme].whiteText}
           />
@@ -114,7 +114,6 @@ const createStyles = (theme: "dark" | "light") =>
       overflow: "hidden",
       marginBottom: hp(2),
       position: "relative",
-      flexDirection: "row",
     },
     image: {
       width: "100%",
@@ -125,21 +124,21 @@ const createStyles = (theme: "dark" | "light") =>
       ...StyleSheet.absoluteFillObject,
       backgroundColor: "rgba(0,0,0,0.3)",
     },
-    content: {
-      flex: 1,
-      padding: wp(6),
-      justifyContent: "flex-end",
-    },
-    bottomContainer: {
-      marginTop: hp(2),
+    topContainer: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      padding: wp(4),
+      paddingTop: hp(2),
     },
     userInfo: {
       flexDirection: "row",
       alignItems: "center",
     },
     avatar: {
-      width: wp(12),
-      height: wp(12),
+      width: wp(10),
+      height: wp(10),
       borderRadius: Borders.circle,
       marginRight: wp(3),
       borderWidth: 2,
@@ -159,23 +158,33 @@ const createStyles = (theme: "dark" | "light") =>
       opacity: 0.8,
       marginTop: hp(0.5),
     },
-    actions: {
+    bottomActions: {
+      position: "absolute",
+      bottom: 0,
+      left: 0,
+      right: 0,
+      flexDirection: "row",
+      justifyContent: "center",
       alignItems: "center",
-      alignSelf: "center",
-      backgroundColor: "rgba(255,255,255,0.4)",
-      padding: hp(1.5),
-      borderTopLeftRadius: hp(2.5),
-      borderBottomLeftRadius: hp(2.5),
+      padding: wp(4),
+      paddingBottom: hp(2),
+      backgroundColor: "rgba(0,0,0,0.2)",
     },
     actionButton: {
+      marginHorizontal: wp(8),
+      paddingVertical: hp(1),
+      paddingHorizontal: wp(3),
+      backgroundColor: "rgba(255,255,255,0.2)",
+      borderRadius: Borders.radius2,
+      flexDirection: "row",
       alignItems: "center",
-      marginVertical: hp(0.5),
+      justifyContent: "center",
     },
     actionCount: {
       color: Colors[theme].whiteText,
       fontSize: FontSize.extraSmall,
       fontFamily: FontFamily.semiBold,
-      marginTop: hp(0.5),
+      marginLeft: wp(2),
     },
   });
 

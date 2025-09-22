@@ -40,6 +40,7 @@ import {
   isErrorWithCode,
   isSuccessResponse,
 } from "@react-native-google-signin/google-signin";
+import { verifyFaceMatch } from "./faceVerification";
 
 interface Location {
   latitude: number;
@@ -82,6 +83,54 @@ export type AppNotification = {
 
 const auth = getAuth();
 const storage = getStorage();
+
+// Face verification is now handled by direct function calls
+
+// Face verification helper function - only for gallery images
+const performFaceVerification = async (
+  userId: string,
+  newImageUrl: string,
+  imageType: "gallery"
+): Promise<void> => {
+  try {
+    // Get user's profile picture for comparison
+    const userDoc = await getUserByUidAsync(userId);
+    if (!userDoc?.photo) {
+      console.warn("No profile picture found for face verification");
+      return;
+    }
+
+    // For gallery images, verify against profile picture
+    const verificationResult = await verifyFaceMatch(
+      userId,
+      newImageUrl,
+      userDoc.photo
+    );
+
+    if (!verificationResult.isMatch) {
+      // Delete the uploaded image if face verification fails
+      await deleteImage(newImageUrl);
+      throw new Error(
+        verificationResult.error ||
+          "Face verification failed. Please upload an image that clearly shows your face and matches your profile picture."
+      );
+    }
+
+    // Update user's face verification status
+    await updateUser(userId, {
+      lastFaceVerification: {
+        timestamp: new Date(),
+        isMatch: verificationResult.isMatch,
+        confidence: verificationResult.confidence,
+        imageUrl: newImageUrl,
+        imageType,
+      },
+    });
+  } catch (error: any) {
+    console.error("Face verification error:", error);
+    throw error;
+  }
+};
 
 const authenticateWithPhone = async (phoneNumber: string) => {
   if (!phoneNumber || !phoneNumber.startsWith("+")) {
@@ -386,6 +435,11 @@ const uploadImage = async (
     await putFile(storageRef, imageUri);
 
     const downloadURL = await getDownloadURL(storageRef);
+
+    // Perform face verification only for gallery images
+    if (type === "user" && userId && imageType === "gallery") {
+      await performFaceVerification(userId, downloadURL, imageType);
+    }
 
     return downloadURL;
   } catch (error: any) {
@@ -1609,8 +1663,6 @@ const listenToUserNotifications = (
 
         const formattedNotifications: AppNotification[] = notifs.map(
           (notif: any) => {
-            const defaultImage = "https://example.com/default-user.png";
-
             const baseNotification = {
               id: notif.id || "unknown-id",
               dataId: notif.data.id,
@@ -1620,7 +1672,7 @@ const listenToUserNotifications = (
                 notif.message ||
                 "You have a new notification",
               time: formatTime(notif.createdAt?.toDate?.() || new Date()),
-              image: notif.data.image || defaultImage,
+              image: notif.data.image,
               data: notif.data,
               read: notif.isRead || false,
               type: notif.type,

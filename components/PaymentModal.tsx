@@ -6,6 +6,7 @@ import { useStripe } from "@stripe/stripe-react-native";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { Colors } from "../constants/Colors";
+import { PaymentService } from "../firebase/paymentService";
 import { useColorScheme } from "../hooks/useColorScheme";
 import RnButton from "./RnButton";
 import RnModal from "./RnModal";
@@ -20,6 +21,7 @@ interface PaymentModalProps {
   eventId?: string;
   totalPrice?: number;
   isPreInitialized?: boolean;
+  paymentMethod?: string;
 }
 
 const PaymentModal: React.FC<PaymentModalProps> = ({
@@ -30,6 +32,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   eventId,
   totalPrice,
   isPreInitialized = false,
+  paymentMethod = "card",
 }) => {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
@@ -47,10 +50,21 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       const initializePaymentSheet = async () => {
         try {
           console.log("🚀 Starting PaymentSheet initialization...");
+
+          // Configure payment method specific settings
+          const paymentService = PaymentService.getInstance();
+          const paymentMethodConfig =
+            paymentService.getPaymentMethodConfiguration(paymentMethod);
+
           const { error } = await initPaymentSheet({
             paymentIntentClientSecret: paymentData.clientSecret,
-            merchantDisplayName: "Your App Name",
+            merchantDisplayName: "Dating App",
             style: "automatic", // or 'alwaysLight' based on your theme
+            allowsDelayedPaymentMethods: true,
+            applePay:
+              paymentMethod === "apple_pay" ? paymentMethodConfig : undefined,
+            googlePay:
+              paymentMethod === "google_pay" ? paymentMethodConfig : undefined,
           });
 
           if (error) {

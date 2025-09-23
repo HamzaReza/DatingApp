@@ -719,8 +719,14 @@ export const createEventTicketPaymentIntent = onCall(
         throw new HttpsError("unauthenticated", "User ID is required");
       }
 
-      const { paymentId, amount, eventId, ticketType, quantity } =
-        data.data || data;
+      const {
+        paymentId,
+        amount,
+        eventId,
+        ticketType,
+        quantity,
+        paymentMethod,
+      } = data.data || data;
 
       if (!paymentId || !amount || !eventId) {
         throw new HttpsError("invalid-argument", "Missing required parameters");
@@ -729,8 +735,8 @@ export const createEventTicketPaymentIntent = onCall(
       // Allow multiple ticket purchases for the same event
       // No duplicate check needed - users can buy multiple tickets
 
-      // Create payment intent in Stripe
-      const paymentIntent = await stripe.paymentIntents.create({
+      // Configure payment method specific settings
+      const paymentMethodConfig: any = {
         amount: amount,
         currency: "usd",
         metadata: {
@@ -739,8 +745,42 @@ export const createEventTicketPaymentIntent = onCall(
           eventId: eventId,
           ticketType: ticketType || "normal",
           quantity: quantity || "1",
+          paymentMethod: paymentMethod || "card",
         },
-      });
+      };
+
+      // Add payment method specific configurations
+      switch (paymentMethod) {
+        case "apple_pay":
+          paymentMethodConfig.automatic_payment_methods = {
+            enabled: true,
+            allow_redirects: "never",
+          };
+          break;
+        case "google_pay":
+          paymentMethodConfig.automatic_payment_methods = {
+            enabled: true,
+            allow_redirects: "never",
+          };
+          break;
+        case "paypal":
+          paymentMethodConfig.automatic_payment_methods = {
+            enabled: true,
+            allow_redirects: "always",
+          };
+          break;
+        default: // card
+          paymentMethodConfig.automatic_payment_methods = {
+            enabled: true,
+            allow_redirects: "never",
+          };
+          break;
+      }
+
+      // Create payment intent in Stripe
+      const paymentIntent = await stripe.paymentIntents.create(
+        paymentMethodConfig
+      );
 
       // Return only the client secret - don't create Firestore document yet
       const result = {

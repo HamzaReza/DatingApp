@@ -2,7 +2,6 @@
 import { VideoProvider } from "@/components/VideoContext";
 import { Colors } from "@/constants/Colors";
 import { FontSize } from "@/constants/FontSize";
-import { configureFirebaseEmulators } from "@/firebase/config";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { persistor, store } from "@/redux/store";
 import { hp, wp } from "@/utils/Dimensions";
@@ -49,7 +48,7 @@ export default function RootLayout() {
     InterBold: require("../assets/fonts/Inter-Bold.ttf"),
   });
 
-  configureFirebaseEmulators();
+  // configureFirebaseEmulators();
 
   //TODO:
   // Hangout Invite

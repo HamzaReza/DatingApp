@@ -5,6 +5,7 @@ import GalleryCard from "@/components/GalleryCard";
 import ReelCard from "@/components/ReelCard";
 import RnAvatar from "@/components/RnAvatar";
 import Container from "@/components/RnContainer";
+import RnModal from "@/components/RnModal";
 import RnText from "@/components/RnText";
 import showToaster from "@/components/RnToast";
 import RoundButton from "@/components/RoundButton";
@@ -40,7 +41,13 @@ import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { FlatList, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 
 type Story = {
@@ -61,6 +68,7 @@ export default function Home() {
   const { user } = useSelector((state: RootState) => state.user);
 
   const [hasNotification, setHasNotification] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const dispatch = useDispatch();
   const [allStories, setAllStories] = useState<Story[]>([]);
@@ -179,8 +187,16 @@ export default function Home() {
     try {
       const stories = await fetchAllUserStories(user?.uid);
       setAllStories(stories);
+
+      // Extract user IDs who have stories (excluding current user if needed)
+      const usersWithStories = stories
+        .filter((story: any) => story.hasActiveStories)
+        .map((story: any) => story.id);
+
+      return usersWithStories;
     } catch (error) {
       console.log("error when fetch stories", error);
+      return [];
     }
   };
 
@@ -241,19 +257,85 @@ export default function Home() {
     setCombinedContent(combined);
   };
 
-  const handleStoryPress = async (userStory: Story) => {
-    const currentUserStories = await fetchStoriesForUser(userStory.id);
+  // In home.tsx - when navigating to story view
+  const handleStoryPress = async (userStory: any) => {
+    try {
+      const usersWithStoriesIds = await getStories();
+      const currentUserStories = await fetchStoriesForUser(userStory.id);
 
-    router.push({
-      pathname: "/mainScreens/storyView",
-      params: {
-        userId: userStory.id,
-        username: userStory.username,
-        profilePic: userStory.image,
-        stories: JSON.stringify(currentUserStories),
-        initialStoryIndex: 0,
-      },
-    });
+      if (currentUserStories && currentUserStories.length > 0) {
+        // Filter out auth user BEFORE passing to StoryView
+        const filteredUsersWithStories = usersWithStoriesIds.filter(
+          (id: any) => id !== user?.uid // ← SKIP AUTH USER HERE
+        );
+
+        router.push({
+          pathname: "/mainScreens/storyView",
+          params: {
+            userId: userStory.id,
+            username: userStory.username,
+            profilePic: userStory.image,
+            stories: JSON.stringify(currentUserStories),
+            initialStoryIndex: 0,
+            allUsersWithStories: JSON.stringify(filteredUsersWithStories), // ← PASS FILTERED LIST
+          },
+        });
+      }
+    } catch (error) {
+      console.error("Error handling story press:", error);
+    }
+  };
+
+  // For your own story
+  const handleOwnStoryPress = async () => {
+    try {
+      const usersWithStoriesIds = await getStories();
+      const userStories = await fetchStoriesForUser(user?.uid);
+
+      if (userStories && userStories.length > 0) {
+        // Filter out auth user BEFORE passing to StoryView
+        const filteredUsersWithStories = usersWithStoriesIds.filter(
+          (id: any) => id !== user?.uid // ← SKIP AUTH USER HERE
+        );
+
+        router.push({
+          pathname: "/mainScreens/storyView",
+          params: {
+            userId: user?.uid,
+            username: "My Story",
+            profilePic: user?.photo,
+            stories: JSON.stringify(userStories),
+            initialStoryIndex: 0,
+            allUsersWithStories: JSON.stringify(filteredUsersWithStories), // ← PASS FILTERED LIST
+          },
+        });
+      }
+    } catch (error) {
+      console.error("Error handling own story press:", error);
+    }
+  };
+
+  const onOwnStoryUpload = async () => {
+    try {
+      console.log("🎬 Starting story upload flow...");
+      setUploading(true);
+
+      const picked: any = await pickStory();
+      console.log("📂 Picked asset:", picked);
+
+      if (!picked) {
+        console.log("⚠️ No media picked or trimming canceled.");
+        return;
+      }
+
+      await handleStoryUpload(picked, user);
+      console.log("✅ Story uploaded successfully!");
+    } catch (err) {
+      console.error("❌ Error uploading story:", err);
+    } finally {
+      setUploading(false);
+      console.log("🛑 Upload flow finished.");
+    }
   };
 
   const handleReelAction = async (action: string, contentId: string) => {
@@ -536,17 +618,37 @@ export default function Home() {
   const pickStory = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.All,
-      allowsMultipleSelection: true,
+      allowsMultipleSelection: false,
       quality: 0.8,
+      videoMaxDuration: 15, // ⬅️ max 15s
     });
 
     if (!result.canceled) {
-      return result.assets.map(asset => asset.uri);
+      const validStories = [];
+
+      for (const asset of result.assets) {
+        if (asset.type === "video" && (asset.duration || 0) > 15000) {
+          // 🔥 Show message for videos longer than 15 seconds
+          Alert.alert(
+            "Video Too Long",
+            "Please select a video shorter than 15 seconds",
+            [{ text: "OK" }]
+          );
+          continue; // Skip this video
+        }
+
+        validStories.push({
+          uri: asset.uri,
+          type: asset.type, // "image" or "video"
+          duration: asset.duration || 0,
+        });
+      }
+
+      return validStories;
     }
 
     return [];
   };
-
   return (
     <Container>
       <View style={styles.titleContainer}>
@@ -581,8 +683,14 @@ export default function Home() {
               image={item.image}
               username={item.username || "user"}
               isOwn={item.isOwn}
-              onPress={() => handleStoryPress(item)}
-              ownUploadOnPress={() => handleStoryUpload(pickStory(), user)}
+              // 🟢 Use different logic if it's own story
+              onPress={
+                () =>
+                  item.isOwn
+                    ? handleOwnStoryPress() // <- own story check
+                    : handleStoryPress(item) // <- others' story
+              }
+              ownUploadOnPress={onOwnStoryUpload} // plus icon
             />
           )}
           horizontal
@@ -678,6 +786,13 @@ export default function Home() {
         onAddComment={handleAddComment}
         loading={isSubmitting}
       />
+      <RnModal show={uploading}>
+        <View
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        >
+          <ActivityIndicator size="large" color={Colors[theme].whiteText} />
+        </View>
+      </RnModal>
     </Container>
   );
 }

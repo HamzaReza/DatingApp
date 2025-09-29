@@ -399,55 +399,6 @@ export default function StoryView() {
     }
   }, [isPaused, isVideoStory, isMediaLoading, progress, startStoryTimer]);
 
-  // useEventListener(
-  //   player,
-  //   "timeUpdate",
-  //   (payload: { currentTime: number; duration: number }) => {
-  //     if (!isVideoStory || !payload) return;
-
-  //     const { currentTime, duration } = payload;
-
-  //     if (duration > 0) {
-  //       const fraction = currentTime / duration;
-  //       progress.setValue(fraction);
-
-  //       if (isMediaLoading) {
-  //         setIsMediaLoading(false);
-  //         videoLoadedRef.current = true;
-  //       }
-
-  //       if (fraction >= 0.99) {
-  //         goToNextStory();
-  //       }
-  //     }
-  //   }
-  // );
-
-  // useEventListener(player, "playing", () => {
-  //   if (isVideoStory && isMediaLoading) {
-  //     setIsMediaLoading(false);
-  //     videoLoadedRef.current = true;
-  //   }
-  // });
-
-  // useEventListener(player, "load", (payload: any) => {
-  //   if (isVideoStory && isMediaLoading && payload?.isLoaded) {
-  //     setIsMediaLoading(false);
-  //     videoLoadedRef.current = true;
-  //   }
-  // });
-
-  // useEventListener(player, "playToEnd", () => {
-  //   if (isVideoStory) {
-  //     goToNextStory();
-  //   }
-  // });
-
-  // useEventListener(player, "error", () => {
-  //   setIsMediaLoading(false);
-  //   videoLoadedRef.current = true;
-  // });
-
   useEffect(() => {
     if (!isVideoStory || !player) return;
 

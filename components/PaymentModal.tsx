@@ -20,6 +20,7 @@ interface PaymentModalProps {
   eventId?: string;
   totalPrice?: number;
   isPreInitialized?: boolean;
+  paymentMethod?: string;
 }
 
 const PaymentModal: React.FC<PaymentModalProps> = ({
@@ -30,6 +31,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   eventId,
   totalPrice,
   isPreInitialized = false,
+  paymentMethod = "card",
 }) => {
   const colorScheme = useColorScheme();
   const theme = colorScheme === "dark" ? "dark" : "light";
@@ -47,10 +49,14 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       const initializePaymentSheet = async () => {
         try {
           console.log("🚀 Starting PaymentSheet initialization...");
+
+          // Only card payments are supported
+
           const { error } = await initPaymentSheet({
             paymentIntentClientSecret: paymentData.clientSecret,
-            merchantDisplayName: "Your App Name",
+            merchantDisplayName: "Dating App",
             style: "automatic", // or 'alwaysLight' based on your theme
+            allowsDelayedPaymentMethods: true,
           });
 
           if (error) {

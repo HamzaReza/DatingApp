@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createEventTicketPaymentIntent = exports.createMessagePaymentIntent = exports.checkExpiredPayments = exports.stripeWebhook = exports.verifyFaceMatch = void 0;
+exports.deleteOldStories = exports.createEventTicketPaymentIntent = exports.createMessagePaymentIntent = exports.checkExpiredPayments = exports.stripeWebhook = exports.verifyFaceMatch = void 0;
 const AWS = require("aws-sdk");
 const admin = require("firebase-admin");
 const https_1 = require("firebase-functions/v2/https");
@@ -579,6 +579,45 @@ exports.createEventTicketPaymentIntent = (0, https_1.onCall)({
     catch (error) {
         console.error("Error creating event ticket payment intent:", error);
         throw new https_1.HttpsError("internal", "Failed to create payment intent");
+    }
+});
+// Delete stories older than 2 minutes (for testing) from stories collection
+exports.deleteOldStories = (0, scheduler_1.onSchedule)("every 2 hours", async () => {
+    try {
+        const now = admin.firestore.Timestamp.now();
+        // 7 days ago (7 days * 24 hours * 60 minutes * 60 seconds * 1000 milliseconds)
+        const sevenDaysAgo = new Date(now.toDate().getTime() - 7 * 24 * 60 * 60 * 1000);
+        console.log(`Cleaning stories older than: ${sevenDaysAgo}`);
+        // Query the users collection
+        const usersSnapshot = await db.collection("users").get();
+        let totalDeleted = 0;
+        // Process each user document
+        for (const userDoc of usersSnapshot.docs) {
+            const userId = userDoc.id;
+            const userData = userDoc.data();
+            const stories = userData.stories || [];
+            // Filter out old stories (older than 7 days)
+            const validStories = stories.filter((story) => {
+                var _a, _b, _c, _d;
+                const storyDate = ((_b = (_a = story.createdAt) === null || _a === void 0 ? void 0 : _a.toDate) === null || _b === void 0 ? void 0 : _b.call(_a)) || ((_d = (_c = story.date) === null || _c === void 0 ? void 0 : _c.toDate) === null || _d === void 0 ? void 0 : _d.call(_c));
+                return storyDate && storyDate > sevenDaysAgo;
+            });
+            if (validStories.length === stories.length) {
+                continue; // nothing to remove
+            }
+            // Update user document with only valid stories
+            await userDoc.ref.update({
+                stories: validStories,
+                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            });
+            const deletedCount = stories.length - validStories.length;
+            totalDeleted += deletedCount;
+            console.log(`✅ Removed ${deletedCount} old stories for user ${userId}`);
+        }
+        console.log(`🎯 Successfully removed ${totalDeleted} old stories from users collection`);
+    }
+    catch (error) {
+        console.error("❌ Error cleaning old stories:", error);
     }
 });
 //# sourceMappingURL=index.js.map

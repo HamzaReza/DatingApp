@@ -83,4 +83,49 @@ export default (theme: "dark" | "light") =>
     inputStyle: {
       color: Colors[theme].whiteText,
     },
+    loadingOverlay: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: "rgba(0, 0, 0, 0.4)",
+    },
+    overlayContainer: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      paddingTop: hp(5),
+      paddingHorizontal: wp(4),
+    },
+    touchOverlay: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+    },
+    container: {
+      flex: 1,
+      backgroundColor: "black",
+    },
+    videoContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: "black",
+    },
+    video: {
+      width: "100%",
+      height: "100%",
+    },
+    timestamp: {
+      color: Colors[theme].whiteText,
+      fontSize: FontSize.regular,
+      opacity: 0.8,
+      marginLeft: wp(1.5),
+    },
   });

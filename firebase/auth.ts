@@ -584,11 +584,7 @@ export const fetchUsersWithLocation = async () => {
 const fetchAllUserStories = async (userId: string) => {
   try {
     const db = getFirestore();
-
-    const [usersSnapshot, storiesSnapshot] = await Promise.all([
-      getDocs(collection(db, "users")),
-      getDocs(collection(db, "stories")),
-    ]);
+    const usersSnapshot = await getDocs(collection(db, "users"));
 
     const usersData = usersSnapshot.docs.map((doc: any) => ({
       id: doc.id,
@@ -596,33 +592,34 @@ const fetchAllUserStories = async (userId: string) => {
       profilePic:
         encodeImagePath(doc.data().photo) || "https://example.com/default.jpg",
       isOwn: doc.id === userId,
+      // Get stories directly from the user document
+      stories: doc.data().stories || [], // This gets the stories array from users collection
     }));
 
-    const storiesByUser: Record<string, any[]> = {};
-    storiesSnapshot.forEach((doc: any) => {
-      storiesByUser[doc.id] = (doc.data().storyItems || [])
-        .map((story: any) => ({
-          ...story,
-          date: story.date?.toDate() || new Date(),
-        }))
-        .sort((a: any, b: any) => b.date - a.date);
-    });
+    return (
+      usersData
+        .map((user: any) => {
+          // Use the stories from the user document
+          const userStories = user.stories || [];
 
-    return usersData
-      .map((user: any) => {
-        const userStories = storiesByUser[user.id] || [];
-
-        return {
-          ...user,
-          hasStories: userStories.length > 0,
-          image: user.isOwn
-            ? userStories[0]?.storyUrls[0] || user.profilePic
-            : userStories[0]?.storyUrls[0] || null,
-          storyCount: userStories.length,
-        };
-      })
-      .filter((user: any) => user.isOwn || user.image !== null)
-      .sort((a: any, b: any) => b.isOwn - a.isOwn);
+          return {
+            ...user,
+            hasStories: userStories.length > 0,
+            // Always use profile picture for thumbnail
+            image: user.profilePic,
+            storyCount: userStories.length,
+            // Add a flag to indicate if user has actual stories
+            hasActiveStories: userStories.length > 0,
+          };
+        })
+        // Filter: show current user OR users who have actual stories
+        .filter((user: any) => user.isOwn || user.hasActiveStories)
+        .sort((a: any, b: any) => {
+          // Sort: current user first, then by story count descending
+          if (a.isOwn !== b.isOwn) return b.isOwn - a.isOwn;
+          return b.storyCount - a.storyCount;
+        })
+    );
   } catch (error) {
     console.error("Error fetching stories:", error);
     return [];
@@ -630,12 +627,25 @@ const fetchAllUserStories = async (userId: string) => {
 };
 
 const fetchStoriesForUser = async (userId: string) => {
-  const db = getFirestore();
-  const docSnap = await getDoc(doc(db, "stories", userId));
+  try {
+    const db = getFirestore();
 
-  if (docSnap.exists()) {
-    return docSnap.data()?.storyItems || [];
-  } else {
+    const docSnap = await getDoc(doc(db, "users", userId));
+
+    if (docSnap.exists()) {
+      let stories = docSnap.data()?.stories || [];
+
+      // Ensure it's always an array
+      if (!Array.isArray(stories)) {
+        stories = Object.values(stories);
+      }
+      return stories;
+    } else {
+      console.log("❌ User document not found:", userId);
+      return [];
+    }
+  } catch (error) {
+    console.error("🔥 Error fetching stories for user:", userId, error);
     return [];
   }
 };
@@ -653,6 +663,54 @@ const fetchNextUsersStories = async (currentUserId: string) => {
     }));
 
   return allUsers;
+};
+
+const fetchUsersWithStories = async (authUserId: string) => {
+  try {
+    const db = getFirestore();
+    const [usersSnapshot, storiesSnapshot] = await Promise.all([
+      getDocs(collection(db, "users")),
+      getDocs(collection(db, "stories")),
+    ]);
+
+    // Get users excluding auth user
+    const usersData = usersSnapshot.docs
+      .map((doc: any) => ({
+        id: doc.id,
+        username: doc.data().name || "User",
+        profilePic:
+          encodeImagePath(doc.data().photo) ||
+          "https://example.com/default.jpg",
+      }))
+      .filter((user: any) => user.id !== authUserId);
+
+    // Get stories for these users
+    const storiesByUser: Record<string, any[]> = {};
+    storiesSnapshot.forEach((doc: any) => {
+      if (doc.id !== authUserId) {
+        const userStories = doc.data().storyItems || [];
+        if (userStories.length > 0) {
+          storiesByUser[doc.id] = userStories
+            .map((story: any) => ({
+              ...story,
+              date: story.date?.toDate() || new Date(),
+            }))
+            .sort((a: any, b: any) => b.date - a.date);
+        }
+      }
+    });
+
+    // Return only users who have stories
+    return usersData
+      .map((user: any) => ({
+        ...user,
+        stories: storiesByUser[user.id] || [],
+      }))
+      .filter((user: any) => user.stories.length > 0);
+  } catch (error) {
+    console.error("Error fetching users with stories:", error);
+    return [];
+  }
 };
 
 const getUserLocation = async (userId: string) => {
@@ -953,16 +1011,25 @@ export const respondToGroupInvite = async (
   }
 };
 
-const handleStoryUpload = async (pickStory: Promise<string[]>, user: User) => {
+const handleStoryUpload = async (pickStory: Promise<any[]>, user: User) => {
   const result = await pickStory;
+  console.log("result", result);
 
   if (!result || result.length === 0) return;
-  const uploadedUrls = await uploadMultipleImages(result, "story");
+
+  // 🔑 only pass URIs to uploadMultipleImages
+  const uploadedUrls = await uploadMultipleImages(
+    result.map(item => item.uri),
+    "story"
+  );
 
   const now = new Date();
 
-  const newStoryItems = uploadedUrls.map(url => ({
-    url,
+  // keep type + duration when saving
+  const newStoryItems = uploadedUrls.map((url, i) => ({
+    storyUrls: [url],
+    type: result[i].type,
+    duration: result[i].duration,
     createdAt: now,
   }));
 
@@ -980,7 +1047,6 @@ const handleStoryUpload = async (pickStory: Promise<string[]>, user: User) => {
   const userData = userDoc.data();
 
   const existingStories = userData?.stories || [];
-
   const updatedStories = [...existingStories, ...newStoryItems];
 
   await updateDoc(userRef, {
@@ -993,7 +1059,8 @@ const handleStoryUpload = async (pickStory: Promise<string[]>, user: User) => {
 
   const newStoryItem = {
     date: now,
-    storyUrls: uploadedUrls,
+    storyUrls: uploadedUrls, // just URLs
+    type: result[0].type,
   };
 
   if (storyDoc.exists()) {
@@ -1788,4 +1855,5 @@ export {
   uploadImage,
   uploadMultipleImages,
   verifyCode,
+  fetchUsersWithStories,
 };

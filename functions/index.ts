@@ -773,7 +773,6 @@ export const createEventTicketPaymentIntent = onCall(
   }
 );
 
-// Delete stories older than 2 minutes (for testing) from stories collection
 export const deleteOldStories = onSchedule("every 2 hours", async () => {
   try {
     const now = admin.firestore.Timestamp.now();

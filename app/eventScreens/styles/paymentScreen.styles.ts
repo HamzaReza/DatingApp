@@ -202,4 +202,18 @@ export default (theme: "dark" | "light") =>
       flex: 1,
       paddingHorizontal: 0,
     },
+    paymentMethodInfo: {
+      marginTop: hp(3),
+      borderWidth: 1,
+      borderRadius: Borders.radius1,
+      borderColor: Colors[theme].primary,
+      backgroundColor: Colors[theme].primaryOpaque,
+      padding: wp(2),
+    },
+    paymentMethodNote: {
+      fontSize: FontSize.small,
+      color: Colors[theme].placeholderText,
+      textAlign: "center",
+      marginTop: hp(1),
+    },
   });

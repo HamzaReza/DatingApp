@@ -69,8 +69,8 @@ import {
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useSelector } from "react-redux";
 
-// Timer component for payment countdown
-const PaymentTimer = ({
+// Payment status checker component (shows if other user has paid)
+const PaymentStatusChecker = ({
   matchId,
   theme,
   styles,
@@ -81,7 +81,6 @@ const PaymentTimer = ({
   styles: any;
   currentUserId: string;
 }) => {
-  const [timeLeft, setTimeLeft] = useState<number>(0);
   const [otherUserPaid, setOtherUserPaid] = useState(false);
 
   useEffect(() => {
@@ -114,22 +113,14 @@ const PaymentTimer = ({
           const expiryTime = paymentData.expiresAt?.toDate();
 
           if (expiryTime) {
-            const updateTimer = () => {
-              const now = new Date();
-              const diff = expiryTime.getTime() - now.getTime();
+            const now = new Date();
+            const diff = expiryTime.getTime() - now.getTime();
 
-              if (diff <= 0) {
-                setTimeLeft(0);
-              } else {
-                setTimeLeft(Math.floor(diff / 1000));
-              }
-            };
-
-            updateTimer();
-            const interval = setInterval(updateTimer, 1000);
-
-            // Clean up interval when component unmounts or payment changes
-            return () => clearInterval(interval);
+            // Check if payment has expired (no timer display, just checking)
+            if (diff <= 0) {
+              // Payment has expired - this could trigger refund logic
+              console.log("Payment has expired for match:", matchId);
+            }
           }
         }
       },
@@ -145,16 +136,7 @@ const PaymentTimer = ({
     };
   }, [matchId, currentUserId]);
 
-  const formatTime = (seconds: number) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    return `${hours.toString().padStart(2, "0")}:${minutes
-      .toString()
-      .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-  };
-
-  // Only render timer if other user has paid
+  // Show payment status if other user has paid
   if (!otherUserPaid) {
     return null;
   }
@@ -162,18 +144,8 @@ const PaymentTimer = ({
   return (
     <View style={styles.timerContainer}>
       <RnText style={styles.timerLabel}>
-        ⏰ Other user has paid! You have:
-      </RnText>
-      <RnText
-        style={[
-          styles.timerText,
-          { color: Colors[theme as keyof typeof Colors].primary },
-        ]}
-      >
-        {formatTime(timeLeft)}
-      </RnText>
-      <RnText style={styles.timerLabel}>
-        to pay, or the first user gets refunded
+        ✅ The other user has paid! You have 24 hours to pay to continue
+        chatting.
       </RnText>
     </View>
   );
@@ -824,7 +796,7 @@ export default function Chat() {
             {/* Header */}
 
             {isSingleChat && !userHasPaid && !bothUsersPaid && (
-              <PaymentTimer
+              <PaymentStatusChecker
                 matchId={matchId as string}
                 theme={theme}
                 styles={paymentStyleSheet}

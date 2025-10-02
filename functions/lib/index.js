@@ -543,14 +543,14 @@ exports.createEventTicketPaymentIntent = (0, https_1.onCall)({
         if (!userId) {
             throw new https_1.HttpsError("unauthenticated", "User ID is required");
         }
-        const { paymentId, amount, eventId, ticketType, quantity } = data.data || data;
+        const { paymentId, amount, eventId, ticketType, quantity, paymentMethod, } = data.data || data;
         if (!paymentId || !amount || !eventId) {
             throw new https_1.HttpsError("invalid-argument", "Missing required parameters");
         }
         // Allow multiple ticket purchases for the same event
         // No duplicate check needed - users can buy multiple tickets
-        // Create payment intent in Stripe
-        const paymentIntent = await stripe.paymentIntents.create({
+        // Configure payment method specific settings
+        const paymentMethodConfig = {
             amount: amount,
             currency: "usd",
             metadata: {
@@ -559,8 +559,16 @@ exports.createEventTicketPaymentIntent = (0, https_1.onCall)({
                 eventId: eventId,
                 ticketType: ticketType || "normal",
                 quantity: quantity || "1",
+                paymentMethod: paymentMethod || "card",
             },
-        });
+        };
+        // Only card payments are supported
+        paymentMethodConfig.automatic_payment_methods = {
+            enabled: true,
+            allow_redirects: "never",
+        };
+        // Create payment intent in Stripe
+        const paymentIntent = await stripe.paymentIntents.create(paymentMethodConfig);
         // Return only the client secret - don't create Firestore document yet
         const result = {
             clientSecret: paymentIntent.client_secret,

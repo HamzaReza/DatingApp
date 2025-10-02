@@ -35,31 +35,39 @@ export const formatMessageDate = (
 const parseDate = (
   date: Date | string | FirebaseFirestoreTypes.Timestamp
 ): Date => {
-  // Handle null/undefined
-  if (!date) {
-    return new Date();
-  }
-
-  // Handle Date objects
+  // If it's already a Date object
   if (date instanceof Date) {
     return date;
   }
 
-  // Handle Firebase Timestamp
-  if (date && typeof date === "object" && "toDate" in date) {
-    return date.toDate();
-  }
+  // If it's a Firestore Timestamp (check for both React Native Firebase and standard Firestore formats)
+  if (typeof date === "object" && date !== null) {
+    // Check for React Native Firebase format
+    if ("toDate" in date && typeof date.toDate === "function") {
+      return (date as FirebaseFirestoreTypes.Timestamp).toDate();
+    }
 
-  // Handle ISO date strings like "2025-07-25T13:03:31.963Z"
-  if (typeof date === "string") {
-    const parsedDate = new Date(date);
-    if (!isNaN(parsedDate.getTime())) {
-      return parsedDate;
+    // Check for standard Firestore format with seconds and nanoseconds
+    if ("seconds" in date && "nanoseconds" in date) {
+      // Convert Firestore timestamp to JavaScript Date
+      return new Date(date.seconds * 1000 + date.nanoseconds / 1000000);
     }
   }
 
-  // Fallback for other types
-  return new Date(date);
+  // If it's a string (ISO format or other)
+  if (typeof date === "string") {
+    // Try parsing as ISO string first
+    const parsedDate = new Date(date);
+    if (!isNaN(parsedDate.getTime())) {
+      return parsedDate;
+    } else {
+      console.log("❌ Failed to parse string date");
+    }
+  }
+
+  // If all else fails, return current date or throw error
+  console.error("❌ Unable to parse date:", date);
+  return new Date();
 };
 
 export const formatTimeAgo = (
@@ -68,6 +76,7 @@ export const formatTimeAgo = (
   const dateObj = parseDate(date);
 
   if (isNaN(dateObj.getTime())) {
+    console.log("❌ Invalid date object");
     return "Invalid date";
   }
 

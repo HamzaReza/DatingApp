@@ -13,43 +13,18 @@ import { addOrUpdateTicketSale } from "@/firebase/ticket";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { RootState } from "@/redux/store";
 import { hp, wp } from "@/utils";
-import { AntDesign, FontAwesome5 } from "@expo/vector-icons";
+import { FontAwesome5 } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { Formik } from "formik";
 import React, { useState } from "react";
-import { TouchableOpacity, View } from "react-native";
+import { View } from "react-native";
 import { useSelector } from "react-redux";
 import * as Yup from "yup";
 
-const paymentMethods = [
-  {
-    id: "apple_pay",
-    name: "Apple Pay",
-    icon: <AntDesign name="apple1" size={24} color="black" />,
-    selected: true,
-  },
-  {
-    id: "google_pay",
-    name: "Google Pay",
-    icon: <FontAwesome5 name="google-pay" size={24} color="#5F6368" />,
-    selected: false,
-  },
-  {
-    id: "paypal",
-    name: "PayPal",
-    icon: <FontAwesome5 name="paypal" size={24} color="#003087" />,
-    selected: false,
-  },
-  {
-    id: "card",
-    name: "Debit/Credit Card",
-    icon: <FontAwesome5 name="cc-mastercard" size={24} color="#EB001B" />,
-    selected: false,
-  },
-];
+// Only card payments are supported
 
 const PaymentScreen = () => {
-  const [selectedMethod, setSelectedMethod] = useState("apple_pay");
+  const [selectedMethod] = useState("card"); // Only card payments supported
   // const [voucher, setVoucher] = useState("");
   const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
   const [isPaymentModalVisible, setIsPaymentModalVisible] = useState(false);
@@ -221,31 +196,21 @@ const PaymentScreen = () => {
       <RnText
         style={[styles.subtitle, { textAlign: "center", marginTop: hp(1) }]}
       >
-        Choose your preferred payment method to buy tickets
+        Secure payment processing for your tickets
       </RnText>
 
-      {paymentMethods.map(item => (
-        <TouchableOpacity
-          key={item.id}
-          style={styles.methodButton}
-          onPress={() => setSelectedMethod(item.id)}
-          activeOpacity={1}
-        >
-          <View style={styles.radioRow}>
-            <View
-              style={
-                selectedMethod === item.id
-                  ? styles.selectedRadio
-                  : styles.unselectedRadio
-              }
-            >
-              {selectedMethod === item.id && <View style={styles.radioDot} />}
-            </View>
-            {item.icon}
-            <RnText style={styles.methodName}>{item.name}</RnText>
+      <View style={styles.paymentMethodInfo}>
+        <View style={styles.radioRow}>
+          <View style={styles.selectedRadio}>
+            <View style={styles.radioDot} />
           </View>
-        </TouchableOpacity>
-      ))}
+          <FontAwesome5 name="cc-mastercard" size={24} color="#EB001B" />
+          <RnText style={styles.methodName}>Debit/Credit Card</RnText>
+        </View>
+        <RnText style={styles.paymentMethodNote}>
+          Secure payment processing via Stripe
+        </RnText>
+      </View>
 
       <View style={styles.paymentSection}>
         <RnText style={styles.subtitle}>Payment Details</RnText>

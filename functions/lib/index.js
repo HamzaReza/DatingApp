@@ -562,33 +562,11 @@ exports.createEventTicketPaymentIntent = (0, https_1.onCall)({
                 paymentMethod: paymentMethod || "card",
             },
         };
-        // Add payment method specific configurations
-        switch (paymentMethod) {
-            case "apple_pay":
-                paymentMethodConfig.automatic_payment_methods = {
-                    enabled: true,
-                    allow_redirects: "never",
-                };
-                break;
-            case "google_pay":
-                paymentMethodConfig.automatic_payment_methods = {
-                    enabled: true,
-                    allow_redirects: "never",
-                };
-                break;
-            case "paypal":
-                paymentMethodConfig.automatic_payment_methods = {
-                    enabled: true,
-                    allow_redirects: "always",
-                };
-                break;
-            default: // card
-                paymentMethodConfig.automatic_payment_methods = {
-                    enabled: true,
-                    allow_redirects: "never",
-                };
-                break;
-        }
+        // Only card payments are supported
+        paymentMethodConfig.automatic_payment_methods = {
+            enabled: true,
+            allow_redirects: "never",
+        };
         // Create payment intent in Stripe
         const paymentIntent = await stripe.paymentIntents.create(paymentMethodConfig);
         // Return only the client secret - don't create Firestore document yet

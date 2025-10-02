@@ -6,7 +6,6 @@ import { useStripe } from "@stripe/stripe-react-native";
 import React, { useEffect, useState } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { Colors } from "../constants/Colors";
-import { PaymentService } from "../firebase/paymentService";
 import { useColorScheme } from "../hooks/useColorScheme";
 import RnButton from "./RnButton";
 import RnModal from "./RnModal";
@@ -51,20 +50,13 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         try {
           console.log("🚀 Starting PaymentSheet initialization...");
 
-          // Configure payment method specific settings
-          const paymentService = PaymentService.getInstance();
-          const paymentMethodConfig =
-            paymentService.getPaymentMethodConfiguration(paymentMethod);
+          // Only card payments are supported
 
           const { error } = await initPaymentSheet({
             paymentIntentClientSecret: paymentData.clientSecret,
             merchantDisplayName: "Dating App",
             style: "automatic", // or 'alwaysLight' based on your theme
             allowsDelayedPaymentMethods: true,
-            applePay:
-              paymentMethod === "apple_pay" ? paymentMethodConfig : undefined,
-            googlePay:
-              paymentMethod === "google_pay" ? paymentMethodConfig : undefined,
           });
 
           if (error) {

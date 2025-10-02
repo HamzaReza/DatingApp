@@ -30,24 +30,6 @@ export class PaymentService {
   getAvailablePaymentMethods(): PaymentMethod[] {
     return [
       {
-        id: "apple_pay",
-        name: "Apple Pay",
-        type: "apple_pay",
-        enabled: true, // Stripe will handle availability check
-      },
-      {
-        id: "google_pay",
-        name: "Google Pay",
-        type: "google_pay",
-        enabled: true, // Stripe will handle availability check
-      },
-      {
-        id: "paypal",
-        name: "PayPal",
-        type: "paypal",
-        enabled: true,
-      },
-      {
         id: "card",
         name: "Debit/Credit Card",
         type: "card",
@@ -95,38 +77,6 @@ export class PaymentService {
     } catch (error) {
       console.error("Error creating payment intent:", error);
       throw new Error("Failed to create payment intent");
-    }
-  }
-
-  /**
-   * Get payment method configuration for Stripe PaymentSheet
-   */
-  getPaymentMethodConfiguration(paymentMethod: string) {
-    const baseConfig = {
-      applePay: {
-        merchantId: "merchant.com.datingapp.payments", // Replace with your actual Apple Merchant ID
-        merchantCountryCode: "US",
-      },
-      googlePay: {
-        merchantId: "12345678901234567890", // Replace with your actual Google Pay Merchant ID
-        merchantCountryCode: "US",
-        testEnvironment: __DEV__, // Use test environment in development
-      },
-      paypal: {
-        merchantId: "A12345678901234567890", // Replace with your actual PayPal Client ID
-        merchantCountryCode: "US",
-      },
-    };
-
-    switch (paymentMethod) {
-      case "apple_pay":
-        return baseConfig.applePay;
-      case "google_pay":
-        return baseConfig.googlePay;
-      case "paypal":
-        return baseConfig.paypal;
-      default:
-        return undefined;
     }
   }
 
